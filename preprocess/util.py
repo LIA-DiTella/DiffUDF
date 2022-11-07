@@ -2,8 +2,8 @@ import numpy as np
 
 class Interpolation:
     def __init__( self, points ):
-        if len(points) < 2:
-            raise ValueError("Cannot interpolate less than 2 points")
+        if len(points) < 3:
+            raise ValueError("Cannot interpolate 3 or less points")
         
         self.points = [points[0]] + points + [points[-1]]
         self.parametrization = lambda x : x
