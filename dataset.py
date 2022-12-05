@@ -8,15 +8,6 @@ from plyfile import PlyData
 import torch
 from torch.utils.data import Dataset
 
-def segment_surface( mesh: o3d.t.geometry.TriangleMesh, centerline: np.nd.array,  ) -> np.nd.array:
-    # voy a hacer lo más croto que hay como para probar...
-    # sampleo puntos -> hago NN -> resampleo
-    # habria que hacer algo mas piola 100%... pero bue
-
-    pc = o3d.geometry.sample_points_poisson_disk( mesh , 10000 )
-
-
-
 
 def _sample_on_surface(mesh: o3d.t.geometry.TriangleMesh,
                        n_points: int,
@@ -298,7 +289,7 @@ def _create_training_data(
 
     if not no_sdf:
         domain_pts = o3c.Tensor(domain_pts, dtype=o3c.Dtype.Float32)
-        domain_sdf = scene.compute_signed_distance(domain_pts)
+        domain_sdf = scene.compute_distance(domain_pts)
         domain_sdf = torch.from_numpy(domain_sdf.numpy())
         domain_pts = torch.from_numpy(domain_pts.numpy())
     else:
@@ -469,17 +460,111 @@ class PointCloud(Dataset):
             curvature_fractions=self.curvature_fractions,
             curvature_thresholds=self.curvature_bins
         )
-        return {
-            "coords": pts.float(),
-        }, {
-            "normals": normals.float(),
-            "sdf": sdf.unsqueeze(1).float()
-        }
 
+        return pts.float(), normals.float(), sdf.unsqueeze(1).float()
+
+class MultiplePointClouds( Dataset ):
+    """SDF Point Cloud dataset.
+
+    Parameters
+    ----------
+    mesh_paths: list[str]
+        Paths to the base mesh.
+
+    selector_path: str
+        Path to mesh selector parameter.
+
+    off_surface_sdf_per_mesh: list[number], optional
+        Value to replace the SDF calculated by the sampling function for points
+        with SDF != 0. May be used to replicate the behavior of Sitzmann et al.
+        If set to `None` (default) uses the SDF estimated by the sampling
+        function.
+
+    off_surface_normals_per_mesh: list[torch.Tensor], optional
+        Value to replace the normals calculated by the sampling algorithm for
+        points with SDF != 0. May be used to replicate the behavior of Sitzmann
+        et al. If set to `None` (default) uses the SDF estimated by the
+        sampling function.
+
+    batch_size: integer, optional
+        Used for fetching `batch_size` at every call of `__getitem__`. If set
+        to 0 (default), fetches all on-surface points at every call.
+
+    use_curvature: boolean, optional
+        Indicates if we must use the curvature to perform sampling on surface
+        points. By default this is False.
+
+    curvature_fractions: list, optional
+        The fractions of points to sample per curvature band. Only used when
+        `use_curvature` is True.
+
+    curvature_percentiles: list, optional
+        The curvature percentiles to use when defining low, medium and high
+        curvatures. Only used when `use_curvature` is True.
+
+    References
+    ----------
+    [1] Sitzmann, V., Martel, J. N. P., Bergman, A. W., Lindell, D. B.,
+    & Wetzstein, G. (2020). Implicit Neural Representations with Periodic
+    Activation Functions. ArXiv. Retrieved from http://arxiv.org/abs/2006.09661
+    """
+    def __init__(self, mesh_paths: list[str], selector_path : str,
+                 batch_size: int,
+                 off_surface_sdf_per_mesh: list[float] = [],
+                 off_surface_normals_per_mesh: list[torch.Tensor] = [],
+                 use_curvature: bool = False,
+                 curvature_fractions: list = [],
+                 curvature_percentiles: list = []):
+        super().__init__()
+        self.amount_meshes = len(mesh_paths)
+        self.meshes = {}
+        self.batch_size = batch_size
+
+        with open( selector_path, 'r') as selector_file:
+            selector = [ torch.Tensor([float(v)]) for v in selector_file] 
+
+        if len(off_surface_sdf_per_mesh) == 0:
+            off_surface_sdf_per_mesh_v = [ None ] * len(mesh_paths)
+        
+        if len(off_surface_normals_per_mesh) == 0:
+            off_surface_normals_per_mesh_v = [ None ] * len(mesh_paths)
+
+        for idx, mesh_path, off_surface_sdf, off_surface_normals in zip( selector, mesh_paths, off_surface_sdf_per_mesh_v, off_surface_normals_per_mesh_v ):
+            self.meshes[idx] = PointCloud( 
+                mesh_path=mesh_path,
+                batch_size=self.batch_size // len(mesh_paths),
+                off_surface_sdf=off_surface_sdf,
+                off_surface_normals=off_surface_normals,
+                use_curvature=use_curvature,
+                curvature_fractions=curvature_fractions,
+                curvature_percentiles=curvature_percentiles
+            )
+
+    def __len__(self):
+        return sum([ len(p) for p in self.meshes.values()]) # porque ya estan divididos por el batchsize
+
+    def __getitem__(self, idx):
+        allpoints = []
+        allnormals = []
+        allsdfs = []
+        allsels = []
+        for sel, pc in self.meshes.items():
+            points, normals, sdf = pc.__getitem__(0)
+            allsels += [ sel ] * len(points)
+            allpoints.append(points)
+            allnormals.append(normals)
+            allsdfs.append(sdf)
+
+        return { 
+            'sel': torch.cat(allsels ).reshape( (len(allsels), 1)), 
+            'coords':torch.cat(allpoints) }, {
+            "normals": torch.cat(allnormals),
+            "sdf": torch.cat(allsdfs)
+        }
 
 if __name__ == "__main__":
     p = PointCloud(
-        "data/armadillo_curvs.ply", batch_size=10, use_curvature=True,
+        "data/segmented/test1/normalized/test1_0_curv.ply", batch_size=10, use_curvature=True,
         curvature_fractions=(0.2, 0.7, 0.1), curvature_percentiles=(70, 95)
     )
     print(len(p))
@@ -487,8 +572,17 @@ if __name__ == "__main__":
     print(p.__getitem__(0))
     print(p.__getitem__(0))
 
-    p = PointCloud("data/armadillo.ply", batch_size=10, use_curvature=False)
-    print(len(p))
-    print(p.__getitem__(0))
-    print(p.__getitem__(0))
-    print(p.__getitem__(0))
+    p2 = MultiplePointClouds(
+        mesh_paths=[ f"data/segmented/test1/normalized/test1_{i}_curv.ply" for i in range(5) ],
+        selector_path= "data/segmented/test1/normalized/selector.csv",
+        batch_size=10,
+        use_curvature=True, curvature_fractions=(0.2, 0.7, 0.1), curvature_percentiles=(70, 95)
+    )
+
+    print(len(p2))
+    val = p2.__getitem__(0)
+    print(val)
+    print(val[0]['sel'])
+    print(val[0]['coords'])
+    print(torch.cat( [ val[0]['sel'], val[0]['coords']], axis=1))
+
