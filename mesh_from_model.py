@@ -11,15 +11,14 @@ model = SIREN(
         w0=60,
         ww=None
 )
-model.load_state_dict( torch.load('results/test_complete_0_curvature_sdf/models/model_best.pth'))
+model.load_state_dict( torch.load('results/test5_curvature_sdf/models/model_best.pth'))
 
-#rango = [0, 0.25, 0.5, 0.75, 1.0]
-rango = [0.1, 0.35, 0.65]
+rango = [0, 0,1, 0.25, 0.35, 0.5, 0.65, 0.75, 1.0]
 
 for i in rango:
     create_mesh(
         model,
         selector = i,
-        filename= osp.join( 'results/test_complete_0_curvature_sdf', "reconstructions", f"mesh{i}.ply"),
+        filename= osp.join( 'results/test5_curvature_sdf', "reconstructions", f"mesh{i}.ply"),
         N=128
     )

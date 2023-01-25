@@ -362,6 +362,10 @@ class PointCloud(Dataset):
     mesh_path: str
         Path to the base mesh.
 
+    mean: torch.Tensor
+
+    std: torch.Tensor
+
     n_on_surface: int, optional
         Number of surface samples to fetch (i.e. {X | f(X) = 0}). Default value
         is None, meaning that all vertices will be used.
@@ -401,6 +405,8 @@ class PointCloud(Dataset):
     Activation Functions. ArXiv. Retrieved from http://arxiv.org/abs/2006.09661
     """
     def __init__(self, mesh_path: str,
+                 mean: torch.Tensor,
+                 std: torch.Tensor,
                  batch_size: int,
                  off_surface_sdf: float = None,
                  off_surface_normals: torch.Tensor = None,
@@ -409,6 +415,9 @@ class PointCloud(Dataset):
                  curvature_percentiles: list = []):
         super().__init__()
 
+
+        self.mean = mean
+        self.std = std
         self.off_surface_normals = None
         if off_surface_normals is not None:
             if isinstance(off_surface_normals, list):
@@ -519,9 +528,13 @@ class MultiplePointClouds( Dataset ):
         self.amount_meshes = len(mesh_paths)
         self.meshes = {}
         self.batch_size = batch_size
+        self.means, self.stds = [], []
 
         with open( selector_path, 'r') as selector_file:
-            selector = [ torch.Tensor([float(v)]) for v in selector_file] 
+            for vals in selector_file:
+                for mean, std in [vals.split(',')]:
+                    self.means.append( torch.Tensor([float(mean)]) )
+                    self.stds.append( torch.Tensor([float(std)]))
 
         if len(off_surface_sdf_per_mesh) == 0:
             off_surface_sdf_per_mesh_v = [ None ] * len(mesh_paths)
@@ -529,34 +542,36 @@ class MultiplePointClouds( Dataset ):
         if len(off_surface_normals_per_mesh) == 0:
             off_surface_normals_per_mesh_v = [ None ] * len(mesh_paths)
 
-        for idx, mesh_path, off_surface_sdf, off_surface_normals in zip( selector, mesh_paths, off_surface_sdf_per_mesh_v, off_surface_normals_per_mesh_v ):
-            self.meshes[idx] = PointCloud( 
-                mesh_path=mesh_path,
-                batch_size=self.batch_size // len(mesh_paths),
-                off_surface_sdf=off_surface_sdf,
-                off_surface_normals=off_surface_normals,
-                use_curvature=use_curvature,
-                curvature_fractions=curvature_fractions,
-                curvature_percentiles=curvature_percentiles
-            )
-
+        
+        self.meshes = [ PointCloud( 
+            mesh_path=mesh_path,
+            mean = mean,
+            std = std,
+            batch_size=self.batch_size // len(mesh_paths),
+            off_surface_sdf=off_surface_sdf,
+            off_surface_normals=off_surface_normals,
+            use_curvature=use_curvature,
+            curvature_fractions=curvature_fractions,
+            curvature_percentiles=curvature_percentiles
+        ) for mesh_path, mean, std, off_surface_sdf, off_surface_normals in zip( mesh_paths, self.means ,self.stds, off_surface_sdf_per_mesh_v, off_surface_normals_per_mesh_v ) ]
+ 
     def __len__(self):
-        return sum([ len(p) for p in self.meshes.values()]) # porque ya estan divididos por el batchsize
+        return sum([ len(p) for p in self.meshes]) # porque ya estan divididos por el batchsize
 
     def __getitem__(self, idx):
         allpoints = []
         allnormals = []
         allsdfs = []
         allsels = []
-        for sel, pc in self.meshes.items():
+        for pc in self.meshes:
             points, normals, sdf = pc.__getitem__(0)
-            allsels += [ sel ] * len(points)
+            allsels.append( torch.normal( pc.mean.repeat( len(points) ) , pc.std.repeat( len(points) )))
             allpoints.append(points)
             allnormals.append(normals)
             allsdfs.append(sdf)
-
+        
         return { 
-            'sel': torch.cat(allsels ).reshape( (len(allsels), 1)), 
+            'sel': torch.cat(allsels ).reshape( self.batch_size, 1), 
             'coords':torch.cat(allpoints) }, {
             "normals": torch.cat(allnormals),
             "sdf": torch.cat(allsdfs)
@@ -564,7 +579,7 @@ class MultiplePointClouds( Dataset ):
 
 if __name__ == "__main__":
     p = PointCloud(
-        "data/segmented/test1/normalized/test1_0_curv.ply", batch_size=10, use_curvature=True,
+        "data/segmented/test1/normalized/test1_0_curv.ply", mean=torch.Tensor(5), std=torch.Tensor(5), batch_size=10, use_curvature=True,
         curvature_fractions=(0.2, 0.7, 0.1), curvature_percentiles=(70, 95)
     )
     print(len(p))
@@ -572,9 +587,11 @@ if __name__ == "__main__":
     print(p.__getitem__(0))
     print(p.__getitem__(0))
 
+    print(p.mean)
+
     p2 = MultiplePointClouds(
-        mesh_paths=[ f"data/segmented/test1/normalized/test1_{i}_curv.ply" for i in range(5) ],
-        selector_path= "data/segmented/test1/normalized/selector.csv",
+        mesh_paths=[ f"data/segmented/test4/normalized/test1_{i}_curv.ply" for i in range(5) ],
+        selector_path= "data/segmented/test4/normalized/selector.csv",
         batch_size=10,
         use_curvature=True, curvature_fractions=(0.2, 0.7, 0.1), curvature_percentiles=(70, 95)
     )
