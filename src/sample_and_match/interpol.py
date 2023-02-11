@@ -64,7 +64,7 @@ class Interpolation:
         '''
         return ( self.evaluate(t) for t in ts )
 
-    def arcLength( self, *, eps=0.001, tStart=0, tEnd=1 ):
+    def arcLength( self, *, eps=0.001, tStart=0.0, tEnd=1.0 ):
         if tEnd - tStart <= eps:
             return np.linalg.norm( self.evaluate(tEnd) - self.evaluate(tStart))
 
@@ -103,22 +103,13 @@ class Interpolation:
 
         return Interpolation( [ np.linalg.norm(dTp_dt[t]) / np.linalg.norm(dC_dt[t]) for t in np.linspace(0, 1, 100)] )
 
-    def direction( self, t ):
-        
-        #ds = []
-        #diffs = []
-        #for ep in np.linspace( min(0.1, 1 - t), 0.0001, 100):
-        #    ds.append( normalize(self[t + ep] - self[t] ) )
-        #    if len(diffs) > 0:
-        #        diffs.append( np.linalg.norm(ds[-1] - ds[-2]) )
-        #return d / np.linalg.norm( d )
+    def direction( self, t, eps=0.001 ):
+        if t + eps > 1:
+            return normalize( self[t] - self[t - eps] )
 
-        if np.isclose(t , 1 ):
-            return normalize( self[t] - self[t - 0.001] )
+        return normalize(self[t + eps] - self[t])
 
-        return normalize(self[t + 0.001] - self[t])
-
-    def basisAlong( self, points, amountOfSamples = 10 ):
+    def basesAlong( self, points, amountOfSamples = 10 ):
         '''
             Calculates a basis along the curve, by projecting the normal vector throughout
             sample points on the curve.
