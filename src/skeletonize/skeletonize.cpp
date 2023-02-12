@@ -3,6 +3,7 @@
 #include <CGAL/extract_mean_curvature_flow_skeleton.h>
 #include <CGAL/boost/graph/split_graph_into_polylines.h>
 #include <fstream>
+#include <string>
 
 typedef CGAL::Simple_cartesian<double> Kernel;
 typedef Kernel::Point_3 Point;
@@ -60,18 +61,20 @@ int main(int argc, char *argv[])
 	std::cout << "Number of vertices of the skeleton: " << boost::num_vertices(skeleton) << "\n";
 	std::cout << "Number of edges of the skeleton: " << boost::num_edges(skeleton) << "\n";
 
+	std::string output_name = argv[2];
+
 	// Output all the edges of the skeleton.
-	std::ofstream output(argv[2]);
+	std::ofstream output(output_name + ".txt");
 	Display_polylines display(skeleton, output);
 	CGAL::split_graph_into_polylines(skeleton, display);
 	output.close();
 
 	// Output skeleton points and the corresponding surface points
-	//output.open("correspondance-poly.polylines.txt");
-	//for (Skeleton_vertex v : CGAL::make_range(vertices(skeleton)))
-	//	for (vertex_descriptor vd : skeleton[v].vertices)
-	//		output << "2 " << skeleton[v].point << " "
-	//			   << get(CGAL::vertex_point, tmesh, vd) << "\n";
+	output.open( output_name + "_corr.txt");
+	for (Skeleton_vertex v : CGAL::make_range(vertices(skeleton)))
+		for (vertex_descriptor vd : skeleton[v].vertices)
+			output << "2 " << skeleton[v].point << " "
+				   << get(CGAL::vertex_point, tmesh, vd) << "\n";
 	
 	return EXIT_SUCCESS;
 }

@@ -1,10 +1,9 @@
 import numpy as np
-from interpol import Interpolation
+from util.util import Interpolation
 import open3d as o3d
 from scipy.spatial import KDTree
 from itertools import chain
 import pymeshlab as pm
-from trimesh import curvature
 import json
 
 class SkeletonBranch:
@@ -35,7 +34,7 @@ class SkeletonBranch:
             try:
                 self.jointMeshVertexIndices[i] = np.concatenate( [ skeleton.getVerticesOfCenter( center ) for center in self.centers[l:h]] )
             except ValueError:
-                print(f'The joint {i} of branch {self} has no vertices.')
+                pass
                     
             l = h
 
@@ -66,6 +65,9 @@ class SkeletonBranch:
     def jointDistance( self, jointIdx ):
         return self.curve.arcLength( tEnd=self.joints[ jointIdx ] )
     
+    def hasVertices( self, jointIdx ):
+        return len(self.jointMeshVertexIndices[jointIdx]) != 0 
+    
     def saveSubmesh( self, jointIdx, submesh, curvatures ):
         self.jointSubmesh[ jointIdx ] = submesh
         self.jointSubmeshCurvatures[ jointIdx ] = curvatures
@@ -86,7 +88,7 @@ class SkeletonBranch:
 
 
 class SkeletonMesh:
-    def __init__( self, meshFile, skeletonFile, correspondanceFile, epsilon=0.01 ):
+    def __init__( self, meshFile, skeletonFile, correspondanceFile ):
 
         self.mesh = o3d.io.read_triangle_mesh( meshFile )
 
@@ -100,8 +102,8 @@ class SkeletonMesh:
                                                                 ((len(contents) - 1) // 3, 3) ) ))
                 
         self.treeOfVertices = KDTree( self.vertices )
-        self._verticesOfCenter = {}
         self._amountOfJoints = 0
+        self._verticesOfCenter = {}
         with open(correspondanceFile) as file:
             for line in file:
                 s = line.split(' ')
@@ -128,6 +130,9 @@ class SkeletonMesh:
         return self._amountOfJoints
     
     def getVerticesOfCenter( self, center ):
+        if tuple(center) not in self._verticesOfCenter:
+            self._verticesOfCenter[tuple(center)] = []
+        
         return self._verticesOfCenter[tuple(center)]
 
     def submesh( self, pointsPerUnit=5 ):
@@ -150,7 +155,7 @@ class SkeletonMesh:
     def getSubmeshes( self ):
         for branch in self.branches:
             for jointIndex, submesh in branch.getSubmeshes():
-                yield branch.getJointPosition(jointIndex), submesh
+                yield branch.getJointPosition(jointIndex), submesh, branch.getJointCurvature( jointIndex )
 
     def branchAndIndexOfJoint( self, t ):
         for branch in self.branches:
@@ -181,22 +186,35 @@ class SkeletonMesh:
                 self.generateSubmesh( branch, jointIdx, submeshIndices)
 
     def saveToJson( self, path ):
-        with open(path, 'x') as jsonFile:
-            json.dump(
-                { 
-                    'branches' : [ 
-                        { 'joints': [ 
-                            {
-                                'position': branch.getJointPosition(jointIdx).tolist(),
-                                'distance': str(branch.jointDistance(jointIdx)),
-                                'vertices': np.asarray(submesh.vertices).tolist(),
-                                'triangles': np.asarray(submesh.triangles).tolist(),
-                                'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist()
-                            }
-                              for jointIdx, submesh in branch.getSubmeshes() ] } for i, branch in enumerate(self.branches) 
-                    ]
-                }, jsonFile
-            )
+        filePath= path
+        fileName = path[:path.rfind('.')]
+        i = 1
+        stop = True
+        while stop:
+            try:
+                with open(filePath, 'x') as jsonFile:
+                    json.dump(
+                        { 
+                            'branches' : [ 
+                                { 'joints': [ 
+                                    {
+                                        'position': branch.getJointPosition(jointIdx).tolist(),
+                                        'distance': str(branch.jointDistance(jointIdx)),
+                                        'vertices': np.asarray(submesh.vertices).tolist(),
+                                        'triangles': np.asarray(submesh.triangles).tolist(),
+                                        'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist()
+                                    }
+                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for i, branch in enumerate(self.branches) 
+                            ]
+                        }, jsonFile
+                    )
+
+                stop = False
+            except:
+                filePath = f'{fileName}({i}).json'
+                i += 1
+
+        return filePath
 
     def centerAndNormalize( self ):
         for branch in self.branches:
