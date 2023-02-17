@@ -13,6 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--save', action='store_true', help='save submeshes as *.ply')
     parser.add_argument('-p', '--ppu', type=float, default=5, help='density of joints per unit arc length of skeleton curve')
     parser.add_argument('-b', '--btol', type=float, default=0.5, help='branching joints tolerance')
+    parser.add_argument('-n', '--nn', action='store_false', help='skip normalization and centering step')
 
     args = parser.parse_args()
 
@@ -41,9 +42,9 @@ if __name__ == '__main__':
 
     skel.postprocess(alpha=args.btol)
 
-    print('\nNormalizing and centering submeshes...')
-
-    skel.centerAndNormalize()
+    if args.nn:
+        print('\nNormalizing and centering submeshes...')
+        skel.centerAndNormalize()
 
     if args.save:
         print('\nSaving submeshes...')

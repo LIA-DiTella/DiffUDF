@@ -3,3 +3,6 @@ __pycache__/
 differential_geometry_in_neural_implicits/
 results/
 *build/
+*.ply
+*.off
+.vscode/

@@ -12,9 +12,8 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from dataset import PointCloud, MultiplePointClouds
-from loss_functions import sdf_sitzmann, mean_curvature_sdf, true_sdf
-from src.render.meshing import create_mesh
+from dataset import PointCloud
+from loss_functions import loss_DGNI
 from model import SIREN
 from util import create_output_paths, load_experiment_parameters
 
@@ -24,10 +23,6 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     warmup_epochs = config.get("warmup_epochs", 0)
 
     epochs_til_checkpoint = config.get("epochs_to_checkpoint", 0)
-    epochs_til_reconstruction = config.get("epochs_to_reconstruct", 0)
-
-    if epochs_til_reconstruction and not isinstance(epochs_til_reconstruction, list):
-        epochs_til_reconstruction = list(range(1, stop=epochs+1, step=epochs_til_reconstruction))
 
     log_path = config["log_path"]
     loss_fn = config["loss_fn"]
@@ -64,7 +59,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             optim.zero_grad()
 
             # forward + backward + optimize
-            outputs = model( torch.cat( [inputs["sel"], inputs["coords"]], axis=2 ) )
+            outputs = model( torch.cat( [inputs["distance"], inputs["coords"]], axis=2 ) )
             
             loss = loss_fn(outputs, gt)
 
@@ -157,17 +152,11 @@ if __name__ == "__main__":
         json.dump(parameter_dict, fout, indent=4)
 
     sampling_config = parameter_dict["sampling_opts"]
-    off_surface_sdf = parameter_dict.get("off_surface_sdf", [])
-    off_surface_normals = parameter_dict.get("off_surface_normals", [])
-    dataset = MultiplePointClouds(
-        mesh_paths= parameter_dict["dataset"],
-        selector_path = parameter_dict["selector"],
-        batch_size= parameter_dict["batch_size"],
-        off_surface_sdf_per_mesh=off_surface_sdf,
-        off_surface_normals_per_mesh=off_surface_normals,
-        use_curvature=not sampling_config.get("uniform_sampling", True),
-        curvature_fractions=sampling_config.get("curvature_iteration_fractions", []),
-        curvature_percentiles=sampling_config.get("percentile_thresholds", []),
+    dataset = PointCloud(
+        jsonPath= parameter_dict["dataset"],
+        batchSize= parameter_dict["batch_size"],
+        curvatureFractions=sampling_config["curvature_iteration_fractions"],
+        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
     )
 
     network_params = parameter_dict["network"]
@@ -187,27 +176,14 @@ if __name__ == "__main__":
             params=model.parameters()
         )
 
-    loss_opt = parameter_dict.get("loss")
-    loss_fn = sdf_sitzmann
-    if loss_opt == "sdf":
-        loss_fn = true_sdf
-    elif loss_opt == "curvature":
-        loss_fn = mean_curvature_sdf
-    elif loss_opt == "sitzmann":
-        pass  # same as default
-    else:
-        print("Unknown loss option. Using default \"sitzmann\".")
-
     config_dict = {
         "epochs": parameter_dict["num_epochs"],
         "warmup_epochs": parameter_dict.get("warmup_epochs", 0),
         "batch_size": parameter_dict["batch_size"],
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
-        "epochs_to_reconstruct": parameter_dict.get("epochs_to_reconstruction", None),
         "log_path": full_path,
         "optimizer": optimizer,
-        "loss_fn": loss_fn,
-        "mc_resolution": parameter_dict["reconstruction"]["resolution"]
+        "loss_fn": loss_DGNI
     }
 
     losses, best_weights = train_model(

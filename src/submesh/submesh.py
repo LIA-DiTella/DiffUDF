@@ -59,6 +59,9 @@ class SkeletonBranch:
     def getJointCurvature( self, jointIdx ):
         return self.jointSubmeshCurvatures[ jointIdx ]
     
+    def amountOfJoints( self ):
+        return len(self.joints)
+    
     def extendSubmesh( self, jointIdx, vertices ):
         self.jointMeshVertexIndices[ jointIdx ] = np.append( self.jointMeshVertexIndices[ jointIdx ], vertices )
 
@@ -91,6 +94,7 @@ class SkeletonMesh:
     def __init__( self, meshFile, skeletonFile, correspondanceFile ):
 
         self.mesh = o3d.io.read_triangle_mesh( meshFile )
+        self.mesh.compute_vertex_normals( normalized = True )
 
         self.curvature = self._calculateCurvature( meshFile )
         self.branches = []
@@ -100,7 +104,10 @@ class SkeletonMesh:
                 contents = line.split(" ")
                 self.branches.append( SkeletonBranch( np.reshape( np.array( contents[1:]).astype(np.float32), 
                                                                 ((len(contents) - 1) // 3, 3) ) ))
-                
+        
+        if len( self.branches ) == 0:
+            raise ValueError("The skeleton provided is empty")
+
         self.treeOfVertices = KDTree( self.vertices )
         self._amountOfJoints = 0
         self._verticesOfCenter = {}
@@ -194,17 +201,21 @@ class SkeletonMesh:
             try:
                 with open(filePath, 'x') as jsonFile:
                     json.dump(
-                        { 
-                            'branches' : [ 
-                                { 'joints': [ 
+                        {
+                            'amount_branches': len(self.branches),
+                            'branches' : [
+                                { 
+                                    'amount_joints': branch.amountOfJoints(),
+                                    'joints': [ 
                                     {
                                         'position': branch.getJointPosition(jointIdx).tolist(),
                                         'distance': str(branch.jointDistance(jointIdx)),
                                         'vertices': np.asarray(submesh.vertices).tolist(),
                                         'triangles': np.asarray(submesh.triangles).tolist(),
+                                        'normals': np.asarray(submesh.vertex_normals).tolist(),
                                         'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist()
                                     }
-                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for i, branch in enumerate(self.branches) 
+                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for branch in self.branches 
                             ]
                         }, jsonFile
                     )
