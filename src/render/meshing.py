@@ -8,7 +8,7 @@ import time
 import torch
 
 
-def gen_mc_coordinate_grid(N: int, selector, voxel_size: float, device: str = "cpu",
+def gen_mc_coordinate_grid(N: int, distance, voxel_size: float, device: str = "cpu",
                            voxel_origin: list = [-1, -1, -1]) -> torch.Tensor:
     """Creates the coordinate grid for inference and marching cubes run.
 
@@ -17,7 +17,7 @@ def gen_mc_coordinate_grid(N: int, selector, voxel_size: float, device: str = "c
     N: int
         Number of elements in each dimension. Total grid size will be N ** 3
     
-    selector: float
+    distance: float
 
     voxel_size: number
         Size of each voxel
@@ -54,14 +54,14 @@ def gen_mc_coordinate_grid(N: int, selector, voxel_size: float, device: str = "c
     samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[1]
     samples[:, 3] = (samples[:, 3] * voxel_size) + voxel_origin[0]
 
-    samples[:, 0] = selector
+    samples[:, 0] = distance
 
     return samples
 
 
 def create_mesh(
     decoder,
-    selector,
+    distance,
     filename="",
     N=256,
     max_batch=64 ** 3,
@@ -76,7 +76,7 @@ def create_mesh(
     voxel_origin = [-1, -1, -1]
     voxel_size = 2.0 / (N - 1)
 
-    samples = gen_mc_coordinate_grid(N,selector, voxel_size,  device=device )
+    samples = gen_mc_coordinate_grid(N,distance, voxel_size,  device=device )
 
     num_samples = N ** 3
     head = 0

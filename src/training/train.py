@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from dataset import PointCloud
-from loss_functions import loss_DGNI
+from loss_functions import loss_DGNI, loss_sitzmann
 from model import SIREN
 from util import create_output_paths, load_experiment_parameters
 
@@ -30,8 +30,6 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
     train_loader = DataLoader(
         dataset,
-        shuffle=True,
-        batch_size=1,
         pin_memory=True,
         num_workers=0,
         drop_last=False,
@@ -54,10 +52,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             # get the inputs; data is a list of [inputs, labels]
             inputs = {k: v.to(device) for k, v in input_data.items()}
             gt = {k: v.to(device) for k, v in gt_data.items()}
-
+            
             # zero the parameter gradients
             optim.zero_grad()
-
+            
             # forward + backward + optimize
             outputs = model( torch.cat( [inputs["distance"], inputs["coords"]], axis=2 ) )
             
@@ -76,6 +74,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             optim.step()
 
             writer.add_scalar("train_loss", train_loss.item(), epoch)
+
+            break
 
         # accumulate statistics
         for it, l in running_loss.items():
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
         "log_path": full_path,
         "optimizer": optimizer,
-        "loss_fn": loss_DGNI
+        "loss_fn": loss_DGNI if parameter_dict == 'dgni' else loss_sitzmann
     }
 
     losses, best_weights = train_model(

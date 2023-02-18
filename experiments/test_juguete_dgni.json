@@ -1,0 +1,22 @@
+{
+    "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
+    "num_epochs": 100,
+    "sampling_opts": {
+        "curvature_iteration_fractions": [0.2, 0.4, 0.4],
+        "curvature_percentile_thresholds": [0.6, 0.85]
+    },
+    "dataset": "results/juguete/juguete.json",
+    "batch_size": 2000,
+    "checkpoint_path": "results/juguete",
+    "experiment_name": "test_juguete_dgni",
+    "epochs_to_checkpoint": 30,
+    "optimizer": {
+        "type": "adam",
+        "lr": 1e-4
+    },
+    "loss": "dgni",
+    "network": {
+        "hidden_layer_nodes": [256, 256, 256, 256],
+        "w0": 30
+    }
+}

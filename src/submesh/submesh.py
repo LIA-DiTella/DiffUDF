@@ -14,6 +14,7 @@ class SkeletonBranch:
         self.jointMeshVertexIndices = {}
         self.jointSubmesh = {}
         self.jointSubmeshCurvatures = {}
+        self.jointTransformations = {}
 
     def sampleJoints( self, pointsPerUnit ):
         if len(self.centers) <= 3:
@@ -59,6 +60,9 @@ class SkeletonBranch:
     def getJointCurvature( self, jointIdx ):
         return self.jointSubmeshCurvatures[ jointIdx ]
     
+    def getJointTransformation( self, jointIdx ):
+        return self.jointTransformations[jointIdx]
+    
     def amountOfJoints( self ):
         return len(self.joints)
     
@@ -76,19 +80,39 @@ class SkeletonBranch:
         self.jointSubmeshCurvatures[ jointIdx ] = curvatures
 
     def centerAndNormalize( self ):
-        bases = self.curve.basesAlong( self.joints )
-
-        for jointIndex, (subMesh, basis) in enumerate(zip(self.jointSubmesh.values(), bases)):
+        '''
+            Supongo la malla esta en la base dada por la curva (como un frenet frame).
+            Entonces Bv = w,  donde w son los vertices posta.
+            Para obtenerla normalizada entonces hago 
+                B_inv B v = B_inv w
+                v = B_inv w = w'
+            Osea ahora la matriz Id seria nuestra base, que es lo que quiero.
             
-            subMesh.translate( -self.getJointPosition(jointIndex) )
+            Ademas, para entrenar quiero que esten en el cubo [-1,-1,-1] y [1,1,1].
+            Pero quiero que mantengan (por ahora dentro de cada rama exclusivamente) las relaciones de tamaños.
+            Entonces tengo que escalar por el más grande.
+        '''
+        bases = self.curve.basesAlong( self.joints )
+        maxCoord = 0
+        for (jointIndex, subMesh), basis in zip(self.jointSubmesh.items(), bases):
+            
+            #subMesh.translate( -self.getJointPosition(jointIndex) )
+            T = np.block( [[np.eye(3,3), -1 * self.getJointPosition(jointIndex).reshape(3,1)], [np.zeros(3), np.ones(1)]])
 
             B_inv = np.linalg.inv(basis.T) # existe porque son ortogonales entre si -> son li
-            T = np.block( [[ B_inv, np.zeros((3,1)) ], [np.zeros((1,3)), np.array([1]) ] ])
-            subMesh.transform( T )
+            B_inv = np.block( [[ B_inv, np.zeros((3,1)) ], [np.zeros((1,3)), np.array([1]) ] ])
 
-            maxCoord = np.max( np.abs( np.asarray(subMesh.vertices) ) )
-            subMesh.scale( 1/maxCoord, center=(0,0,0)) # ahora en rango [0,0,0], [2,2,2]
+            H =  B_inv @ T
+            subMesh.transform( H )
+            self.jointTransformations[jointIndex] = H
 
+            maxCoord = max( maxCoord, np.max( np.abs( np.asarray(subMesh.vertices) ) ))
+        
+        for jointIndex, subMesh in self.jointSubmesh.items():
+            S = np.block( [ [np.eye(3,3) * (1/maxCoord), np.zeros((3,1))], [np.zeros((1,3)), np.ones(1)]])
+            subMesh.transform( S )
+
+            self.jointTransformations[jointIndex] = S @ self.jointTransformations[jointIndex]
 
 class SkeletonMesh:
     def __init__( self, meshFile, skeletonFile, correspondanceFile ):
@@ -209,11 +233,12 @@ class SkeletonMesh:
                                     'joints': [ 
                                     {
                                         'position': branch.getJointPosition(jointIdx).tolist(),
-                                        'distance': str(branch.jointDistance(jointIdx)),
+                                        'distance': str(branch.joints[jointIdx]),
                                         'vertices': np.asarray(submesh.vertices).tolist(),
                                         'triangles': np.asarray(submesh.triangles).tolist(),
                                         'normals': np.asarray(submesh.vertex_normals).tolist(),
-                                        'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist()
+                                        'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist(),
+                                        'transformation': np.linalg.inv(branch.getJointTransformation(jointIdx)).tolist()
                                     }
                                     for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for branch in self.branches 
                             ]

@@ -3,7 +3,7 @@ import numpy as np
 import open3d as o3d
 import open3d.core as o3c
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import IterableDataset
 import json
 
 def readJson( path: str ):
@@ -175,23 +175,33 @@ def sampleTrainingData(
         torch.zeros(len(domainPoints))
     ))
 
-    def std( i ):
-        if i==0:
-            return torch.from_numpy( np.array( [distances[1]]))
-        elif i==len(distances) - 1:
-            return torch.from_numpy( np.array( [distances[i] - distances[i-1] ]))# asumo len(distances) > 1
-        else:
-            return torch.from_numpy( np.array( [max(distances[i] - distances[i-1], distances[i+1] - distances[i])]))
+    #def std( i ):
+    #    if i==0:
+    #        return torch.from_numpy( np.array( [distances[1]]))
+    #    elif i==len(distances) - 1:
+    #        return torch.from_numpy( np.array( [distances[i] - distances[i-1] ]))# asumo len(distances) > 1
+    #    else:
+    #        return torch.from_numpy( np.array( [max(distances[i] - distances[i-1], distances[i+1] - distances[i])]))
 
-    fullDistances = torch.cat(
-        [
-            torch.abs( torch.normal( mean=torch.from_numpy(distance), std=std(i) / 3 )) for _ in range(samplesOffSurface + samplesOnSurface) for i, distance in enumerate(distances)
-        ]
-    )
+    #fullDistances = torch.cat(
+    #    [
+    #        torch.abs( torch.normal( mean=torch.from_numpy(distance), std=std(i) / 300 )) for _ in range(samplesOffSurface + samplesOnSurface) for i, distance in enumerate(distances)
+    #    ] 
+    #)
     # tomo std / 3 por https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
     # de esta forma un 99% de las muestras van a estar entre una articulacion y su vecina mas lejana
 
-    return fullSamples.float(), fullDistances.float(), fullNormals.float(), fullSDFs.float(), fullCurvatures.float()
+    fullOnSurfDistances = torch.cat(
+        [ torch.ones( samplesOnSurface ) * d for d in distances ]
+    )
+
+    fullOffSurfDistances = torch.cat(
+        [ torch.ones( samplesOffSurface ) * d for d in distances ]
+    )
+
+    fullDistances = torch.cat( (fullOnSurfDistances, fullOffSurfDistances))
+
+    return fullSamples, fullDistances, fullNormals, fullSDFs, fullCurvatures
 
 def pointSegmentationByCurvature(
         mesh: o3d.t.geometry.TriangleMesh,
@@ -264,7 +274,7 @@ def pointSegmentationByCurvature(
 
 
 
-class PointCloud(Dataset):
+class PointCloud(IterableDataset):
     """SDF Point Cloud dataset.
 
     Parameters
@@ -296,7 +306,7 @@ class PointCloud(Dataset):
 
         print(f"Loading meshes \"{jsonPath}\".")
         self.meshes, self.distances = readJson(jsonPath)
-
+        
         if batchSize % (2 * len(self.meshes)) != 0:
             raise ValueError(f'Batch size must be divisible by {2 * len(self.meshes)}')
         
@@ -311,18 +321,16 @@ class PointCloud(Dataset):
             self.scenes.append( scene )
 
         self.curvatureFractions = curvatureFractions
-        self.meshSizes = np.array([ len(mesh.vertex["positions"]) for mesh in self.meshes ])
 
         self.curvatureBins = getCurvatureBins(
             [ torch.from_numpy(mesh.vertex["curvature"].numpy()) for mesh in self.meshes ],
             curvaturePercentiles
             )
-
-    def __len__(self):
-        return np.sum( 2 * self.meshSizes // self.batchSize )
-
-    def __getitem__(self, idx):
-
+        
+    def __iter__(self):
+        return self
+    
+    def __next__( self ):
         pts, distances, normals, sdf, curvature = sampleTrainingData(
             meshes=self.meshes,
             samplesOnSurface=(self.batchSize // 2) // len(self.meshes),
@@ -334,7 +342,7 @@ class PointCloud(Dataset):
             onSurfaceExceptions= [[] for _ in range(len(self.meshes))]
         )
         return {
-            "distance": distances.float(),
+            "distance": distances.unsqueeze(1).float(),
             "coords": pts.float()
         }, {
             "normals": normals.float(),
@@ -344,10 +352,10 @@ class PointCloud(Dataset):
     
 if __name__ == "__main__":
     p = PointCloud(
-        "results/armadillo/armadillo_curvs.json", batchSize=18,
+        "results/juguete/juguete.json", batchSize=18,
         curvatureFractions=(0.2, 0.7, 0.1), curvaturePercentiles=(0.7, 0.85)
     )
-    print(len(p))
-    print(p.__getitem__(0))
-    print(p.__getitem__(0))
-    print(p.__getitem__(0))
+
+    print(next(p))
+    #print(next(p))
+    #print(next(p))

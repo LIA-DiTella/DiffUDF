@@ -1,19 +1,20 @@
 {
     "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
-    "num_epochs": 250,
+    "num_epochs": 100,
     "sampling_opts": {
-        "curvature_iteration_fractions": [0.5, 0.3, 0.2],
-        "curvature_percentile_thresholds": [0.1, 0.9]
+        "curvature_iteration_fractions": [0.2, 0.6, 0.2],
+        "curvature_percentile_thresholds": [0.6, 0.95]
     },
     "dataset": "results/armadillo/armadillo_curvs.json",
-    "batch_size": 192,
+    "batch_size": 19992,
     "checkpoint_path": "results/armadillo",
-    "experiment_name": "test_armadillo",
-    "epochs_to_checkpoint": 50,
+    "experiment_name": "test_armadillo_dgni",
+    "epochs_to_checkpoint": 30,
     "optimizer": {
         "type": "adam",
         "lr": 1e-4
     },
+    "loss": "dgni",
     "network": {
         "hidden_layer_nodes": [256, 256, 256, 256],
         "w0": 60

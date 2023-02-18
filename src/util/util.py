@@ -66,12 +66,12 @@ class Interpolation:
 
     def arcLength( self, *, eps=0.001, tStart=0.0, tEnd=1.0 ):
         if tEnd - tStart <= eps:
-            return np.linalg.norm( self.evaluate(tEnd) - self.evaluate(tStart))
+            return np.linalg.norm( self[tEnd] - self[tStart])
 
         longitude = 0
-        lastValue = self.evaluate(tStart)
+        lastValue = self[tStart]
         for step in np.arange(eps, tEnd + eps, eps):
-            newValue = self.evaluate( step )
+            newValue = self[step]
             longitude += np.linalg.norm( newValue - lastValue )
             lastValue = newValue
 
