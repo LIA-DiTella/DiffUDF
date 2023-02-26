@@ -2,8 +2,9 @@ import numpy as np
 from util.util import Interpolation
 import open3d as o3d
 from scipy.spatial import KDTree
-from itertools import chain
+from itertools import chain, combinations
 import pymeshlab as pm
+import networkx as nx
 import json
 
 class SkeletonBranch:
@@ -123,14 +124,34 @@ class SkeletonMesh:
         self.curvature = self._calculateCurvature( meshFile )
         self.branches = []
 
+        borders = {}
         with open( skeletonFile ) as file:
-            for line in file:
+            for idx, line in enumerate(file):
+                line =line.replace('\n', '')
                 contents = line.split(" ")
+
+                if tuple(contents[1:4]) in borders:
+                    borders[ tuple(contents[1:4]) ].add(idx)
+                else:
+                    borders[ tuple(contents[1:4]) ] = set([idx])
+
+                if tuple(contents[-3:]) in borders:
+                    borders[ tuple(contents[-3:]) ].add(idx)
+                else:
+                    borders[ tuple(contents[-3:]) ] = set([idx])
+
                 self.branches.append( SkeletonBranch( np.reshape( np.array( contents[1:]).astype(np.float32), 
                                                                 ((len(contents) - 1) // 3, 3) ) ))
         
         if len( self.branches ) == 0:
             raise ValueError("The skeleton provided is empty")
+        
+        self.skeletonGraph = nx.Graph()
+        self.skeletonGraph.add_nodes_from( list(range(0,len(self.branches))) )
+        self.skeletonGraph.add_edges_from( [ t for s in borders.values() for t in combinations(s, 2) ] )
+
+        self.skeletonRoot = int(np.argmin( np.max( [ [ len(k) for k in d.values() ] for d in dict(nx.all_pairs_shortest_path(self.skeletonGraph)).values() ], axis=1 ) ))
+        self.skeletonTree = nx.bfs_tree( self.skeletonGraph, self.skeletonRoot )
 
         self.treeOfVertices = KDTree( self.vertices )
         self._amountOfJoints = 0
@@ -160,6 +181,13 @@ class SkeletonMesh:
     def amountOfJoints( self ):
         return self._amountOfJoints
     
+    def getBranches( self ):
+        for branchNumber in self.skeletonTree.nodes:
+            yield branchNumber, self.branches[branchNumber]
+
+    def branchParents( self, branchIdx ):
+        return nx.shortest_path( self.skeletonTree, source=self.skeletonRoot, target=branchIdx )
+
     def getVerticesOfCenter( self, center ):
         if tuple(center) not in self._verticesOfCenter:
             self._verticesOfCenter[tuple(center)] = []
@@ -228,25 +256,27 @@ class SkeletonMesh:
                         {
                             'amount_branches': len(self.branches),
                             'branches' : [
-                                { 
+                                {
+                                    'branch_number': branchNumber,
+                                    'parents': self.branchParents(branchNumber),
                                     'amount_joints': branch.amountOfJoints(),
                                     'joints': [ 
                                     {
                                         'position': branch.getJointPosition(jointIdx).tolist(),
-                                        'distance': str(branch.joints[jointIdx]),
+                                        'distance': str(branch.jointDistance(jointIdx) / branch.jointDistance(branch.amountOfJoints() - 1) ),
                                         'vertices': np.asarray(submesh.vertices).tolist(),
                                         'triangles': np.asarray(submesh.triangles).tolist(),
                                         'normals': np.asarray(submesh.vertex_normals).tolist(),
                                         'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist(),
                                         'transformation': np.linalg.inv(branch.getJointTransformation(jointIdx)).tolist()
                                     }
-                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for branch in self.branches 
+                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for branchNumber, branch in self.getBranches()
                             ]
-                        }, jsonFile
+                        }, jsonFile, default=str
                     )
 
                 stop = False
-            except:
+            except FileExistsError:
                 filePath = f'{fileName}({i}).json'
                 i += 1
 

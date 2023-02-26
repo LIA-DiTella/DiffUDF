@@ -10,10 +10,9 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from dataset import PointCloud
-from loss_functions import loss_DGNI, loss_sitzmann
+from loss_functions import loss, loss_curvs
 from model import SIREN
 from util import create_output_paths, load_experiment_parameters
 
@@ -28,12 +27,6 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     loss_fn = config["loss_fn"]
     optim = config["optimizer"]
 
-    train_loader = DataLoader(
-        dataset,
-        pin_memory=True,
-        num_workers=0,
-        drop_last=False,
-    )
     model.to(device)
 
     # Creating the summary storage folder
@@ -47,19 +40,14 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     best_weights = None
     for epoch in range(epochs):
         running_loss = dict()
-        for i, (input_data, gt_data) in enumerate(train_loader, start=0):
-
-            # get the inputs; data is a list of [inputs, labels]
-            inputs = {k: v.to(device) for k, v in input_data.items()}
-            gt = {k: v.to(device) for k, v in gt_data.items()}
-            
+        for input_data, normals, sdf, curvature in iter(dataset):
             # zero the parameter gradients
             optim.zero_grad()
             
             # forward + backward + optimize
-            outputs = model( torch.cat( [inputs["distance"], inputs["coords"]], axis=2 ) )
+            outputs = model( input_data )
             
-            loss = loss_fn(outputs, gt)
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature})
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -75,8 +63,6 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
             writer.add_scalar("train_loss", train_loss.item(), epoch)
 
-            break
-
         # accumulate statistics
         for it, l in running_loss.items():
             if it in losses:
@@ -89,6 +75,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
         epoch_loss = 0
         for k, v in running_loss.items():
             epoch_loss += v
+        epoch_loss /=+ dataset.batchesPerEpoch
         print(f"Epoch: {epoch} - Loss: {epoch_loss}")
 
         # Saving the best model after warmup.
@@ -155,6 +142,7 @@ if __name__ == "__main__":
     dataset = PointCloud(
         jsonPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
+        batchesPerEpoch = parameter_dict["batches_per_epoch"],
         curvatureFractions=sampling_config["curvature_iteration_fractions"],
         curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
     )
@@ -183,7 +171,7 @@ if __name__ == "__main__":
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
         "log_path": full_path,
         "optimizer": optimizer,
-        "loss_fn": loss_DGNI if parameter_dict == 'dgni' else loss_sitzmann
+        "loss_fn": loss if parameter_dict["loss"] != "loss_curvs" else loss_curvs
     }
 
     losses, best_weights = train_model(

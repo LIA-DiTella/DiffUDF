@@ -6,3 +6,4 @@ results/
 *.ply
 *.off
 .vscode/
+*.json

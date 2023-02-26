@@ -64,7 +64,7 @@ def on_surface_normal_constraint(gt_sdf, gt_normals, grad):
            torch.zeros_like(grad[..., :1])
     )
 
-def loss_DGNI(model_output, gt):
+def loss(model_output, gt):
     """Uses true SDF value off surface and tries to fit the mean curvatures
     on the 0 level-set.
 
@@ -86,35 +86,24 @@ def loss_DGNI(model_output, gt):
     """
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
-    #gt_curvature = gt['curvature']
 
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
     indexes = torch.tensor( [1,2,3] )
-    gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 2, indexes)
-
-    #gradient_norm = torch.norm(gradient, dim=-1)
-    #unit_gradient = gradient.squeeze(-1)/gradient_norm.unsqueeze(-1)
-    
-    #pred_mean_curvature = (-0.5)*diff_operators.divergence(gradient, coords)
-    #curv_constraint = torch.where(
-    #    gt_sdf == 0,
-    #    (pred_mean_curvature - gt_curvature) ** 2,
-    #    torch.zeros_like(pred_mean_curvature)
-    #)
+    gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
 
     # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * 3e3,
         'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * 2e2,
-        'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() *1e2 ,#* 1e1,
+        'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() *1e2 ,
         'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * 5e1,
-        #'curv_constraint': curv_constraint.mean() * 1e-2
     }
 
-def loss_sitzmann(X, gt):
-    """Loss function employed in Sitzmann et al. for SDF experiments [1].
+def loss_curvs(model_output, gt):
+    """Uses true SDF value off surface and tries to fit the mean curvatures
+    on the 0 level-set.
 
     Parameters
     ----------
@@ -123,42 +112,40 @@ def loss_sitzmann(X, gt):
         with the model input and SDF values respectively.
 
     gt: dict[str=>torch.Tensor]
-        Ground-truth data with the following keys: 'sdf' and 'normals', with
-        the actual SDF values and the input data normals, respectively.
+        Ground-truth data with the following keys: 'sdf', 'normals', and
+        'curvature' with the actual SDF values, the input data normals, and
+        gaussian curvatures, respectively.
 
     Returns
     -------
     loss: dict[str=>torch.Tensor]
         The calculated loss values for each constraint.
-
-    References
-    ----------
-    [1] Sitzmann, V., Martel, J. N. P., Bergman, A. W., Lindell, D. B.,
-    & Wetzstein, G. (2020). Implicit Neural Representations with Periodic
-    Activation Functions. ArXiv. Retrieved from http://arxiv.org/abs/2006.09661
     """
-    gt_sdf = gt["sdf"]
-    gt_normals = gt["normals"]
+    gt_sdf = gt['sdf']
+    gt_normals = gt['normals']
+    gt_curvature = gt['curvature']
 
-    coords = X["model_in"]
-    pred_sdf = X["model_out"]
+    coords = model_output['model_in']
+    pred_sdf = model_output['model_out']
 
     indexes = torch.tensor( [1,2,3] )
-    grad = torch.index_select( diff_operators.gradient(pred_sdf, coords), 2, indexes)
+    gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
 
-    # Initial-boundary constraints
-    sdf_constraint = torch.where(gt_sdf != -1, pred_sdf, torch.zeros_like(pred_sdf))
-    inter_constraint = torch.where(gt_sdf != -1, torch.zeros_like(pred_sdf), torch.exp(-1e2 * torch.abs(pred_sdf)))
-    normal_constraint = torch.where(gt_sdf != -1, 1 - F.cosine_similarity(grad, gt_normals, dim=-1)[..., None],
-                                    torch.zeros_like(grad[..., :1]))
+    gradient_norm = torch.norm(gradient, dim=-1)
+    unit_gradient = gradient.squeeze(-1)/gradient_norm.unsqueeze(-1)
+    
+    pred_mean_curvature = (-0.5)*diff_operators.divergence(unit_gradient, coords)
+    curv_constraint = torch.where(
+        gt_sdf == 0,
+        (pred_mean_curvature - gt_curvature) ** 2,
+        torch.zeros_like(pred_mean_curvature)
+    )
 
-    # PDE constraints
-    grad_constraint = torch.abs(grad.norm(dim=-1) - 1)
-
+    # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {
-        "sdf_constraint": torch.abs(sdf_constraint).mean() * 3e3,
-        "inter_constraint": inter_constraint.mean() * 1e2,
-        "normal_constraint": normal_constraint.mean() * 1e2,
-        "grad_constraint": grad_constraint.mean() * 5e1,
+        'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * 3e3,
+        'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * 2e2,
+        'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() *1e2 ,
+        'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * 5e1,
+        'curv_constraint': curv_constraint.mean() * 1e-2
     }
-
