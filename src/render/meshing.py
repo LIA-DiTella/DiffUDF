@@ -8,7 +8,7 @@ import time
 import torch
 
 
-def gen_mc_coordinate_grid(N: int, distance, voxel_size: float, device: str = "cpu",
+def gen_mc_coordinate_grid(N: int, parameter, voxel_size: float, device: str = "cpu",
                            voxel_origin: list = [-1, -1, -1]) -> torch.Tensor:
     """Creates the coordinate grid for inference and marching cubes run.
 
@@ -39,22 +39,22 @@ def gen_mc_coordinate_grid(N: int, distance, voxel_size: float, device: str = "c
     """
     overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
 
-    samples = torch.zeros(N ** 3, 4, device=device,
+    samples = torch.zeros(N ** 3, 3 + len(parameter), device=device,
                           requires_grad=False)
 
     # transform last 3 columns
     # to be the x, y, z index
-    samples[:, 3] = overall_index % N
-    samples[:, 2] = (overall_index.long() / N) % N
-    samples[:, 1] = ((overall_index.long() / N) / N) % N
+    samples[:, len(parameter) + 2] = overall_index % N
+    samples[:, len(parameter) + 1] = (overall_index.long() / N) % N
+    samples[:, len(parameter)] = ((overall_index.long() / N) / N) % N
 
     # transform last 3 columns
     # to be the x, y, z coordinate
-    samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[2]
-    samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[1]
-    samples[:, 3] = (samples[:, 3] * voxel_size) + voxel_origin[0]
+    samples[:, len(parameter)] = (samples[:, len(parameter)] * voxel_size) + voxel_origin[2]
+    samples[:, len(parameter) + 1] = (samples[:, len(parameter) + 1] * voxel_size) + voxel_origin[1]
+    samples[:, len(parameter) + 2] = (samples[:, len(parameter) + 2] * voxel_size) + voxel_origin[0]
 
-    samples[:, 0] = distance
+    samples[:, :len(parameter)] = parameter
 
     return samples
 

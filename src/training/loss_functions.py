@@ -128,7 +128,8 @@ def loss_curvs(model_output, gt):
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    indexes = torch.tensor( [1,2,3] )
+    parameter_count = torch.tensor([coords.shape]).squeeze()[1]
+    indexes = torch.tensor( [ parameter_count - 3, parameter_count - 2, parameter_count - 1 ] )
     gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
 
     gradient_norm = torch.norm(gradient, dim=-1)

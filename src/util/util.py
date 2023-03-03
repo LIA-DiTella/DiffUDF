@@ -64,18 +64,16 @@ class Interpolation:
         '''
         return ( self.evaluate(t) for t in ts )
 
-    def arcLength( self, *, eps=0.001, tStart=0.0, tEnd=1.0 ):
-        if tEnd - tStart <= eps:
-            return np.linalg.norm( self[tEnd] - self[tStart])
+    def arcLength( self, *, eps=None, tStart=0.0, tEnd=1.0 ):
+        if np.isclose( tStart, tEnd ):
+            return 0
+        
+        if eps is None:
+            eps = 0.001 * np.sign( tEnd - tStart )
 
-        longitude = 0
-        lastValue = self[tStart]
-        for step in np.arange(eps, tEnd + eps, eps):
-            newValue = self[step]
-            longitude += np.linalg.norm( newValue - lastValue )
-            lastValue = newValue
+        values = list(self.evaluateFrom( np.arange(tStart, tEnd, eps) ))
 
-        return longitude
+        return np.sum( [ np.linalg.norm( values[i+1] - values[i]) for i in range(0, len(values) - 1)] )
 
     def reparametrize( self, funcion ):
         self.parametrization = funcion
@@ -205,3 +203,15 @@ def projectionToPlane( v, n ):
 def cross(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return normalize(np.cross(a,b))
 
+if __name__=='__main__':
+    i = Interpolation( [
+        [0,0,0],
+        [1,1,1],
+        [2,2,2],
+        [3,3,3],
+        [4,4,4]
+    ])
+
+    print( i.arcLength(tStart=0, tEnd=1) )
+    print( i.arcLength(tStart=1, tEnd=0, eps=-0.001) )
+    print( i.arcLength(tEnd=1, tStart=1))

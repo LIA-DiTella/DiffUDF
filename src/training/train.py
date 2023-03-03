@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     network_params = parameter_dict["network"]
     model = SIREN(
-        n_in_features=4,
+        n_in_features= dataset.amountBranches + 3,
         n_out_features=1,
         hidden_layer_config=network_params["hidden_layer_nodes"],
         w0=network_params["w0"],
