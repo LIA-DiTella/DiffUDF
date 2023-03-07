@@ -16,6 +16,7 @@ class SkeletonBranch:
         self.jointSubmesh = {}
         self.jointSubmeshCurvatures = {}
         self.jointTransformations = {}
+        self.direction = 0
 
     def sampleJoints( self, pointsPerUnit ):
         if len(self.centers) <= 3:
@@ -71,7 +72,26 @@ class SkeletonBranch:
         self.jointMeshVertexIndices[ jointIdx ] = np.append( self.jointMeshVertexIndices[ jointIdx ], vertices )
 
     def jointDistance( self, jointIdx ):
-        return self.curve.arcLength( tEnd=self.joints[ jointIdx ] )
+        if self.direction == -1:
+            return self.curve.arcLength( tStart = 1, tEnd=self.joints[ jointIdx ] )
+        else:
+            return self.curve.arcLength( tEnd=self.joints[ jointIdx ] )
+    
+    def jointDistanceToNN( self, jointIdx ):
+        if self.direction == 0:
+            if jointIdx == 0:
+                return self.jointDistance(1)
+            elif jointIdx == len(self.joints) - 1:
+                return np.abs( self.jointDistance( jointIdx ) - self.jointDistance(jointIdx - 1) )
+            else:
+                return np.abs( min( self.jointDistance( jointIdx - 1), self.jointDistance( jointIdx + 1)) - self.jointDistance(jointIdx) )
+        else:
+            if jointIdx == 0:
+                return self.jointDistance(0) - self.jointDistance(1)
+            elif jointIdx == len(self.joints) - 1:
+                return self.jointDistance(jointIdx - 1)
+            else:
+                return np.abs( min( self.jointDistance( jointIdx - 1), self.jointDistance( jointIdx + 1)) - self.jointDistance(jointIdx) )
     
     def hasVertices( self, jointIdx ):
         return len(self.jointMeshVertexIndices[jointIdx]) != 0 
@@ -114,6 +134,14 @@ class SkeletonBranch:
             subMesh.transform( S )
 
             self.jointTransformations[jointIndex] = S @ self.jointTransformations[jointIndex]
+    
+    def direct( self, parent ):
+        if (np.linalg.norm(parent.getJointPosition( parent.amountOfJoints() - 1 ) - self.getJointPosition( len(self.joints) - 1 )) <
+            np.linalg.norm(parent.getJointPosition( parent.amountOfJoints() - 1 ) - self.getJointPosition( 0 )) ):
+            self.direction = -1
+            return len(self.joints) - 1
+        
+        return 0
 
 class SkeletonMesh:
     def __init__( self, meshFile, skeletonFile, correspondanceFile ):
@@ -123,8 +151,10 @@ class SkeletonMesh:
 
         self.curvature = self._calculateCurvature( meshFile )
         self.branches = []
+        self.skipableJoints = {}
 
         borders = {}
+        centers = []
         with open( skeletonFile ) as file:
             for idx, line in enumerate(file):
                 line =line.replace('\n', '')
@@ -140,9 +170,20 @@ class SkeletonMesh:
                 else:
                     borders[ tuple(contents[-3:]) ] = set([idx])
 
-                self.branches.append( SkeletonBranch( np.reshape( np.array( contents[1:]).astype(np.float32), 
-                                                                ((len(contents) - 1) // 3, 3) ) ))
+                centers.append( np.reshape( np.array( contents[1:]).astype(np.float32), ((len(contents) - 1) // 3, 3) ) )
+
         
+        treeOfCenters = KDTree( np.concatenate(centers))
+        for idx, branchCenters in enumerate(centers):
+            query = treeOfCenters.query_ball_point( branchCenters, r=0.01, return_length=True)
+
+            if not all( quantity > 1 for quantity in query ):
+                self.branches.append( SkeletonBranch( branchCenters ))
+            else:
+                print("SALTO")
+
+        
+
         if len( self.branches ) == 0:
             raise ValueError("The skeleton provided is empty")
         
@@ -177,6 +218,9 @@ class SkeletonMesh:
     def triangles( self ):
         return np.asarray( self.mesh.triangles )
 
+    def amountOfBranches( self ):
+        return len(self.branches)
+
     @property
     def amountOfJoints( self ):
         return self._amountOfJoints
@@ -186,7 +230,7 @@ class SkeletonMesh:
             yield branchNumber, self.branches[branchNumber]
 
     def branchParents( self, branchIdx ):
-        return nx.shortest_path( self.skeletonTree, source=self.skeletonRoot, target=branchIdx )
+        return nx.shortest_path( self.skeletonTree, source=self.skeletonRoot, target=branchIdx )[:-1]
 
     def getVerticesOfCenter( self, center ):
         if tuple(center) not in self._verticesOfCenter:
@@ -212,9 +256,10 @@ class SkeletonMesh:
         return chain.from_iterable( branch.getJoints() for branch in self.branches )
 
     def getSubmeshes( self ):
-        for branch in self.branches:
+        for branchIdx, branch in enumerate(self.branches):
             for jointIndex, submesh in branch.getSubmeshes():
-                yield branch.getJointPosition(jointIndex), submesh, branch.getJointCurvature( jointIndex )
+                if branchIdx in self.skipableJoints and self.skipableJoints[branchIdx] != jointIndex:
+                    yield branch.getJointPosition(jointIndex), submesh, branch.getJointCurvature( jointIndex )
 
     def branchAndIndexOfJoint( self, t ):
         for branch in self.branches:
@@ -244,6 +289,12 @@ class SkeletonMesh:
                 submeshIndices = branch.getJointVertices( jointIdx )
                 self.generateSubmesh( branch, jointIdx, submeshIndices)
 
+        for branchIdx in self.skeletonTree.nodes:
+            parents = list(self.skeletonTree.in_edges( branchIdx ))
+            if len(parents) == 1:
+                jointConnection = self.branches[branchIdx].direct( self.branches[ parents[0][0]] )
+                self.skipableJoints[branchIdx] = jointConnection
+
     def saveToJson( self, path ):
         filePath= path
         fileName = path[:path.rfind('.')]
@@ -268,9 +319,11 @@ class SkeletonMesh:
                                         'triangles': np.asarray(submesh.triangles).tolist(),
                                         'normals': np.asarray(submesh.vertex_normals).tolist(),
                                         'curvature': np.asarray(branch.getJointCurvature(jointIdx)).tolist(),
-                                        'transformation': np.linalg.inv(branch.getJointTransformation(jointIdx)).tolist()
+                                        'transformation': np.linalg.inv(branch.getJointTransformation(jointIdx)).tolist(),
+                                        'mean': calculateMean( self.amountOfBranches(), self.branchParents(branchNumber), branchNumber, branch.jointDistance(jointIdx) / branch.jointDistance(branch.amountOfJoints() - 1) ),
+                                        'cov': calculateCovMatrix( self.amountOfBranches(), branchNumber, branch.jointDistanceToNN( jointIdx ) / branch.jointDistance(branch.amountOfJoints() - 1) / 6)
                                     }
-                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx)] } for branchNumber, branch in self.getBranches()
+                                    for jointIdx, submesh in branch.getSubmeshes() if branch.hasVertices(jointIdx) ] } for branchNumber, branch in self.getBranches()
                             ]
                         }, jsonFile, default=str
                     )
@@ -296,13 +349,22 @@ class SkeletonMesh:
         v_curv = pyMesh.vertex_custom_scalar_attribute_array('v_curv')
         return np.clip( v_curv, a_min = -1 * float(d['90_percentile']), a_max = float(d['90_percentile']))
 
+def calculateMean( size, parents, branchNumber, distance):
+    mean = np.zeros(size)
+    np.put( mean, np.concatenate( [ parents,  [branchNumber]] ).astype(np.int64), np.concatenate( [np.ones_like(parents), [distance]] ) )
+    return mean.tolist()
+
+def calculateCovMatrix( size, branchNumber, std ):    
+    mat = np.zeros( (size,size) ) + np.eye(size,size) * 1e-10 # pytorch me pide que sea positiva definida... le pongo valor muy chico
+    mat[branchNumber, branchNumber] = std
+    return mat.tolist()
 
 if __name__=='__main__':
+    
     skel = SkeletonMesh( 
         'data/humans/mesh/test_15070.off', 
         'data/humans/centerline/faust_15070.txt',
         'data/humans/centerline/faust_15070.polylines.txt' )
-
     skel.submesh()
 
-    #print( list(skel.getSubmeshes()) )
+    #print( list(skel.getSubmeshes() ))
