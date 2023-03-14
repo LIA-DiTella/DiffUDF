@@ -1,4 +1,4 @@
-from submesh.submesh import SkeletonMesh
+from submesh.submesh import createJson
 import subprocess
 import open3d as o3d
 import argparse
@@ -10,15 +10,15 @@ if __name__ == '__main__':
                         help='path to input mesh')
     parser.add_argument('output_folder', metavar='path/to/output/', type=str,
                         help='path to output folder')
-    parser.add_argument('-s', '--save', action='store_true', help='save submeshes as *.ply')
-    parser.add_argument('-p', '--ppu', type=float, default=5, help='density of joints per unit arc length of skeleton curve')
-    parser.add_argument('-b', '--btol', type=float, default=0.5, help='branching joints tolerance')
+    parser.add_argument('-a', '--alpha', type=float, default=7.5, help='order of distance between joints')
+    parser.add_argument('-b', '--beta', type=int, default=15, help='minimum distance between joints')
     parser.add_argument('-n', '--nn', action='store_false', help='skip normalization and centering step')
+    parser.add_argument('-s', '--std', type=float, default=6, help='standard diviation for mesh code')
 
     args = parser.parse_args()
 
     inputPath = args.input_path
-    outputFolder = args.output_folder
+    outputFolder = args.output_folder if args.output_folder[-1] == '/' else args.output_folder + '/'
     fileName = inputPath[ inputPath.rfind('/') + 1 : ]
     fileName = fileName[:fileName.rfind('.')]
 
@@ -28,32 +28,9 @@ if __name__ == '__main__':
     
     print( '    ' + extractionProc.stdout.decode(encoding='ascii').replace('\n', '\n' + '    ') )
 
-    print('Sampling vertices and submeshing...')
-
-    skel = SkeletonMesh(inputPath, 
-                        outputFolder + fileName + '.txt',
-                        outputFolder + fileName + '_corr.txt')
+    print('Preparing dataset...')
     
-    skel.submesh(pointsPerUnit=args.ppu)
-
-    print('    Joints sampled: ' + str(skel.amountOfJoints) )
-
-    print('\nCleaning submeshes...')
-
-    skel.postprocess(alpha=args.btol)
-
-    if args.nn:
-        print('\nNormalizing and centering submeshes...')
-        skel.centerAndNormalize()
-
-    if args.save:
-        print('\nSaving submeshes...')
-        for idx, (_, submesh, _) in enumerate(skel.getSubmeshes()):
-            o3d.io.write_triangle_mesh(f'{outputFolder}{fileName}_{idx}.ply', submesh)
-
-    print('\nSaving to json...')
-    
-    print('    Saved to path: ', skel.saveToJson(outputFolder + fileName + '.json'))
+    print('    Saved to path: ', createJson( outputFolder + fileName + '.json', inputPath, outputFolder + fileName + '.txt', outputFolder + fileName + '_corr.txt', args.alpha, args.beta, args.nn, args.std ))
     
 
 

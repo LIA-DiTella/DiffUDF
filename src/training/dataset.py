@@ -30,26 +30,28 @@ def readJson( path: str ):
     meshes = []
     means = []
     covs = []
-    amountBranches = 0
+    features = None
 
     with open(path, "r") as jsonFile:
         data = json.load( jsonFile )
-        amountBranches = data['amount_branches']
-        for branch in data['branches']:
-            for joint in branch['joints']:
 
-                means.append( torch.from_numpy( np.array(joint['mean']) ))
-                covs.append( torch.from_numpy( np.array(joint['cov']) ))     
+        for joint in data['joints']:
+            
+            if features is None:
+                features = len(np.array(joint['mean']))
 
-                device = o3c.Device("CPU:0")
-                mesh = o3d.t.geometry.TriangleMesh(device)
-                mesh.vertex["positions"] = o3c.Tensor(np.asarray(joint['vertices']), dtype=o3c.float32)
-                mesh.vertex["normals"] = o3c.Tensor(np.asarray(joint['normals']), dtype=o3c.float32)
-                mesh.vertex["curvature"] = o3c.Tensor(np.asarray(joint['curvature']), dtype=o3c.float32)
-                mesh.triangle["indices"] = o3c.Tensor(np.asarray(joint['triangles']), dtype=o3c.int32)
-                meshes.append( mesh )
+            means.append( torch.from_numpy( np.array(joint['mean']) ))
+            covs.append( torch.from_numpy( np.array(joint['cov']) ))     
+
+            device = o3c.Device("CPU:0")
+            mesh = o3d.t.geometry.TriangleMesh(device)
+            mesh.vertex["positions"] = o3c.Tensor(np.asarray(joint['vertices']), dtype=o3c.float32)
+            mesh.triangle["indices"] = o3c.Tensor(np.asarray(joint['triangles']), dtype=o3c.int32)
+            mesh.vertex["normals"] = o3c.Tensor(np.asarray(joint['normals']), dtype=o3c.float32)
+            mesh.vertex["curvature"] = o3c.Tensor(np.asarray(joint['curvature']), dtype=o3c.float32)
+            meshes.append( mesh )
         
-    return amountBranches, meshes, means, covs
+    return features, meshes, means, covs
 
 def getCurvatureBins(curvatures: torch.Tensor, percentiles: list) -> list:
     """Bins the curvature values according to `percentiles`.
@@ -292,7 +294,7 @@ class PointCloud(IterableDataset):
         super().__init__()
 
         print(f"Loading meshes \"{jsonPath}\".")
-        self.amountBranches, self.meshes, self.means, self.covs = readJson(jsonPath)
+        self.features, self.meshes, self.means, self.covs = readJson(jsonPath)
         
         if batchSize % (2 * len(self.meshes)) != 0:
             raise ValueError(f'Batch size must be divisible by {2 * len(self.meshes)}')
