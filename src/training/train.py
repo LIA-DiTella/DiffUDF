@@ -45,6 +45,11 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             optim.zero_grad()
             
             # forward + backward + optimize
+            input_data.to( device )
+            normals.to(device)
+            sdf.to(device)
+            curvature.to(device)
+
             outputs = model( input_data )
             
             loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature})
@@ -143,7 +148,6 @@ if __name__ == "__main__":
 
     sampling_config = parameter_dict["sampling_opts"]
     dataset = PointCloud(
-        device=args.device,
         jsonPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
