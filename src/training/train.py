@@ -45,11 +45,11 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             optim.zero_grad()
             
             # forward + backward + optimize
-            input_data.to( device )
-            normals.to(device)
-            sdf.to(device)
-            curvature.to(device)
-
+            input_data = input_data.to( device )
+            normals = normals.to(device)
+            sdf = sdf.to(device)
+            curvature = curvature.to(device)
+            #print(input_data.device)
             outputs = model( input_data )
             
             loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature})
@@ -130,7 +130,6 @@ if __name__ == "__main__":
         raise ValueError("JSON experiment not found")
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-
     seed = 123
     torch.manual_seed(seed)
     np.random.seed(seed)
