@@ -52,7 +52,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             #print(input_data.device)
             outputs = model( input_data )
             
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature})
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features)
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():

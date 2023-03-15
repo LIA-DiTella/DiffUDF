@@ -64,7 +64,7 @@ def on_surface_normal_constraint(gt_sdf, gt_normals, grad):
            torch.zeros_like(grad[..., :1])
     )
 
-def loss(model_output, gt):
+def loss(model_output, gt, features):
     """Uses true SDF value off surface and tries to fit the mean curvatures
     on the 0 level-set.
 
@@ -90,7 +90,7 @@ def loss(model_output, gt):
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    indexes = torch.tensor( [1,2,3] ).to(pred_sdf.device)
+    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
     gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
 
     # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
