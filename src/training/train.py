@@ -108,12 +108,15 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(
-        usage="python main.py path_to_experiments.json"
+        usage="python main.py path_to_experiments.json cuda_device"
     )
 
     p.add_argument(
         "experiment_path", type=str,
         help="Path to the JSON experiment description file"
+    )
+    p.add_argument(
+        "device", type=int, help="Cuda device"
     )
     args = p.parse_args()
     parameter_dict = load_experiment_parameters(args.experiment_path)
@@ -121,7 +124,7 @@ if __name__ == "__main__":
     if not bool(parameter_dict):
         raise ValueError("JSON experiment not found")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
     seed = 123
     torch.manual_seed(seed)
