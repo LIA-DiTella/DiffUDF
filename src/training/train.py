@@ -143,6 +143,7 @@ if __name__ == "__main__":
 
     sampling_config = parameter_dict["sampling_opts"]
     dataset = PointCloud(
+        device=args.device,
         jsonPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
