@@ -29,7 +29,7 @@ if __name__ == '__main__':
     print( '    ' + extractionProc.stdout.decode(encoding='ascii').replace('\n', '\n' + '    ') )
 
     print('Preparing dataset...')
-    
+    print(f'    using alpha = {args.alpha}, beta = {args.beta}, std = {args.std}')
     print('    Saved to path: ', createJson( outputFolder + fileName + '.json', inputPath, outputFolder + fileName + '.txt', outputFolder + fileName + '_corr.txt', args.alpha, args.beta, args.nn, args.std ))
     
 

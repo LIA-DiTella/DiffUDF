@@ -56,14 +56,16 @@ def computeJoints( graph, alpha, beta ):
 
             sel[0] = max( beta, np.floor( ((2**alpha) * graph.nodes[node]['mis_radius'])))
             parents[0] = node
+            
 
         if tree.out_degree( node ) > 1:
             sel = [sel[0] - 1] * tree.out_degree( node ) + sel[1:]
             parents = [parents[0]] * (tree.out_degree( node ) - 1) + parents
         elif tree.out_degree(node) == 0:
-            graphOfJoints.add_node( node, position=graph.nodes[node]['position'] )
-            if parents[0] is not None:
-                graphOfJoints.add_edge( parents[0], node )
+            if node not in graphOfJoints:
+                graphOfJoints.add_node( node, position=graph.nodes[node]['position'] )
+                if parents[0] is not None:
+                    graphOfJoints.add_edge( parents[0], node )
             sel.pop(0)
             parents.pop(0)
         else:
@@ -257,10 +259,7 @@ def createJson( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, bet
 
     submeshes = { joint: genSubmeshes(mesh, vertexIndicesOfJoint, joint, curvature) for joint in graphOfJoints.nodes }
     
-
     bases = getBases(  graphOfJoints, root, np.eye(1,3,k=1).squeeze() )
-
-    return graphOfJoints, bases
 
     transformations = {}
     if normalize:

@@ -296,10 +296,11 @@ class PointCloud(IterableDataset):
         print(f"Loading meshes \"{jsonPath}\".")
         self.features, self.meshes, self.means, self.covs = readJson(jsonPath)
         
-        if batchSize % (2 * len(self.meshes)) != 0:
-            raise ValueError(f'Batch size must be divisible by {2 * len(self.meshes)}')
         
-        self.batchSize = batchSize
+        self.batchSize = (batchSize // (2 * len(self.meshes))) * (2 * len(self.meshes))
+        print(f"Using batch size = {self.batchSize}")
+            
+        
         print(f"Fetching {self.batchSize // 2} on-surface points per iteration.")
 
         self.batchesPerEpoch = batchesPerEpoch
