@@ -142,7 +142,7 @@ def getBases( graphOfJoints, root, upVector ):
         else:
             upVectors[0] = base[0]
 
-    return bases
+    nx.set_node_attributes( graphOfJoints, bases, 'base')
 
 def computeBase( tree, node, lastUpVector ):
     nodePosition = tree.nodes[node]['position']
@@ -169,63 +169,72 @@ def computeBase( tree, node, lastUpVector ):
     return upVector, nodeDirection , conormal
     
 
-def normalizeMeshes( graphOfJoints, submeshes, bases ):
+def normalizeMeshes( graphOfJoints, submeshes ):
     max_coord = 0
-    transformations = {}
     for joint, (submesh, curv) in submeshes.items():
-        B_inv = np.block( [ [np.linalg.inv( bases[joint] ), np.zeros((3,1))], [np.eye(1,4,k=3)]])
+        B_inv = np.block( [ [np.linalg.inv( graphOfJoints.nodes[joint]['base'] ), np.zeros((3,1))], [np.eye(1,4,k=3)]])
         T = np.block( [ [np.eye(3,3), -1 * graphOfJoints.nodes[joint]['position'].reshape((3,1))], [np.eye(1,4,k=3)]])
 
         submesh.transform( B_inv @ T )
-        transformations[joint] = B_inv @ T
 
         max_coord = max( np.max( np.abs( np.asarray(submesh.vertices))) , max_coord )
 
     for joint, (submesh, curv) in submeshes.items():
         S = np.block([ [np.eye(3,3) * (1 / max_coord), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
         submesh.transform( S )
-        transformations[joint] = S @ transformations[joint]
 
-    return transformations    
+    return 1 / max_coord
 
-def saveToJson( path, graph, submeshes, transformations ):
-    filePath= path
-    fileName = path[:path.rfind('.')]
+def save( path, graph, root, submeshes, scale ):
+
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, np.float32):
+                return obj.tolist()
+            return json.JSONEncoder.default(self, obj)
+    
+    jsonPath= path + '.json'
     i = 1
     stop = True
     while stop:
         try:
-            with open(filePath, 'x') as jsonFile:
+            with open(jsonPath, 'x') as jsonFile:
                 json.dump(
                     {
                         'amount_joints': len(graph.nodes),
+                        'root': graph.nodes[root]['number'],
+                        'scale' : scale,
                         'joints': [ 
-                        {
-                            'vertices': np.asarray(submeshes[joint][0].vertices).tolist(),
-                            'triangles': np.asarray(submeshes[joint][0].triangles).tolist(),
-                            'normals': np.asarray(submeshes[joint][0].vertex_normals).tolist(),
-                            'curvature': submeshes[joint][1].tolist(),
-                            'mean': graph.nodes[joint]['mean'].tolist(),
-                            'cov': graph.nodes[joint]['cov'].tolist(),
-                            'transformation': np.linalg.inv(transformations.get( joint, np.eye(4,4))).tolist()
+                        {   
+                            'id': graph.nodes[joint]['number'],
+                            'children' : [ graph.nodes[v]['number'] for _, v in graph.out_edges(joint) ],
+                            'position': graph.nodes[joint]['position'],
+                            'vertices': np.asarray(submeshes[joint][0].vertices),
+                            'triangles': np.asarray(submeshes[joint][0].triangles),
+                            'normals': np.asarray(submeshes[joint][0].vertex_normals),
+                            'curvature': submeshes[joint][1],
+                            'mean': graph.nodes[joint]['mean'],
+                            'cov': graph.nodes[joint]['cov'],
+                            'base' : graph.nodes[joint]['base']
                         }
                         for joint in graph.nodes ]
                         
-                    }, jsonFile, default=str
+                    }, jsonFile, cls=NumpyEncoder
                 )
 
             stop = False
         except FileExistsError:
-            filePath = f'{fileName}({i}).json'
+            jsonPath = f'{path}({i}).json'
             i += 1
 
-    return filePath
+    return jsonPath
 
-def createJson( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, normalize=True, std=6 ):
+def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6 ):
 
     mesh = o3d.io.read_triangle_mesh( meshFile )
     mesh.compute_vertex_normals( normalized = True )
-
     vertexTree = KDTree( np.asarray(mesh.vertices) )
     curvature = calculateCurvature( meshFile )
     centers = []
@@ -259,10 +268,9 @@ def createJson( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, bet
 
     submeshes = { joint: genSubmeshes(mesh, vertexIndicesOfJoint, joint, curvature) for joint in graphOfJoints.nodes }
     
-    bases = getBases(  graphOfJoints, root, np.eye(1,3,k=1).squeeze() )
+    getBases(  graphOfJoints, root, np.eye(1,3,k=2).squeeze() )
+    scale = normalizeMeshes(graphOfJoints, submeshes)
 
-    transformations = {}
-    if normalize:
-        transformations = normalizeMeshes(graphOfJoints, submeshes, bases)
+    nx.set_node_attributes( graphOfJoints, {node: i for i, node in enumerate(graphOfJoints.nodes)}, 'number')
 
-    return saveToJson( path, graphOfJoints, submeshes, transformations)
+    return save( path, graphOfJoints, root, submeshes, scale )

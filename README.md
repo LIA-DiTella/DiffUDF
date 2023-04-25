@@ -52,3 +52,18 @@ Articulaciones sampleadas  |  Matching
     Es un problema que no esta resuelto a nivel de una única malla y nuestro desarrollo solo complica las cosas. Así que creo que quedará para otro trabajo optimizar y lograr renders pro que utilicen ray marching o cosas por el estilo.
   
 </details>
+
+
+# Instalación
+
+    - sudo apt-get install libeigen3-dev
+    - sudo apt-get install libcgal-dev
+
+    - mkdir src/skeletonize/build
+	- cd src/skeletonize/build && cmake ../
+	- cmake --build .
+
+# Correr
+
+    - python src/preprocesspy path-to-off-file path-to-output [-a, -b, --std]
+    - python src/training/train.py path-to-json-experiment cuda-device

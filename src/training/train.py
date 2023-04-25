@@ -130,7 +130,7 @@ if __name__ == "__main__":
         raise ValueError("JSON experiment not found")
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    seed = 123
+    seed = 123 
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
