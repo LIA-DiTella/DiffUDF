@@ -21,9 +21,20 @@ def createGraph( branches: list, vertexTree: KDTree ) -> nx.Graph:
 
     return graph
 
-def calculateCurvature( meshFile ):
+#def calculateCurvature( meshFile ):
+#    pyMeshset = pm.MeshSet()
+#    pyMeshset.load_new_mesh( meshFile )
+#    pyMesh = pyMeshset.current_mesh()
+#
+#    d = pyMeshset.apply_filter("compute_scalar_by_discrete_curvature_per_vertex", curvaturetype='Mean Curvature')
+#    pyMeshset.compute_new_custom_scalar_attribute_per_vertex(name="v_curv", expr="q")
+#    v_curv = pyMesh.vertex_custom_scalar_attribute_array('v_curv')
+#    return np.clip( v_curv, a_min = -1 * float(d['90_percentile']), a_max = float(d['90_percentile']))
+
+def calculateCurvature( verts, faces ):
     pyMeshset = pm.MeshSet()
-    pyMeshset.load_new_mesh( meshFile )
+    mesh = pm.Mesh(verts, faces)
+    pyMeshset.add_mesh(mesh)
     pyMesh = pyMeshset.current_mesh()
 
     d = pyMeshset.apply_filter("compute_scalar_by_discrete_curvature_per_vertex", curvaturetype='Mean Curvature')
@@ -41,7 +52,11 @@ def computeJoints( graph, alpha, beta ):
             break
 
     if root is None:
-        raise ValueError('Couldnt find suitable root')
+        print('Couldnt find suitable root')
+        for node in graph.nodes:
+            if graph.degree(node) == 1:
+                root = node
+                break
 
     tree = nx.dfs_tree( graph, source=root )
     sel = [0]
@@ -62,10 +77,10 @@ def computeJoints( graph, alpha, beta ):
             sel = [sel[0] - 1] * tree.out_degree( node ) + sel[1:]
             parents = [parents[0]] * (tree.out_degree( node ) - 1) + parents
         elif tree.out_degree(node) == 0:
-            if node not in graphOfJoints:
-                graphOfJoints.add_node( node, position=graph.nodes[node]['position'] )
-                if parents[0] is not None:
-                    graphOfJoints.add_edge( parents[0], node )
+            #if node not in graphOfJoints:
+            #    graphOfJoints.add_node( node, position=graph.nodes[node]['position'] )
+            #    if parents[0] is not None:
+            #        graphOfJoints.add_edge( parents[0], node )
             sel.pop(0)
             parents.pop(0)
         else:
@@ -118,12 +133,14 @@ def divideVertices( graph, joints, verticesOfCenter, alpha, beta ):
     return vertexIndicesOfJoint
 
 
-def genSubmeshes( mesh, indices, joint, curvature ):
+def genSubmeshes( mesh, indices, joint ):
     newMesh = o3d.geometry.TriangleMesh( mesh  )
     vertexMask = np.array([i not in indices[joint] for i in np.arange(len(np.asarray(mesh.vertices)))])
     newMesh.remove_vertices_by_mask( vertexMask )
+    newMesh.remove_duplicated_vertices()
+    newMesh.remove_unreferenced_vertices()
 
-    return newMesh, curvature[ ~vertexMask ]
+    return newMesh, calculateCurvature( np.asarray(newMesh.vertices), np.asarray(newMesh.triangles) )
 
 
 def getBases( graphOfJoints, root, upVector ):
@@ -236,7 +253,7 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
     mesh = o3d.io.read_triangle_mesh( meshFile )
     mesh.compute_vertex_normals( normalized = True )
     vertexTree = KDTree( np.asarray(mesh.vertices) )
-    curvature = calculateCurvature( meshFile )
+    #curvature = calculateCurvature( meshFile )
     centers = []
 
     with open( skeletonFile ) as file:
@@ -247,6 +264,8 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
 
     graph = createGraph( centers, vertexTree )
     graphOfJoints, root = computeJoints( graph, alpha=alpha, beta=beta )
+    if not nx.is_tree(graphOfJoints):
+        raise Exception('No es arbol')
 
     calculateDistributions( graphOfJoints, root, std )
 
@@ -266,8 +285,10 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
 
     vertexIndicesOfJoint = divideVertices( graph, graphOfJoints.nodes, verticesOfCenter, alpha, beta )
 
-    submeshes = { joint: genSubmeshes(mesh, vertexIndicesOfJoint, joint, curvature) for joint in graphOfJoints.nodes }
+    submeshes = { joint: genSubmeshes(mesh, vertexIndicesOfJoint, joint ) for joint in graphOfJoints.nodes }
     
+    #return submeshes
+
     getBases(  graphOfJoints, root, np.eye(1,3,k=2).squeeze() )
     scale = normalizeMeshes(graphOfJoints, submeshes)
 

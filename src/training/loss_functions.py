@@ -97,11 +97,11 @@ def loss(model_output, gt, features):
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * 3e3,
         'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * 2e2,
-        'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() *1e2 ,
-        'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * 5e1,
+        'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() * 5e2 ,
+        'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * 5e1, 
     }
 
-def loss_curvs(model_output, gt):
+def loss_curvs(model_output, gt, features):
     """Uses true SDF value off surface and tries to fit the mean curvatures
     on the 0 level-set.
 
@@ -128,8 +128,7 @@ def loss_curvs(model_output, gt):
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    parameter_count = torch.tensor([coords.shape]).squeeze()[1]
-    indexes = torch.tensor( [ parameter_count - 3, parameter_count - 2, parameter_count - 1 ] )
+    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
     gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
 
     gradient_norm = torch.norm(gradient, dim=-1)
