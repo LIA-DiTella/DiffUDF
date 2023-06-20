@@ -21,16 +21,6 @@ def createGraph( branches: list, vertexTree: KDTree ) -> nx.Graph:
 
     return graph
 
-#def calculateCurvature( meshFile ):
-#    pyMeshset = pm.MeshSet()
-#    pyMeshset.load_new_mesh( meshFile )
-#    pyMesh = pyMeshset.current_mesh()
-#
-#    d = pyMeshset.apply_filter("compute_scalar_by_discrete_curvature_per_vertex", curvaturetype='Mean Curvature')
-#    pyMeshset.compute_new_custom_scalar_attribute_per_vertex(name="v_curv", expr="q")
-#    v_curv = pyMesh.vertex_custom_scalar_attribute_array('v_curv')
-#    return np.clip( v_curv, a_min = -1 * float(d['90_percentile']), a_max = float(d['90_percentile']))
-
 def calculateCurvature( verts, faces ):
     pyMeshset = pm.MeshSet()
     mesh = pm.Mesh(verts, faces)
@@ -202,7 +192,19 @@ def normalizeMeshes( graphOfJoints, submeshes ):
 
     return 1 / max_coord
 
-def save( path, graph, root, submeshes, scale ):
+def normalizeFullMesh( mesh ):
+    T = np.block( [ [np.eye(3,3), -1 * mesh.get_center().reshape((3,1))], [np.eye(1,4,k=3)]])
+
+    mesh.transform( T )
+
+    max_coord = np.max( np.abs( np.asarray(mesh.vertices)))
+
+    S = np.block([ [np.eye(3,3) * (1 / max_coord), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
+    mesh.transform( S )
+
+    return 1 / max_coord
+
+def save( path, graph, root, submeshes, scale, full=False ):
 
     class NumpyEncoder(json.JSONEncoder):
         def default(self, obj):
@@ -213,47 +215,81 @@ def save( path, graph, root, submeshes, scale ):
             return json.JSONEncoder.default(self, obj)
     
     jsonPath= path + '.json'
-    i = 1
-    stop = True
-    while stop:
+
+    if not full:
+        i = 1
+        stop = True
+        while stop:
+            try:
+                with open(jsonPath, 'x') as jsonFile:
+                    json.dump(
+                        {
+                            'amount_joints': len(graph.nodes),
+                            'root': graph.nodes[root]['number'],
+                            'scale' : scale,
+                            'joints': [ 
+                            {   
+                                'id': graph.nodes[joint]['number'],
+                                'children' : [ graph.nodes[v]['number'] for _, v in graph.out_edges(joint) ],
+                                'position': graph.nodes[joint]['position'],
+                                'vertices': np.asarray(submeshes[joint][0].vertices),
+                                'triangles': np.asarray(submeshes[joint][0].triangles),
+                                'normals': np.asarray(submeshes[joint][0].vertex_normals),
+                                'curvature': submeshes[joint][1],
+                                'mean': graph.nodes[joint]['mean'],
+                                'cov': graph.nodes[joint]['cov'],
+                                'base' : graph.nodes[joint]['base']
+                            }
+                            for joint in graph.nodes ]
+                            
+                        }, jsonFile, cls=NumpyEncoder
+                    )
+
+                stop = False
+            except FileExistsError:
+                jsonPath = f'{path}({i}).json'
+                i += 1
+    
+    else:
         try:
             with open(jsonPath, 'x') as jsonFile:
                 json.dump(
                     {
-                        'amount_joints': len(graph.nodes),
-                        'root': graph.nodes[root]['number'],
+                        'amount_joints': 1,
+                        'root': 0,
                         'scale' : scale,
                         'joints': [ 
                         {   
-                            'id': graph.nodes[joint]['number'],
-                            'children' : [ graph.nodes[v]['number'] for _, v in graph.out_edges(joint) ],
-                            'position': graph.nodes[joint]['position'],
-                            'vertices': np.asarray(submeshes[joint][0].vertices),
-                            'triangles': np.asarray(submeshes[joint][0].triangles),
-                            'normals': np.asarray(submeshes[joint][0].vertex_normals),
-                            'curvature': submeshes[joint][1],
-                            'mean': graph.nodes[joint]['mean'],
-                            'cov': graph.nodes[joint]['cov'],
-                            'base' : graph.nodes[joint]['base']
-                        }
-                        for joint in graph.nodes ]
-                        
+                            'id': 0,
+                            'children' : [],
+                            'position': [0,0,0],
+                            'vertices': np.asarray(submeshes.vertices),
+                            'triangles': np.asarray(submeshes.triangles),
+                            'normals': np.asarray(submeshes.vertex_normals),
+                            'curvature': calculateCurvature(np.asarray(submeshes.vertices), np.asarray(submeshes.triangles)),
+                            'mean': [],
+                            'cov': [],
+                            'base' : np.eye(4)
+                        } ]     
                     }, jsonFile, cls=NumpyEncoder
                 )
-
             stop = False
         except FileExistsError:
             jsonPath = f'{path}({i}).json'
             i += 1
-
     return jsonPath
 
-def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6 ):
+def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6, full=False ):
 
     mesh = o3d.io.read_triangle_mesh( meshFile )
-    mesh.compute_vertex_normals( normalized = True )
+    mesh.compute_vertex_normals( )
+
+    if full:
+        scale = normalizeFullMesh(mesh)
+        return save(path,None, None, mesh, scale, full=full)
+
     vertexTree = KDTree( np.asarray(mesh.vertices) )
-    #curvature = calculateCurvature( meshFile )
+    
     centers = []
 
     with open( skeletonFile ) as file:
@@ -266,6 +302,8 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
     graphOfJoints, root = computeJoints( graph, alpha=alpha, beta=beta )
     if not nx.is_tree(graphOfJoints):
         raise Exception('No es arbol')
+
+    #return graphOfJoints, root
 
     calculateDistributions( graphOfJoints, root, std )
 
@@ -287,8 +325,6 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
 
     submeshes = { joint: genSubmeshes(mesh, vertexIndicesOfJoint, joint ) for joint in graphOfJoints.nodes }
     
-    #return submeshes
-
     getBases(  graphOfJoints, root, np.eye(1,3,k=2).squeeze() )
     scale = normalizeMeshes(graphOfJoints, submeshes)
 

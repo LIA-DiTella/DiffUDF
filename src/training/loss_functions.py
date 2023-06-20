@@ -20,6 +20,12 @@ def sdf_constraint_off_surf(gt_sdf, pred_sdf):
         torch.zeros_like(pred_sdf)
     )
 
+def sdf_constraint_neg( pred_sdf):
+    return torch.where(
+        pred_sdf < 0 ,
+        (pred_sdf) ** 2,
+        torch.zeros_like(pred_sdf)
+    )
 
 def vector_aligment_on_surf(gt_sdf, gt_vectors, pred_vectors):
     return torch.where(
@@ -36,11 +42,26 @@ def direction_aligment_on_surf(gt_sdf, gt_dirs, pred_dirs):
         torch.zeros_like(gt_sdf)
     )
 
-
 def eikonal_constraint(gradient):
     return (gradient.norm(dim=-1) - 1.) ** 2
 
+def minimum_constraint(gt_sdf, gradient):
+    return torch.where(
+        gt_sdf != 0,
+        (gradient.norm(dim=-1) - 1.) ** 2,
+        gradient.norm(dim=-1) ** 2
+    )
 
+def gradient_constraint_off_surf( gt_sdf, gradient ):
+    return (torch.diagonal(gradient @ gradient.T) - 4 * gt_sdf.squeeze() ) ** 2
+
+def gradient_constraint_on_surf( gt_sdf, gradient ):
+    return torch.where(
+        gt_sdf == 0,
+        (gradient.norm(dim=-1)) ** 2,
+        torch.zeros_like(gt_sdf)
+    )
+    
 def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
     """
     This function penalizes the pred_sdf of points in gt_sdf!=0
@@ -53,37 +74,7 @@ def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
         )
 
 
-def on_surface_normal_constraint(gt_sdf, gt_normals, grad):
-    """
-    This function return a number that measure how far gt_normals
-    and grad are aligned in the zero-level set of sdf.
-    """
-    return torch.where(
-           gt_sdf == 0,
-           1 - F.cosine_similarity(grad, gt_normals, dim=-1)[..., None],
-           torch.zeros_like(grad[..., :1])
-    )
-
 def loss(model_output, gt, features):
-    """Uses true SDF value off surface and tries to fit the mean curvatures
-    on the 0 level-set.
-
-    Parameters
-    ----------
-    X: dict[str=>torch.Tensor]
-        Model output with the following keys: 'model_in' and 'model_out'
-        with the model input and SDF values respectively.
-
-    gt: dict[str=>torch.Tensor]
-        Ground-truth data with the following keys: 'sdf', 'normals', and
-        'curvature' with the actual SDF values, the input data normals, and
-        gaussian curvatures, respectively.
-
-    Returns
-    -------
-    loss: dict[str=>torch.Tensor]
-        The calculated loss values for each constraint.
-    """
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
 
@@ -101,26 +92,27 @@ def loss(model_output, gt, features):
         'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * 5e1, 
     }
 
+def loss_ndf(model_output, gt, features):
+    gt_sdf = gt['sdf']
+    gt_normals = gt['normals']
+
+    coords = model_output['model_in']
+    pred_sdf = model_output['model_out']
+
+    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
+    gradient = torch.index_select( diff_operators.gradient(pred_sdf, coords), 1, indexes)
+
+    return {
+        'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * 5e3,
+        'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * 2e2,
+        #'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() * 5e1,
+        'grad_constraint': gradient_constraint_off_surf(gt_sdf, gradient).unsqueeze(-1).mean() * 5e1,
+        'grad_constraint_on_surf': gradient_constraint_on_surf(gt_sdf, gradient).unsqueeze(-1).mean() * 5e1
+        #'neg_constraing': sdf_constraint_neg(pred_sdf).mean() * 5e4
+    }
+
+
 def loss_curvs(model_output, gt, features):
-    """Uses true SDF value off surface and tries to fit the mean curvatures
-    on the 0 level-set.
-
-    Parameters
-    ----------
-    X: dict[str=>torch.Tensor]
-        Model output with the following keys: 'model_in' and 'model_out'
-        with the model input and SDF values respectively.
-
-    gt: dict[str=>torch.Tensor]
-        Ground-truth data with the following keys: 'sdf', 'normals', and
-        'curvature' with the actual SDF values, the input data normals, and
-        gaussian curvatures, respectively.
-
-    Returns
-    -------
-    loss: dict[str=>torch.Tensor]
-        The calculated loss values for each constraint.
-    """
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
     gt_curvature = gt['curvature']

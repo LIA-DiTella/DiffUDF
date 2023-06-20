@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from dataset import PointCloud
-from loss_functions import loss, loss_curvs
+from loss_functions import loss, loss_curvs, loss_ndf
 from model import SIREN
 from util import create_output_paths, load_experiment_parameters
 
@@ -171,6 +171,15 @@ if __name__ == "__main__":
             params=model.parameters()
         )
 
+    if parameter_dict["loss"] == "loss":
+        loss_fn = loss
+    elif parameter_dict["loss"] == "loss_curvs":
+        loss_fn = loss_curvs
+    elif parameter_dict["loss"] == "loss_ndf":
+        loss_fn = loss_ndf
+    else:
+        raise ValueError("Loss unknown")
+
     config_dict = {
         "epochs": parameter_dict["num_epochs"],
         "warmup_epochs": parameter_dict.get("warmup_epochs", 0),
@@ -178,7 +187,7 @@ if __name__ == "__main__":
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
         "log_path": full_path,
         "optimizer": optimizer,
-        "loss_fn": loss if parameter_dict["loss"] != "loss_curvs" else loss_curvs
+        "loss_fn": loss_fn 
     }
 
     losses, best_weights = train_model(
