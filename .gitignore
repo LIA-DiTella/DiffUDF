@@ -8,3 +8,5 @@ results/
 .vscode/
 *.json
 *.png
+.ipynb_checkpoints
+*.ipynb
