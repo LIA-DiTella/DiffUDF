@@ -50,14 +50,17 @@ def getCurvatureBins(curvatures: torch.Tensor, percentiles: list) -> list:
 def sampleTrainingData(
         meshes: list,
         samplesOnSurface: int,
-        samplesOffSurface: int,
+        samplesFarSurface: int,
+        samplesNearSurface: int,
         scenes: list,
         distributions: list,
         onSurfaceExceptions: list = [],
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
         curvatureFractions: list = [],
         curvatureBins: list = [],
+        nearSurfaceStd: float=0.01
 ):
+        ## samples on surface
     surfacePoints = torch.cat([
         pointSegmentationByCurvature(
         mesh,
@@ -69,20 +72,38 @@ def sampleTrainingData(
 
     surfacePoints = torch.from_numpy(surfacePoints.numpy())
 
-    domainPoints = [ o3c.Tensor(np.random.uniform(
+        ## samples uniformly in domain (far)
+    farDomainPoints = [ o3c.Tensor(np.random.uniform(
         domainBounds[0], domainBounds[1],
-        (samplesOffSurface, 3)
+        (samplesFarSurface, 3)
     ), dtype=o3c.Dtype.Float32) for _ in range(len(meshes))]
 
-    domainSDFs = torch.cat( [ torch.from_numpy(scene.compute_distance(points).numpy()) for scene, points in zip(scenes, domainPoints)], dim=0)
-    domainSDFs = torch.from_numpy(domainSDFs.numpy()) ** 2
-    domainPoints = torch.cat( [ torch.from_numpy(points.numpy()) for points in domainPoints ] )
+    farDomainSDFs = torch.cat( [ torch.from_numpy(scene.compute_distance(points).numpy()) for scene, points in zip(scenes, farDomainPoints)], dim=0)
+    farDomainSDFs = torch.pow( farDomainSDFs, 2)
+    farDomainPoints = torch.cat( [ torch.from_numpy(points.numpy()) for points in farDomainPoints ] )
 
-    domainNormals = torch.zeros_like(domainPoints)
+        ## samples near surface
+    displacement = MultivariateNormal(torch.Tensor([0,0,0]), torch.eye(3)*nearSurfaceStd )
+    nearDomainPoints = [
+        pointSegmentationByCurvature(
+        mesh,
+        samplesNearSurface,
+        bins,
+        curvatureFractions,
+        exceptions
+    )[..., :3] + displacement.sample( torch.Size([samplesNearSurface]) ) for mesh, exceptions, bins in zip(meshes, onSurfaceExceptions, curvatureBins)]
+    
+    nearDomainSDFs = torch.cat( [ torch.from_numpy(scene.compute_distance(o3c.Tensor(points.numpy())).numpy()) for scene, points in zip(scenes, nearDomainPoints)], dim=0)
+    nearDomainSDFs = torch.pow( nearDomainSDFs, 2)
+    nearDomainPoints = torch.cat(nearDomainPoints, dim=0)
 
+    domainNormals = torch.zeros((samplesNearSurface + samplesFarSurface, 3))
+
+    # full dataset:
     fullSamples = torch.row_stack((
         surfacePoints[..., :3],
-        domainPoints
+        farDomainPoints,
+        nearDomainPoints
     ))
     fullNormals = torch.row_stack((
         surfacePoints[..., 3:6],
@@ -90,25 +111,29 @@ def sampleTrainingData(
     ))
     fullSDFs = torch.cat((
         torch.zeros(len(surfacePoints)),
-        domainSDFs
+        farDomainSDFs,
+        nearDomainSDFs
     )).unsqueeze(1)
     fullCurvatures = torch.cat((
         surfacePoints[..., -1],
-        torch.zeros(len(domainPoints))
+        torch.zeros(samplesNearSurface + samplesFarSurface)
     )).unsqueeze(1)
-
     
     fullOnSurfDistances = torch.cat( [
         torch.abs( dist.sample( torch.Size([ samplesOnSurface ]) )) for dist in distributions
     ] )
 
-    fullOffSurfDistances = torch.cat( [
-        torch.abs( dist.sample( torch.Size([ samplesOffSurface ]) )) for dist in distributions
+    fullFarSurfDistances = torch.cat( [
+        torch.abs( dist.sample( torch.Size([ samplesFarSurface ]) )) for dist in distributions
     ] )
 
-    fullDistances = torch.cat( (fullOnSurfDistances, fullOffSurfDistances))
+    fullNearSurfDistances = torch.cat( [
+        torch.abs( dist.sample( torch.Size([ samplesNearSurface ]) )) for dist in distributions
+    ] )
 
-    return torch.column_stack( [fullDistances, fullSamples]).float(), fullNormals.float(), fullSDFs.float(), fullCurvatures.float()
+    fullDistances = torch.cat( (fullOnSurfDistances, fullFarSurfDistances, fullNearSurfDistances))
+
+    return torch.column_stack( [fullDistances, fullSamples]).float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0), fullCurvatures.float().unsqueeze(0)
 
 def pointSegmentationByCurvature(
         mesh: o3d.t.geometry.TriangleMesh,
@@ -158,6 +183,7 @@ def pointSegmentationByCurvature(
 class PointCloud(IterableDataset):
     def __init__(self, jsonPath: str,
                  batchSize: int,
+                 samplingPercentiles: list,
                  batchesPerEpoch : int,
                  curvatureFractions: list = [],
                  curvaturePercentiles: list = []):
@@ -167,11 +193,14 @@ class PointCloud(IterableDataset):
         self.features, self.meshes, self.means, self.covs = readJson(jsonPath)
         
         
-        self.batchSize = (batchSize // (2 * len(self.meshes))) * (2 * len(self.meshes))
-        print(f"Using batch size = {self.batchSize}")
-            
+        self.batchSize = batchSize
+        self.samplesOnSurface = int(self.batchSize * samplingPercentiles[0])
+        self.samplesFarSurface = int(self.batchSize * samplingPercentiles[1])
+        self.samplesNearSurface = self.batchSize - self.samplesOnSurface - self.samplesFarSurface
         
-        print(f"Fetching {self.batchSize // 2} on-surface points per iteration.")
+        print(f"Fetching {self.samplesOnSurface} on-surface points per iteration.")
+        print(f"Fetching {self.samplesFarSurface} far from surface points per iteration.")
+        print(f"Fetching {self.samplesNearSurface} near surface points per iteration.")
 
         self.batchesPerEpoch = batchesPerEpoch
 
@@ -194,8 +223,9 @@ class PointCloud(IterableDataset):
         for _ in range(self.batchesPerEpoch):
             yield sampleTrainingData(
                 meshes=self.meshes,
-                samplesOnSurface=(self.batchSize // 2) // len(self.meshes),
-                samplesOffSurface=(self.batchSize // 2) // len(self.meshes),
+                samplesOnSurface=self.samplesOnSurface,
+                samplesFarSurface=self.samplesFarSurface,
+                samplesNearSurface=self.samplesNearSurface,
                 scenes=self.scenes,
                 curvatureFractions=self.curvatureFractions,
                 curvatureBins=self.curvatureBins,

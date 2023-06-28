@@ -1,12 +1,10 @@
 # coding: utf-8
-
-from collections import OrderedDict
 import json
 import os
 import os.path as osp
 import shutil
 import logging
-from model import SIREN
+import numpy as np
 
 
 def create_output_paths(checkpoint_path, experiment_name, overwrite=True):
@@ -32,3 +30,7 @@ def load_experiment_parameters(parameters_path):
         logging.warning("File '{parameters_path}' not found.")
         return {}
     return parameter_dict
+
+def normalize( arr ):
+    norm_arr = np.linalg.norm( arr, axis=1 )
+    return arr / np.vstack( [norm_arr, norm_arr, norm_arr] ).T

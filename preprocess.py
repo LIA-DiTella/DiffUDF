@@ -1,4 +1,4 @@
-from submesh.submesh import preprocessMesh
+from src.submesh import preprocessMesh
 import subprocess
 import open3d as o3d
 import argparse
@@ -13,6 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--alpha', type=float, default=7.5, help='order of distance between joints')
     parser.add_argument('-b', '--beta', type=int, default=15, help='minimum distance between joints')
     parser.add_argument('-s', '--std', type=float, default=6, help='standard diviation for mesh code')
+    parser.add_argument('-f', '--full', action='store_true', help='leave mesh unfragmented')
 
     args = parser.parse_args()
 
@@ -29,7 +30,7 @@ if __name__ == '__main__':
 
     print('Preparing dataset...')
     print(f'    using alpha = {args.alpha}, beta = {args.beta}, std = {args.std}')
-    print('    Saved to path: ', preprocessMesh( outputFolder + fileName, inputPath, outputFolder + fileName + '.txt', outputFolder + fileName + '_corr.txt', args.alpha, args.beta, args.std ))
+    print('    Saved to path: ', preprocessMesh( outputFolder + fileName, inputPath, outputFolder + fileName + '.txt', outputFolder + fileName + '_corr.txt', args.alpha, args.beta, args.std, args.full ))
     
 
 

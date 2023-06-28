@@ -182,7 +182,7 @@ def hessian(y, x):
     status = 0
     if torch.any(torch.isnan(h)):
         status = -1
-    return h, status
+    return h.squeeze(2), status
 
 
 def laplace(y, x):

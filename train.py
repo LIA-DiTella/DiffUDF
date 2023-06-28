@@ -11,10 +11,10 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from dataset import PointCloud
-from loss_functions import loss, loss_curvs, loss_ndf
-from model import SIREN
-from util import create_output_paths, load_experiment_parameters
+from src.dataset import PointCloud
+from src.loss_functions import loss, loss_curvs, loss_ndf
+from src.model import SIREN
+from src.util import create_output_paths, load_experiment_parameters
 
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
@@ -149,6 +149,7 @@ if __name__ == "__main__":
     dataset = PointCloud(
         jsonPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
+        samplingPercentiles=parameter_dict["sampling_percentiles"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
         curvatureFractions=sampling_config["curvature_iteration_fractions"],
         curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
