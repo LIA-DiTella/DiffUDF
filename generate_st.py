@@ -17,8 +17,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--device', type=int, default=0, help='torch device')
     parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
     parser.add_argument('-w', '--width', type=int, default=512, help='width of generated image')
-    parser.add_argument('-t', '--surf_thresh', type=float, default=1e-5, help='on surface threshold')
+    parser.add_argument('-t', '--surf_thresh', type=float, default=1e-3, help='on surface threshold')
     parser.add_argument('-r', '--ref_steps', type=int, default=5, help='number of refinement steps (grad desc)')
+    parser.add_argument('-i', '--max_iter', type=int, default=np.inf, help='max number of sphere tracing iterations')
 
     args = parser.parse_args()
 
@@ -51,7 +52,9 @@ if __name__ == '__main__':
         refinement_steps=args.ref_steps,
         origin=np.array([0,0,2]), 
         image=image,
-        light_position=np.array([0,0,2]) )
+        light_position=np.array([0,0,2]),
+        max_iterations=args.max_iter
+    )
     
     im = Image.fromarray((colores * 255).astype(np.uint8))
     im.save(args.output_path, 'PNG')

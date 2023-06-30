@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--device', type=int, default=0, help='torch device')
     parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
     parser.add_argument('-w', '--width', type=int, default=512, help='width of generated image')
-    parser.add_argument('-t', '--surf_thresh', type=float, default=1e-5, help='on surface threshold')
+    parser.add_argument('-t', '--surf_thresh', type=float, default=1e-3, help='on surface threshold')
     parser.add_argument('-j', '--joint', type=int, default=0, help="joint number to render")
 
     args = parser.parse_args()
@@ -102,9 +102,9 @@ if __name__ == '__main__':
     scene.add_triangles(mesh)
     gt_distances = (scene.compute_distance( o3c.Tensor(samples, dtype=o3c.float32) ).numpy() ** 2).reshape((SAMPLES, 1))
 
-    imagen_dist( args.output_path + 'pred_field.png',pred_distances / np.max(pred_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=0.001)
-    imagen_dist( args.output_path + 'gt_field.png',gt_distances / np.max(gt_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=0.001)
-    imagen_dist( args.output_path + 'pred_grad_norm.png',pred_grad_norm / np.max(pred_grad_norm), np.linspace(0,1,10), color_map='turbo', eps=0.001 )
+    imagen_dist( args.output_path + 'pred_field.png',pred_distances / np.max(pred_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=args.surf_thresh)
+    imagen_dist( args.output_path + 'gt_field.png',gt_distances / np.max(gt_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=args.surf_thresh)
+    imagen_dist( args.output_path + 'pred_grad_norm.png',pred_grad_norm / np.max(pred_grad_norm), np.linspace(0,1,10), color_map='turbo', eps=args.surf_thresh )
 
     im = Image.fromarray((pred_grad_cm.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
-    im.save('pred_grad.png', 'PNG')
+    im.save(args.output_path +'pred_grad.png', 'PNG')

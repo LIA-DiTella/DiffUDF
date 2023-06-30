@@ -67,7 +67,7 @@ def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, re
     cmap = cm.get_cmap('turbo')
     return cmap( (np.clip( samples[:, 2].reshape((LADO, LADO)), -1, 1) + np.ones((LADO, LADO))) / 2 )[:,:,:3], values
 
-def create_projectional_image( model, sample_count, surface_eps, refinement_steps, origin, image, light_position, shininess=40 ):
+def create_projectional_image( model, sample_count, surface_eps, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30 ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     device_torch = torch.device(0)
     LADO = int(np.sqrt(sample_count))
@@ -78,16 +78,19 @@ def create_projectional_image( model, sample_count, surface_eps, refinement_step
     hits = np.zeros(sample_count, dtype=np.bool8)
 
     samples = image.copy()
-
-    while np.sum(alive) > 0:
+    iteration = 0
+    while np.sum(alive) > 0 and iteration < max_iterations:
         udfs = evaluate( model, samples[ alive ], device=device_torch)
 
         hits[alive] += (udfs < surface_eps).squeeze(1)
         samples[alive] += directions[alive] * np.hstack([udfs, udfs, udfs])
         alive[alive] *= (udfs > surface_eps).squeeze(1)
         alive *= np.logical_and( np.all( samples > -1, axis=1 ), np.all( samples < 1, axis=1 ) )
-
+        iteration += 1
     
+    if np.sum(hits) == 0:
+        raise ValueError(f"Ray tracing did not converge in {max_iterations} iterations to any point at distance {surface_eps} or lower from surface.")
+
     #normals = np.zeros( (np.sum(hits), 3))
     amount_hits = np.sum(hits)
     hessians = np.zeros( (amount_hits, 3, 3) )
@@ -99,14 +102,10 @@ def create_projectional_image( model, sample_count, surface_eps, refinement_step
             udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians)
         else:
             udfs = evaluate( model, samples[hits], gradients=gradients)
+            samples[hits] -= normalize(gradients) * (udfs * 0.95) # multiplico por 0.95 para ser conservador
 
-        udfs = np.where( udfs <= 0, udfs, np.sqrt(udfs) )
+        udfs = np.sqrt(udfs, where=udfs >= 0)
 
-        samples[hits] -= normalize(gradients) * udfs
-        
-        #normals += normalize(gradients)
-
-        samples[hits] -= udfs * gradients
 
     #normals /= refinement_steps
     #normals = normalize(normals)
@@ -133,6 +132,6 @@ def phong_shading(light_position, shininess, hits, samples, normals):
 
     diffuse_color = np.array([0.3, 0.4, 0.7] )
     specular_color = np.array([1, 1, 1])
-    colors[hits] = np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + np.tile( specular_color, (normals.shape[0],1)) * specular
+    colors[hits] = np.clip( np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + np.tile( specular_color, (normals.shape[0],1)) * specular, 0, 1)
     
     return colors

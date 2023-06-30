@@ -38,7 +38,7 @@ class Sampler:
             for _ in range(num_steps):
                 udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
 
-                udfs = np.where( udfs <= 0, udfs, np.sqrt(udfs) )
+                udfs = np.sqrt(udfs, where=udfs >= 0)
 
                 gradient_wrt_samples = normalize(gradients[:, -3:])
 

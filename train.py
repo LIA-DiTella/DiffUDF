@@ -52,7 +52,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             #print(input_data.device)
             outputs = model( input_data )
             
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features)
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'])
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -188,7 +188,8 @@ if __name__ == "__main__":
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
         "log_path": full_path,
         "optimizer": optimizer,
-        "loss_fn": loss_fn 
+        "loss_fn": loss_fn,
+        "loss_weights": parameter_dict["loss_weights"]
     }
 
     losses, best_weights = train_model(
