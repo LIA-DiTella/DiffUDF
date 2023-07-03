@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from src.diff_operators import gradient, hessian
 
-def evaluate( model, samples, max_batch=64**3, output_size=1, device=torch.device(0), gradients=None, hessians=None ):
+def evaluate( model, samples, max_batch=64**2, output_size=1, device=torch.device(0), gradients=None, hessians=None ):
     # samples = ( amount_samples, features + 3 )
     head = 0        
     amount_samples = samples.shape[0]

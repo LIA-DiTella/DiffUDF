@@ -41,7 +41,7 @@ if __name__ == '__main__':
     image = np.concatenate(
                     np.concatenate( np.array([np.expand_dims(i_1, 2), 
                                             np.expand_dims(i_2, 2), 
-                                            np.expand_dims(np.ones_like(i_1) * 1, 2)])
+                                            np.expand_dims(np.ones_like(i_1) * -1, 2)])
                                     , axis=2 ),
                     axis=0)
     
@@ -50,9 +50,9 @@ if __name__ == '__main__':
         sample_count=args.width ** 2, 
         surface_eps=args.surf_thresh, 
         refinement_steps=args.ref_steps,
-        origin=np.array([0,0,2]), 
+        origin=np.array([0,0,-2]), 
         image=image,
-        light_position=np.array([0,0,2]),
+        light_position=np.array([0,0,-2]),
         max_iterations=args.max_iter
     )
     
