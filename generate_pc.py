@@ -29,12 +29,12 @@ if __name__ == '__main__':
         print('Generating point cloud')
         for joint in tqdm.tqdm(skel['joints']):
 
-
+            
             #T = (np.block( [[np.eye(3,3), np.asarray(joint['position']).reshape((3,1))],[np.eye(1,4,k=3)] ] ) @ 
             #     np.block( [ [np.asarray(joint['base']), np.zeros((3,1))], [np.eye(1,4,k=3)]]) @ 
             #     np.diag( [1 / skel['scale']] * 3 + [1] ))
             
-            points = gen.generate_point_cloud( 
+            points, normals = gen.generate_point_cloud( 
                 code=joint['mean'], 
                 num_points=args.nsamples // skel['amount_joints'], 
                 num_steps=args.ref_steps, 
@@ -43,8 +43,9 @@ if __name__ == '__main__':
             #puntosTransf = (T @ np.concatenate( (points, np.ones( (points.shape[0], 1)) ), axis=1).T).T[:, :3]
 
             generated_points = points #puntosTransf
+            generated_normals = normals
         
     p_cloud = o3d.geometry.PointCloud( )
     p_cloud.points = o3d.utility.Vector3dVector(generated_points)
-    #p_cloud.normals = o3d.utility.Vector3dVector(generated_normals)
+    p_cloud.normals = o3d.utility.Vector3dVector(generated_normals)
     o3d.io.write_point_cloud( args.output_path, p_cloud)

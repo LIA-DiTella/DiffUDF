@@ -5,7 +5,7 @@ from src.evaluate import evaluate
 from src.util import normalize
 
 class Sampler:
-    def __init__(self, n_in_features, hidden_layers=[256,256,256,256], w0=30, ww=None,  threshold = 0.4, checkpoint = None, device =0):
+    def __init__(self, n_in_features, hidden_layers=[256,256,256,256], w0=30, ww=None,  threshold = 0.03, checkpoint = None, device =0):
         self.decoder = SIREN(
             n_in_features= n_in_features,
             n_out_features=1,
@@ -23,35 +23,38 @@ class Sampler:
         self.threshold = threshold
 
 
-    def generate_point_cloud(self, code, num_steps = 5, num_points = 20000, surf_thresh = 0.009 ):
+    def generate_point_cloud(self, code, num_steps = 5, num_points = 20000, surf_thresh = 0.009, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
 
         surface_points = np.zeros((0, 3))
-        samples = np.random.uniform(-1, 1, (num_points, 3) )
-
-        i = 0
-        while len(surface_points) < num_points:
-            gradients = np.zeros( (num_points, len(code) + 3 ) )
+        normals = np.zeros((0,3))
+        iterations = 0
+        while len(surface_points) < num_points and iterations <= max_iter :
+            samples = np.random.uniform(-1, 1, (num_points, 3) )
+            gradients = np.zeros( (num_points, 3 ) )
+            hessians = np.zeros( (num_points, 3, 3))
             udfs = None
-            for _ in range(num_steps):
-                udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
+            for step in range(num_steps):
+                if step == num_steps - 1:
+                    udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, hessians=hessians, device=self.device )
+                else:
+                    udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
 
                 udfs = np.sqrt(udfs, where=udfs >= 0)
+                samples -= gradients * udfs
 
-                gradient_wrt_samples = normalize(gradients[:, -3:])
-
-                samples -= gradient_wrt_samples * udfs
+            gradient_norms = np.sum( gradients ** 2, axis=1)
         
-            if i > 0: # en la primera iteracion no sampleo... nose bien porque
-                samples_near_surf = samples[udfs.squeeze(1) < surf_thresh]
-                surface_points = np.vstack((surface_points, samples_near_surf))
+            mask_points_on_surf = gradient_norms < surf_thresh
+            samples_near_surf = samples[ mask_points_on_surf ]
+            surface_points = np.vstack((surface_points, samples_near_surf))
 
-            samples = samples[ udfs.squeeze(1) < 0.5 ]
-            samples = samples[ np.random.randint( 0, samples.shape[0], num_points) ]
+            # problema... no podemos saber si es por 1 o -1 las normales
+            normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
 
-            samples += (self.threshold / 3) * np.random.standard_normal( samples.shape )
-            i += 1
+        if iterations == max_iter:
+            print(f'Max iterations reached. Only sampled {len(surface_points)} surface points.')
 
-        return surface_points
+        return surface_points, normals

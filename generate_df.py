@@ -95,7 +95,7 @@ if __name__ == '__main__':
     gradients = np.zeros((SAMPLES, 3))
 
     pred_distances = evaluate( model, samples, device=device_torch, gradients=gradients )
-    pred_grad_norm = np.linalg.norm(gradients, axis=1).reshape( (SAMPLES, 1))
+    pred_grad_norm = np.sum( gradients ** 2, axis=1 ).reshape((SAMPLES, 1)) #np.linalg.norm(gradients, axis=1).reshape( (SAMPLES, 1))
     pred_grad_cm = ( normalize(gradients) + np.ones_like(gradients) ) / 2
 
     scene = o3d.t.geometry.RaycastingScene()
