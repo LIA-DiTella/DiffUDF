@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--surf_thresh', type=float, default=1e-5, help='on surface threshold')
     parser.add_argument('-d', '--device', type=int, default=0, help='torch device')
     parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
+    parser.add_argument('-i', '--max_iter', type=int, default=100, help='max iterations')
 
     args = parser.parse_args()
 
@@ -38,7 +39,9 @@ if __name__ == '__main__':
                 code=joint['mean'], 
                 num_points=args.nsamples // skel['amount_joints'], 
                 num_steps=args.ref_steps, 
-                surf_thresh=args.surf_thresh )
+                surf_thresh=args.surf_thresh,
+                max_iter=args.max_iter
+            )
             
             #puntosTransf = (T @ np.concatenate( (points, np.ones( (points.shape[0], 1)) ), axis=1).T).T[:, :3]
 

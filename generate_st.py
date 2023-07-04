@@ -53,7 +53,8 @@ if __name__ == '__main__':
         origin=np.array([0,0,-2]), 
         image=image,
         light_position=np.array([0,0,-2]),
-        max_iterations=args.max_iter
+        max_iterations=args.max_iter,
+        device=device_torch
     )
     
     im = Image.fromarray((colores * 255).astype(np.uint8))

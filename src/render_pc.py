@@ -42,12 +42,13 @@ class Sampler:
                 else:
                     udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
 
-                udfs = np.sqrt(udfs, where=udfs >= 0)
-                samples -= gradients * udfs
+                steps = np.zeros_like(udfs)
+                np.sqrt(udfs, where=udfs > 0, out=steps)
+                samples -= gradients * steps
 
             gradient_norms = np.sum( gradients ** 2, axis=1)
         
-            mask_points_on_surf = gradient_norms < surf_thresh
+            mask_points_on_surf = np.logical_and( gradient_norms < surf_thresh, steps.flatten() < 0.05)
             samples_near_surf = samples[ mask_points_on_surf ]
             surface_points = np.vstack((surface_points, samples_near_surf))
 
