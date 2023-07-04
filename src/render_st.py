@@ -84,11 +84,11 @@ def create_projectional_image( model, sample_count, surface_eps, refinement_step
         udfs = evaluate( model, samples[ alive ], gradients=gradients, device=device_torch)
 
         gradient_norms = np.sum( gradients ** 2, axis=-1)
-        steps = np.ones_like(udfs) * 0.1 # minimum step
+        steps = np.ones_like(udfs) * 0.01 # minimum step
         np.sqrt(udfs, out=steps, where=udfs > 0)
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
-        hits[alive] += (gradient_norms < surface_eps)
+        hits[alive] += np.logical_and(gradient_norms < surface_eps, udfs < surface_eps)
         alive[alive] *= (gradient_norms > surface_eps)
         alive *= np.logical_and( np.all( samples > -1, axis=1 ), np.all( samples < 1, axis=1 ) )
         
