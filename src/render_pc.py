@@ -49,11 +49,13 @@ class Sampler:
             gradient_norms = np.sum( gradients ** 2, axis=1)
         
             mask_points_on_surf = np.logical_and( gradient_norms < surf_thresh, steps.flatten() < 0.05)
-            samples_near_surf = samples[ mask_points_on_surf ]
-            surface_points = np.vstack((surface_points, samples_near_surf))
 
-            # problema... no podemos saber si es por 1 o -1 las normales
-            normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
+            if np.sum(mask_points_on_surf) > 0:
+                samples_near_surf = samples[ mask_points_on_surf ]
+                surface_points = np.vstack((surface_points, samples_near_surf))
+
+                # problema... no podemos saber si es por 1 o -1 las normales
+                normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
 
         if iterations == max_iter:
             print(f'Max iterations reached. Only sampled {len(surface_points)} surface points.')

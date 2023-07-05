@@ -1,242 +1,158 @@
-'''From the DeepSDF repository https://github.com/facebookresearch/DeepSDF
-'''
-
-import numpy as np
-import plyfile
-from skimage.measure import marching_cubes
-import time
 import torch
+import numpy as np
+from scipy.sparse import coo_matrix
+import trimesh
+from torch.nn import functional as F
+import sys
+from collections import defaultdict
+import src.diff_operators as diff
+from src.evaluate import evaluate
 
+import sys
+sys.path.append('src/marching_cubes')
+from _marching_cubes_lewiner import udf_mc_lewiner
 
-def gen_mc_coordinate_grid(N: int, parameter, voxel_size: float, device: str = "cpu",
-                           voxel_origin: list = [-1, -1, -1]) -> torch.Tensor:
-    """Creates the coordinate grid for inference and marching cubes run.
-
-    Parameters
-    ----------
-    N: int
-        Number of elements in each dimension. Total grid size will be N ** 3
-    
-    distance: float
-
-    voxel_size: number
-        Size of each voxel
-
-
-    device: string, optional
-        Device to store tensors. Default is CPU
-
-    voxel_origin: list[number, number, number], optional
-        Origin coordinates of the volume. Must be the (bottom, left, down)
-        coordinates. Default is [-1, -1, -1]
-
-    Returns
-    -------
-    samples: torch.Tensor
-        A (N**3, 3) shaped tensor with samples' coordinates. If t is not None,
-        then the return tensor is has 4 columns instead of 3, with the last
-        column equalling `t`.
+def get_udf_normals_grid(decoder, latent_vec, N, device=torch.device(0), max_batch=int(64 ** 2) ):
     """
-    overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
+    Fills a dense N*N*N regular grid by querying the decoder network
+    Inputs: 
+        decoder: coordinate network to evaluate
+        latent_vec: conditioning vector
+        N: grid size
+        max_batch: number of points we can simultaneously evaluate
+        fourier: are xyz coordinates encoded with fourier?
+    Returns:
+        df_values: (N,N,N) tensor representing distance field values on the grid
+        vecs: (N,N,N,3) tensor representing gradients values on the grid, only for locations with a small
+                distance field value
+        samples: (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
+    """
 
-    samples = torch.zeros(N ** 3, 3 + len(parameter), device=device,
-                          requires_grad=False)
-
-    # transform last 3 columns
-    # to be the x, y, z index
-    samples[:, len(parameter) + 2] = overall_index % N
-    samples[:, len(parameter) + 1] = (overall_index.long() / N) % N
-    samples[:, len(parameter)] = ((overall_index.long() / N) / N) % N
-
-    # transform last 3 columns
-    # to be the x, y, z coordinate
-    samples[:, len(parameter)] = (samples[:, len(parameter)] * voxel_size) + voxel_origin[2]
-    samples[:, len(parameter) + 1] = (samples[:, len(parameter) + 1] * voxel_size) + voxel_origin[1]
-    samples[:, len(parameter) + 2] = (samples[:, len(parameter) + 2] * voxel_size) + voxel_origin[0]
-
-    samples[:, :len(parameter)] = parameter
-
-    return samples
-
-
-def create_mesh(
-    decoder,
-    distance,
-    filename="",
-    N=256,
-    max_batch=64 ** 3,
-    offset=None,
-    scale=None,
-    device="cpu",
-    silent=False
-):
-    decoder.eval()
-    # NOTE: the voxel_origin is actually the (bottom, left, down) corner, not
-    # the middle
     voxel_origin = [-1, -1, -1]
     voxel_size = 2.0 / (N - 1)
-
-    samples = gen_mc_coordinate_grid(N,distance, voxel_size,  device=device )
-
+    overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
+    samples = torch.zeros(N ** 3, 7)
+    # transform first 3 columns
+    # to be the x, y, z index
+    samples[:, 2] = overall_index % N
+    samples[:, 1] = torch.div(overall_index, N, rounding_mode='floor') % N
+    samples[:, 0] = torch.div(torch.div(overall_index, N, rounding_mode='floor'), N, rounding_mode='floor') % N
+    # transform first 3 columns
+    # to be the x, y, z coordinate
+    samples[:, 0] = (samples[:, 0] * voxel_size) + voxel_origin[2]
+    samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
+    samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
     num_samples = N ** 3
-    head = 0
-    sdf_coord = 0
+    samples.requires_grad = False
 
-    start = time.time()
-    while head < num_samples:
-        # print(head)
-        sample_subset = samples[head:min(head + max_batch, num_samples), :]
-        
-        samples[head:min(head + max_batch, num_samples), sdf_coord] = (
-            decoder(sample_subset)["model_out"]
-            .squeeze()
-            .detach()
-            .cpu()
-        )
-        head += max_batch
-
-    sdf_values = samples[:, sdf_coord]
-    sdf_values = sdf_values.reshape(N, N, N)
+    samples.pin_memory()
     
-    end = time.time()
-    if not silent:
-        print(f"Sampling took: {end-start} s")
+    gradients = np.zeros((samples.shape[0], 3))
+    #samples[..., 3] = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients ) ).float().squeeze(1)
+    udfs = torch.sqrt( torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients ) ).float().squeeze(1) )
+    gradients_torch = torch.from_numpy( gradients )
 
-    verts, faces, normals, values = convert_sdf_samples_to_ply(
-        sdf_values.data.cpu(),
-        voxel_origin,
-        voxel_size,
-        offset,
-        scale,
-    )
+    samples[..., 3] = torch.where( udfs > 0.008, udfs, torch.sum(gradients_torch ** 2, dim=1) )
+    samples[..., 4:] = - F.normalize( gradients_torch, dim= 1)#torch.from_numpy(gradients), dim=1)
 
-    if filename:
-        if not silent:
-            print(f"Saving mesh to {filename}")
+    #
+    # Separate values in DF / gradients
+    df_values = samples[:, 3]
+    df_values = df_values.reshape(N, N, N)
+    vecs = samples[:, 4:]
+    vecs = vecs.reshape(N, N, N, 3)
 
-        save_ply(verts, faces, filename)
+    return df_values, vecs
 
-        if not silent:
-            print("Done")
-
-    return verts, faces, normals, values
-
-
-def convert_sdf_samples_to_ply(
-    pytorch_3d_sdf_tensor,
-    voxel_grid_origin,
-    voxel_size,
-    offset=None,
-    scale=None,
-):
+def get_mesh_udf(decoder, latent_vec, N_MC, device, smooth_borders=False):
     """
-    Convert sdf samples to .ply
-
-    :param pytorch_3d_sdf_tensor: a torch.FloatTensor of shape (n,n,n)
-    :voxel_grid_origin: a list of three floats: the bottom, left, down origin of the voxel grid
-    :voxel_size: float, the size of the voxels
-    :ply_filename_out: string, path of the filename to save to
-
-    This function adapted from: https://github.com/RobotLocomotion/spartan
+    Computes a triangulated mesh from a distance field network conditioned on the latent vector
+    Inputs: 
+        decoder: coordinate network to evaluate
+        latent_vec: conditioning vector
+        samples: already computed (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
+                    for a previous latent_vec, which is assumed to be close to the current one, if any
+        indices: tensor representing the coordinates that need updating in the previous samples tensor (to speed
+                    up iterations)
+        N_MC: grid size
+        fourier: are xyz coordinates encoded with fourier?
+        gradient: do we need gradients?
+        eps: length of the normal vectors used to derive gradients
+        border_gradients: add a special case for border gradients?
+        smooth_borders: do we smooth borders with a Laplacian?
+    Returns:
+        verts: vertices of the mesh
+        faces: faces of the mesh
+        mesh: trimesh object of the mesh
+        samples: (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
+        indices: tensor representing the coordinates that need updating in the next iteration
     """
-    if isinstance(pytorch_3d_sdf_tensor, torch.Tensor):
-        numpy_3d_sdf_tensor = pytorch_3d_sdf_tensor.numpy()
-    else:
-        numpy_3d_sdf_tensor = pytorch_3d_sdf_tensor
+    ### 1: sample grid
+    df_values, normals = get_udf_normals_grid(decoder, latent_vec, device=device, N=N_MC )
+    df_values[df_values < 0] = 0
+    ### 2: run our custom MC on it
+    N = df_values.shape[0]
+    voxel_size = 2.0 / (N - 1)
+    verts, faces, _, _ = udf_mc_lewiner(df_values.cpu().detach().numpy(),
+                                        normals.cpu().detach().numpy(),
+                                        spacing=[voxel_size] * 3)
+    verts = verts - 1 # since voxel_origin = [-1, -1, -1]
+    ### 3: evaluate vertices DF, and remove the ones that are too far
+    verts_torch = torch.from_numpy(verts).float().to(device)
+    xyz = verts_torch
+    pred_df_verts = evaluate(decoder, xyz, latent_vec )
 
-    verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
+    # Remove faces that have vertices far from the surface
+    filtered_faces = faces[np.max(pred_df_verts[faces], axis=1)[:,0] < voxel_size / 6]
+    filtered_mesh = trimesh.Trimesh(verts, filtered_faces)
+    ### 4: clean the mesh a bit
+    # Remove NaNs, flat triangles, duplicate faces
+    filtered_mesh = filtered_mesh.process(validate=False) # DO NOT try to consistently align winding directions: too slow and poor results
+    filtered_mesh.remove_duplicate_faces()
+    filtered_mesh.remove_degenerate_faces()
+    # Fill single triangle holes
+    filtered_mesh.fill_holes()
 
-    # Check if the cubes contains the zero-level set
-    level = 0.0
-    if level < numpy_3d_sdf_tensor.min() or level > numpy_3d_sdf_tensor.max():
-        print(f"Surface level must be within volume data range.")
-    else:
-        verts, faces, normals, values = marching_cubes(
-            numpy_3d_sdf_tensor, level, spacing=[voxel_size] * 3
-        )
+    filtered_mesh_2 = trimesh.Trimesh(filtered_mesh.vertices, filtered_mesh.faces)
+    # Re-process the mesh until it is stable:
+    n_verts, n_faces, n_iter = 0, 0, 0
+    while (n_verts, n_faces) != (len(filtered_mesh_2.vertices), len(filtered_mesh_2.faces)) and n_iter<10:
+        filtered_mesh_2 = filtered_mesh_2.process(validate=False)
+        filtered_mesh_2.remove_duplicate_faces()
+        filtered_mesh_2.remove_degenerate_faces()
+        (n_verts, n_faces) = (len(filtered_mesh_2.vertices), len(filtered_mesh_2.faces))
+        n_iter += 1
+        filtered_mesh_2 = trimesh.Trimesh(filtered_mesh_2.vertices, filtered_mesh_2.faces)
 
-    # transform from voxel coordinates to camera coordinates
-    # note x and y are flipped in the output of marching_cubes
-    mesh_points = np.zeros_like(verts)
-    mesh_points[:, 0] = voxel_grid_origin[0] + verts[:, 0]
-    mesh_points[:, 1] = voxel_grid_origin[1] + verts[:, 1]
-    mesh_points[:, 2] = voxel_grid_origin[2] + verts[:, 2]
+    filtered_mesh = trimesh.Trimesh(filtered_mesh_2.vertices, filtered_mesh_2.faces)
 
-    # apply additional offset and scale
-    if scale is not None:
-        mesh_points = mesh_points / scale
-    if offset is not None:
-        mesh_points = mesh_points - offset
+    if smooth_borders:
+        # Identify borders: those appearing only once
+        border_edges = trimesh.grouping.group_rows(filtered_mesh.edges_sorted, require_count=1)
 
-    return mesh_points, faces, normals, values
+        # Build a dictionnary of (u,l): l is the list of vertices that are adjacent to u
+        neighbours  = defaultdict(lambda: [])
+        for (u,v) in filtered_mesh.edges_sorted[border_edges]:
+            neighbours[u].append(v)
+            neighbours[v].append(u)
+        border_vertices = np.array(list(neighbours.keys()))
 
+        # Build a sparse matrix for computing laplacian
+        pos_i, pos_j = [], []
+        for k, ns in enumerate(neighbours.values()):
+            for j in ns:
+                pos_i.append(k)
+                pos_j.append(j)
 
-def save_ply(
-        verts: np.array,
-        faces: np.array,
-        filename: str,
-        vertex_attributes: list = None
-) -> None:
-    """Converts the vertices and faces into a PLY format, saving the resulting
-    file.
+        sparse = coo_matrix((np.ones(len(pos_i)),   # put ones
+                            (pos_i, pos_j)),        # at these locations
+                            shape=(len(border_vertices), len(filtered_mesh.vertices)))
 
-    Parameters
-    ----------
-    verts: np.array
-        An NxD matrix with the vertices and its attributes (normals,
-        curvatures, etc.). Note that we expect verts to have at least 3
-        columns, each corresponding to a vertex coordinate.
+        # Smoothing operation:
+        lambda_ = 0.3
+        for _ in range(5):
+            border_neighbouring_averages = sparse @ filtered_mesh.vertices / sparse.sum(axis=1)
+            laplacian = border_neighbouring_averages - filtered_mesh.vertices[border_vertices]
+            filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
 
-    faces: np.array
-        An Fx3 matrix with the vertex indices for each triangle.
-
-    filename: str
-        Path to the output PLY file.
-
-    vertex_attributes: list of tuples
-        A list with the dtypes of vertex attributes other than coordinates.
-
-    Examples
-    --------
-    > # This creates a simple triangle and saves it to a file called
-    > #"triagle.ply"
-    > verts = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
-    > faces = np.array([[0, 1, 2]])
-    > save_ply(verts, faces, "triangle.ply")
-
-    > # Writting normal information as well
-    > verts = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
-    > faces = np.array([[0, 1, 2]])
-    > normals = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1]])
-    > attrs = [("nx", "f4"), ("ny", "f4"), ("nz", "f4")]
-    > save_ply(verts, faces, "triangle_normals.ply", vertex_attributes=attrs)
-    """
-    # try writing to the ply file
-    num_verts = verts.shape[0]
-    num_faces = faces.shape[0]
-
-    dtypes = [("x", "f4"), ("y", "f4"), ("z", "f4")]
-    if vertex_attributes is not None:
-        dtypes[3:3] = vertex_attributes
-
-    verts_tuple = np.zeros(
-        (num_verts,),
-        dtype=dtypes
-    )
-
-    for i in range(0, num_verts):
-        verts_tuple[i] = tuple(verts[i, :])
-
-    faces_building = []
-    for i in range(0, num_faces):
-        faces_building.append(((faces[i, :].tolist(),)))
-    faces_tuple = np.array(
-        faces_building,
-        dtype=[("vertex_indices", "i4", (3,))]
-    )
-
-    el_verts = plyfile.PlyElement.describe(verts_tuple, "vertex")
-    el_faces = plyfile.PlyElement.describe(faces_tuple, "face")
-
-    ply_data = plyfile.PlyData([el_verts, el_faces])
-    ply_data.write(filename)
+    return torch.tensor(filtered_mesh.vertices).float().cuda(), torch.tensor(filtered_mesh.faces).long().cuda(), filtered_mesh

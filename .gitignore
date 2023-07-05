@@ -10,3 +10,4 @@ results/
 *.png
 .ipynb_checkpoints
 *.ipynb
+*.obj

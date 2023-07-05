@@ -1,17 +1,28 @@
 import torch
 import numpy as np
 from src.diff_operators import gradient, hessian
-from torch.autograd import Variable
 
-def evaluate( model, samples, max_batch=64**2, output_size=1, device=torch.device(0), gradients=None, hessians=None ):
-    # samples = ( amount_samples, features + 3 )
-    head = 0        
+def evaluate( model, samples, latent_vec=torch.Tensor([[]]), max_batch=64**2, output_size=1, device=torch.device(0), gradients=None, hessians=None ):
+    # samples = ( amount_samples, 3 )    
+    head = 0
     amount_samples = samples.shape[0]
-    feature_length = samples.shape[1] - 3
+    feature_length = latent_vec.shape[1]
+
     evaluations = np.zeros( (amount_samples, output_size))
 
     while head < amount_samples:
-        inputs_subset = torch.from_numpy(samples[head:min(head + max_batch, amount_samples), :]).float().to(device).unsqueeze(0)
+        
+        if torch.is_tensor(samples):
+            inputs_subset = samples[head:min(head + max_batch, amount_samples), :]
+        else:
+            inputs_subset = torch.from_numpy(samples[head:min(head + max_batch, amount_samples), :]).float()
+            
+        if feature_length != 0:
+            batch_vecs = latent_vec.view(latent_vec.shape[0], 1, latent_vec.shape[1]).repeat(1, inputs_subset.shape[0], 1)
+            inputs_subset = torch.cat([batch_vecs.reshape(-1, latent_vec.shape[1]), inputs_subset.reshape(-1, inputs_subset.shape[-1])], dim=1)
+
+        inputs_subset = inputs_subset.to(device).unsqueeze(0)
+
         x, y =  model(inputs_subset).values()
 
         if gradients is not None:
