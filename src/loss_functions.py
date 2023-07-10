@@ -27,7 +27,7 @@ def sdf_constraint_off_surf(gt_sdf, pred_sdf):
 def vector_aligment_on_surf(gt_sdf, gt_vectors, pred_vectors):
     return torch.where(
         gt_sdf == 0,
-        1 - F.cosine_similarity(pred_vectors, gt_vectors, dim=-1)[..., None],
+        1 - F.cosine_similarity(pred_vectors, gt_vectors.squeeze(0), dim=-1)[..., None],
         torch.zeros_like(gt_sdf)
     )
 
@@ -88,7 +88,7 @@ def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
     )
     
 
-def loss(model_output, gt, features, loss_weights):
+def loss_siren(model_output, gt, features, loss_weights):
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
 
@@ -96,7 +96,7 @@ def loss(model_output, gt, features, loss_weights):
     pred_sdf = model_output['model_out']
 
     indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
-    gradient = torch.index_select( dif.gradient(pred_sdf, coords), 1, indexes)
+    gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
 
     # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     training_config = {
         "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
-        "num_epochs": 200,
+        "num_epochs": 2,
         "sampling_opts": {
             "curvature_iteration_fractions": [0.2, 0.4, 0.4],
             "curvature_percentile_thresholds": [0.6, 0.85]
@@ -34,9 +34,9 @@ if __name__ == '__main__':
         "batches_per_epoch": 3,
         "checkpoint_path": "results/ropa/",
         "experiment_name": "test_",
-        "epochs_to_checkpoint": 300,
-        "loss": "loss_ndf",
-        "loss_weights": [1e3, 1e2, 2e0, 1e1, 0, 7],
+        "epochs_to_checkpoint": 600,
+        "loss": "loss_siren",
+        "loss_weights": [ 1e3, 1e2, 2e0, 1e1 ],
         "optimizer": {
             "type": "adam",
             "lr": 1e-4
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         "network": {
             "hidden_layer_nodes": [256, 256, 256, 256],
             "w0": 30,
-            "pretrained_dict": 'results/sphere/test_sphere/models/model_best.pth'
+            "pretrained_dict": 'None'
         }
     }
 
@@ -69,8 +69,8 @@ if __name__ == '__main__':
         'grad_thresh': 0.01,
         'device': args.device,
         'weight0': 30,
-        'max_iter': 100
-        'hess': True
+        'max_iter': 100,
+        'hess': False
     }
     
     chamfer_distances = {}

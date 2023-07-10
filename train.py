@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss, loss_curvs, loss_ndf
+from src.loss_functions import loss_siren, loss_curvs, loss_ndf
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
@@ -136,7 +136,8 @@ def setup_train( parameter_dict, cuda_device ):
         samplingPercentiles=parameter_dict["sampling_percentiles"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
         curvatureFractions=sampling_config["curvature_iteration_fractions"],
-        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
+        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"],
+        squared_dist=sampling_config.get(['squared_dist'], True)
     )
 
     network_params = parameter_dict["network"]
@@ -165,8 +166,8 @@ def setup_train( parameter_dict, cuda_device ):
         )
     
 
-    if parameter_dict["loss"] == "loss":
-        loss_fn = loss
+    if parameter_dict["loss"] == "loss_siren":
+        loss_fn = loss_siren
     elif parameter_dict["loss"] == "loss_curvs":
         loss_fn = loss_curvs
     elif parameter_dict["loss"] == "loss_ndf":
