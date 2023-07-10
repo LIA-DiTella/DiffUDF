@@ -79,7 +79,7 @@ def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
     return torch.where(
         gt_sdf == 0,
         #1 - torch.pow(F.cosine_similarity(gt_vectors.squeeze(0), torch.bmm(hessians.squeeze(0), eigenvectors[...,2].squeeze(0).unsqueeze(-1)).squeeze(-1) / eigenvalues[...,2].squeeze(0).unsqueeze(1), dim=-1)[..., None], 6 ),
-        1 - F.cosine_similarity(gt_vectors, eigenvectors[...,2], dim=-1).unsqueeze(-1) ** 2,
+        1 - torch.abs(F.cosine_similarity(gt_vectors, eigenvectors[...,2], dim=-1).unsqueeze(-1)),
         torch.zeros_like(gt_sdf)
     ), torch.where(
         gt_sdf != 0,

@@ -92,7 +92,8 @@ if __name__ == '__main__':
                     torch.from_numpy(pred_points).float().unsqueeze(0).to(device_torch), 
                     torch.from_numpy(gt_vertices).float().unsqueeze(0).to(device_torch),
                     x_normals=torch.from_numpy(pred_normals).float().unsqueeze(0).to(device_torch), 
-                    y_normals=torch.from_numpy(gt_normals).float().unsqueeze(0).to(device_torch) )
+                    y_normals=torch.from_numpy(gt_normals).float().unsqueeze(0).to(device_torch),
+                    abs_cosine=True )
 
                 chamfer_distances.append(chamfer_d)
                 normal_cosine_sims.append(normal_s)
