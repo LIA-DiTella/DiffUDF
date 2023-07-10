@@ -60,6 +60,12 @@ def off_surface_with_negative_values( pred_sdf ):
            torch.zeros_like(pred_sdf)
         )
 
+def total_variation( gradient, coords, gt_sdf ):
+    return torch.where(
+        gt_sdf.flatten() != 0,
+        (torch.linalg.norm( dif.gradient( torch.linalg.norm( gradient, dim=-1), coords ), dim=-1 ) - 2) ** 2,
+        torch.zeros_like(gt_sdf.flatten())
+    )
 
 def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
     hessians, status = dif.hessian(pred_sdf, coords)
@@ -117,7 +123,8 @@ def loss_ndf(model_output, gt, features, loss_weights):
         'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * loss_weights[1],
         'grad_constraint': gradient_constraint(gt_sdf, gradient).mean() * loss_weights[2],
         'hessian_constraint': principal_curvature_constraint.mean() * loss_weights[3],
-        'laplacian_constraint': laplacian_constraint.mean() * loss_weights[4]
+        'laplacian_constraint': laplacian_constraint.mean() * loss_weights[4],
+        'total_variation': total_variation( gradient, coords, gt_sdf ).mean() * loss_weights[5]
     }
 
 

@@ -67,7 +67,7 @@ def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, re
     cmap = cm.get_cmap('turbo')
     return cmap( (np.clip( samples[:, 2].reshape((LADO, LADO)), -1, 1) + np.ones((LADO, LADO))) / 2 )[:,:,:3], values
 
-def create_projectional_image( model, sample_count, surface_eps, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
+def create_projectional_image( model, sample_count, surface_eps, gradient_eps, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     LADO = int(np.sqrt(sample_count))
 
@@ -87,7 +87,7 @@ def create_projectional_image( model, sample_count, surface_eps, refinement_step
         np.sqrt(udfs, out=steps, where=udfs > 0)
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
-        mask = np.logical_and(gradient_norms < surface_eps, steps.flatten() < 0.03)
+        mask = np.logical_and(gradient_norms < gradient_eps, steps.flatten() < surface_eps)
         hits[alive] += mask
         alive[alive] *= np.logical_not(mask)
 
@@ -115,6 +115,7 @@ def create_projectional_image( model, sample_count, surface_eps, refinement_step
     hessians = np.zeros((amount_hits, 3, 3))
     udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians, device=device)
     normals = np.array( [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians ] )
+    
     # podria ser que las normales apunten para el otro lado. las tengo que invertir si  < direccion, normal > = cos(tita) > 0
     normals *= np.where( np.expand_dims(np.sum(normals * directions[hits], axis=1),1) > 0, -1 * np.ones( (normals.shape[0], 1)), np.ones( (normals.shape[0], 1)) )
 
@@ -137,6 +138,10 @@ def phong_shading(light_position, shininess, hits, samples, normals):
 
     diffuse_color = np.array([0.3, 0.4, 0.7] )
     specular_color = np.array([1, 1, 1])
-    colors[hits] = np.clip( np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + np.tile( specular_color, (normals.shape[0],1)) * specular, 0, 1)
+    ambient_color = np.array( [0.0, 0.1, 0.4])
+    colors[hits] = np.clip( 
+        np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + 
+        np.tile( specular_color, (normals.shape[0],1)) * specular +
+        ambient_color , 0, 1)
     
     return colors

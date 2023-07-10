@@ -15,6 +15,7 @@ from src.dataset import PointCloud
 from src.loss_functions import loss, loss_curvs, loss_ndf
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
+from generate_df import generate_df
 
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
@@ -110,26 +111,9 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
     return losses, best_weights
 
+def setup_train( parameter_dict, cuda_device ):
 
-if __name__ == "__main__":
-    p = argparse.ArgumentParser(
-        usage="python main.py path_to_experiments.json cuda_device"
-    )
-
-    p.add_argument(
-        "experiment_path", type=str,
-        help="Path to the JSON experiment description file"
-    )
-    p.add_argument(
-        "device", type=int, help="Cuda device"
-    )
-    args = p.parse_args()
-    parameter_dict = load_experiment_parameters(args.experiment_path)
-
-    if not bool(parameter_dict):
-        raise ValueError("JSON experiment not found")
-
-    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    device = torch.device(cuda_device if torch.cuda.is_available() else "cpu")
     seed = 123 
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -165,12 +149,21 @@ if __name__ == "__main__":
     )
     print(model)
 
+    if network_params['pretrained_dict'] != 'None':
+        model.load_state_dict(torch.load(network_params['pretrained_dict']))
+
     opt_params = parameter_dict["optimizer"]
     if opt_params["type"] == "adam":
         optimizer = torch.optim.Adam(
             lr=opt_params["lr"],
             params=model.parameters()
         )
+    elif opt_params["type"] == "lbfgs":
+        optimizer = torch.optim.LBFGS(
+            lr=opt_params["lr"],
+            params=model.parameters()
+        )
+    
 
     if parameter_dict["loss"] == "loss":
         loss_fn = loss
@@ -206,3 +199,36 @@ if __name__ == "__main__":
         model.state_dict(),
         osp.join(full_path, "models", "model_final.pth")
     )
+
+    print('Generating distance field slices')
+
+    df_options = {
+        'device': cuda_device,
+        'surf_thresh': 1e-3,
+        'joint': 0,
+        'width': 512
+    }
+
+    generate_df( model, parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser(
+        usage="python main.py path_to_experiments.json cuda_device"
+    )
+
+    p.add_argument(
+        "experiment_path", type=str,
+        help="Path to the JSON experiment description file"
+    )
+    p.add_argument(
+        "device", type=int, help="Cuda device"
+    )
+    args = p.parse_args()
+    parameter_dict = load_experiment_parameters(args.experiment_path)
+    if not bool(parameter_dict):
+        raise ValueError("JSON experiment not found")
+    
+    setup_train( parameter_dict, args.device )
+
+

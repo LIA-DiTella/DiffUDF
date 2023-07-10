@@ -23,7 +23,7 @@ class Sampler:
         self.threshold = threshold
 
 
-    def generate_point_cloud(self, code, num_steps = 5, num_points = 20000, surf_thresh = 0.009, max_iter=1000 ):
+    def generate_point_cloud(self, code, num_steps = 5, num_points = 20000, grad_thresh=0.001, surf_thresh = 0.01, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
@@ -31,7 +31,7 @@ class Sampler:
         surface_points = np.zeros((0, 3))
         normals = np.zeros((0,3))
         iterations = 0
-        while len(surface_points) < num_points and iterations <= max_iter :
+        while len(surface_points) < num_points and iterations < max_iter :
             samples = np.random.uniform(-1, 1, (num_points, 3) )
             gradients = np.zeros( (num_points, 3 ) )
             hessians = np.zeros( (num_points, 3, 3))
@@ -48,7 +48,7 @@ class Sampler:
 
             gradient_norms = np.sum( gradients ** 2, axis=1)
         
-            mask_points_on_surf = np.logical_and( gradient_norms < surf_thresh, steps.flatten() < 0.05)
+            mask_points_on_surf = np.logical_and( gradient_norms < grad_thresh, steps.flatten() < surf_thresh)
 
             if np.sum(mask_points_on_surf) > 0:
                 samples_near_surf = samples[ mask_points_on_surf ]
@@ -56,6 +56,8 @@ class Sampler:
 
                 # problema... no podemos saber si es por 1 o -1 las normales
                 normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
+            
+            iterations += 1
 
         if iterations == max_iter:
             print(f'Max iterations reached. Only sampled {len(surface_points)} surface points.')

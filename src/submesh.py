@@ -269,7 +269,7 @@ def save( path, graph, root, submeshes, scale, full=False ):
                             'curvature': calculateCurvature(np.asarray(submeshes.vertices), np.asarray(submeshes.triangles)),
                             'mean': [],
                             'cov': [],
-                            'base' : np.eye(4)
+                            'base' : np.eye(3)
                         } ]     
                     }, jsonFile, cls=NumpyEncoder
                 )
@@ -279,13 +279,21 @@ def save( path, graph, root, submeshes, scale, full=False ):
             i += 1
     return jsonPath
 
-def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6, full=False ):
-
+def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6, full=False, subdiv_it=0, normalize=True ):
     mesh = o3d.io.read_triangle_mesh( meshFile )
+
+    if subdiv_it > 0:
+        amount_vertices = len(np.asarray(mesh.vertices))
+        mesh = mesh.subdivide_loop( subdiv_it )
+        print( f'La malla paso de {amount_vertices} a {len(np.asarray(mesh.vertices))}')
+
     mesh.compute_vertex_normals( )
 
     if full:
-        scale = normalizeFullMesh(mesh)
+        scale = 1
+        if normalize:
+            scale = normalizeFullMesh(mesh)
+
         return save(path,None, None, mesh, scale, full=full)
 
     vertexTree = KDTree( np.asarray(mesh.vertices) )

@@ -12,6 +12,7 @@ if __name__=='__main__':
                         help='path to output mesh')
     parser.add_argument('-n', '--nsamples', type=int, default=128, help='number of samples')
     parser.add_argument('-d', '--device', type=int, default=0, help='torch device')
+    parser.add_argument('-l', '--level_set', type=float, default=0, help='level set for surface extraction')
     parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
 
     args = parser.parse_args()
@@ -30,7 +31,7 @@ if __name__=='__main__':
     model.to(device_torch)
 
     print('Generating mesh...')
-    vertices, faces, mesh = get_mesh_udf( model, torch.Tensor([[]]).to(device_torch), N_MC=args.nsamples, device=device_torch )
+    vertices, faces, mesh = get_mesh_udf( model, torch.Tensor([[]]).to(device_torch), N_MC=args.nsamples, device=device_torch, level_set=args.level_set )
 
     mesh.export(args.output_path)
     print(f'Saved to {args.output_path}')
