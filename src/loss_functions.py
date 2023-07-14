@@ -8,9 +8,10 @@ import src.diff_operators as dif
 def sdf_constraint_on_surf(gt_sdf, pred_sdf):
     return torch.where(
         gt_sdf == 0,
-        F.smooth_l1_loss(pred_sdf, torch.zeros_like(pred_sdf), beta=1e-5, reduction='none'),
+        #F.smooth_l1_loss(pred_sdf, torch.zeros_like(pred_sdf), beta=1e-5, reduction='none'),
         #torch.abs( pred_sdf ),
         #pred_sdf ** 2,
+        torch.exp( 30 * pred_sdf **2 ) - 1,
         torch.zeros_like(pred_sdf)
     )
 
@@ -18,9 +19,10 @@ def sdf_constraint_on_surf(gt_sdf, pred_sdf):
 def sdf_constraint_off_surf(gt_sdf, pred_sdf):
     return torch.where(
         gt_sdf != 0,
-        F.smooth_l1_loss(pred_sdf, gt_sdf, beta=1e-5, reduction='none'),
+        #F.smooth_l1_loss(pred_sdf, gt_sdf, beta=1e-5, reduction='none'),
         #torch.abs( pred_sdf - gt_sdf ),
         #( pred_sdf - gt_sdf ) ** 2,
+        torch.exp( 30 * (gt_sdf - pred_sdf)**2 ) - 1,
         torch.zeros_like(pred_sdf)
     )
 
@@ -35,13 +37,14 @@ def eikonal_constraint(gradient):
     return (gradient.norm(dim=-1) - 1.) ** 2
 
 def gradient_constraint( gt_sdf, gradient ):
-    return  F.smooth_l1_loss( torch.sum( gradient ** 2, dim=-1), 4 * gt_sdf.squeeze() , beta=1e-5, reduction='none')
-    #return  ( torch.sum( gradient ** 2, dim=-1) - 4 * gt_sdf.squeeze() ) ** 2
+    #return  F.smooth_l1_loss( torch.sum( gradient ** 2, dim=-1), 4 * gt_sdf.squeeze() , beta=1e-5, reduction='none')
+    return  ( torch.sum( gradient ** 2, dim=-1) - 4 * gt_sdf.squeeze() ) ** 2
+
     
 def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
     """
     This function penalizes the pred_sdf of points in gt_sdf!=0
-    Used in SIREN's paper
+    Used in SIREN's papers
     """
     return torch.where(
            gt_sdf == 0,
@@ -55,7 +58,7 @@ def off_surface_with_negative_values( pred_sdf ):
     Used in SIREN's paper
     """
     return torch.where(
-           pred_sdf < 0,
+           pred_sdf < 0, 
            torch.exp(-pred_sdf ) - torch.ones_like(pred_sdf),
            torch.zeros_like(pred_sdf)
         )
@@ -71,8 +74,8 @@ def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
     hessians, status = dif.hessian(pred_sdf, coords)
 
     if status == -1:
-        print('status: -1')
-        return torch.zeros_like(gt_sdf), torch.zeros_like(gt_sdf)
+        print('STATUS: -1')
+        return torch.zeros_like(gt_sdf)
 
     eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
 
@@ -80,15 +83,31 @@ def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
         gt_sdf == 0,
         1 - torch.abs(F.cosine_similarity(gt_vectors, eigenvectors[...,2], dim=-1).unsqueeze(-1)),
         torch.zeros_like(gt_sdf)
-    ), torch.where(
-        gt_sdf != 0,
-        (torch.sum( eigenvalues, dim=-1 ).unsqueeze(-1) - 4 * torch.ones_like(gt_sdf)) ** 2,
-        torch.zeros_like(gt_sdf)
-    ), torch.where(
-        gt_sdf == 0,
-        -1 * torch.minimum( torch.prod(eigenvalues, dim=-1), torch.Tensor([0]).to(torch.device(0)) ).unsqueeze(-1),
-        torch.zeros_like(gt_sdf)
     )
+    # MINIMUM
+    #, torch.where(
+    #    gt_sdf == 0,
+    #    -1 * torch.minimum( torch.prod(eigenvalues, dim=-1), torch.Tensor([0]).to(torch.device(0)) ).unsqueeze(-1),
+    #    torch.zeros_like(gt_sdf)
+    #)
+    # LAPLACIAN
+    #torch.where(
+       # gt_sdf != 0,
+       # (torch.sum( eigenvalues, dim=-1 ).unsqueeze(-1) - 4 * torch.ones_like(gt_sdf)) ** 2,
+       # torch.zeros_like(gt_sdf)
+    #), 
+
+def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
+    """
+    This function penalizes the pred_sdf of points in gt_sdf!=0
+    Used in SIREN's paper
+    """
+    return torch.where(
+           gt_sdf == 0,
+           torch.zeros_like(pred_sdf),
+           #torch.exp(-radius * torch.abs(pred_sdf))
+           torch.exp(-radius * pred_sdf)
+        )
     
 
 def loss_siren(model_output, gt, features, loss_weights):
@@ -119,16 +138,19 @@ def loss_ndf(model_output, gt, features, loss_weights):
     indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
     gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
     
-    principal_curvature_constraint, laplacian_constraint, minimum_constraint = principal_curvature_alignment(gt_sdf, gt_normals, pred_sdf, coords)
+    #principal_curvature_constraint, laplacian_constraint, minimum_constraint = principal_curvature_alignment(gt_sdf, gt_normals, pred_sdf, coords)
+    principal_curvature_constraint = principal_curvature_alignment(gt_sdf, gt_normals, pred_sdf, coords)
+    grad_constraint = gradient_constraint(gt_sdf, gradient)
 
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * loss_weights[0],
         'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * loss_weights[1],
-        'grad_constraint': gradient_constraint(gt_sdf, gradient).mean() * loss_weights[2],
+        'grad_constraint': grad_constraint.mean() * loss_weights[2],
         'hessian_constraint': principal_curvature_constraint.mean() * loss_weights[3],
-        'laplacian_constraint': laplacian_constraint.mean() * loss_weights[4],
+        #'laplacian_constraint': laplacian_constraint.mean() * loss_weights[4],
         'total_variation': total_variation( gradient, coords, gt_sdf ).mean() * loss_weights[5],
-        'minimum_constraint': minimum_constraint.mean() * loss_weights[6]
+        #'minimum_constraint': minimum_constraint.mean() * loss_weights[6]
+        #'regularization_term': off_surface_without_sdf_constraint(gt_sdf, pred_sdf).mean() * loss_weights[7]
     }
 
 
