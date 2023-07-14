@@ -54,7 +54,7 @@ if __name__ == '__main__':
         refinement_steps=args.ref_steps,
         origin=np.array([0,0,-2]), 
         image=image,
-        light_position=np.array([0,2,-2]),
+        light_position=np.array([1,0,-2]),
         max_iterations=args.max_iter,
         device=device_torch
     )

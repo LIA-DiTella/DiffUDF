@@ -71,5 +71,5 @@ Articulaciones sampleadas  |  Matching
 # Parametros generacion:
     - Losses: [5e2, 1e2, 2e1, 150, 0, 7] ( parece que [1e3, 1e2, 2e0, 15, 0, 7] va un poco mejor )
     - Sphere tracing: t=0.08 g=0.004 r=2 (en armadillo t=0.04 anduvo mejor)
-    - Point cloud: n=200000 r=5 t=0.09 g=0.01 (en armadillo t=0.04 anduvo mejor)
-    - Marching cubes: l=0.003 (en armadillo l=0.007 anduvo mejor)
+    - Point cloud: n=200000 r=5 t=0.09 g=0.01 (en armadillo t=0.04 anduvo mejor) (en armadillo_min g=0.0005 !)
+    - Marching cubes: l=0.003 (en armadillo l=0.007 anduvo mejor) 

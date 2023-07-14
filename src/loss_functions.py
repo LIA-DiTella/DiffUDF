@@ -78,12 +78,15 @@ def principal_curvature_alignment(gt_sdf, gt_vectors, pred_sdf, coords ):
 
     return torch.where(
         gt_sdf == 0,
-        #1 - torch.pow(F.cosine_similarity(gt_vectors.squeeze(0), torch.bmm(hessians.squeeze(0), eigenvectors[...,2].squeeze(0).unsqueeze(-1)).squeeze(-1) / eigenvalues[...,2].squeeze(0).unsqueeze(1), dim=-1)[..., None], 6 ),
         1 - torch.abs(F.cosine_similarity(gt_vectors, eigenvectors[...,2], dim=-1).unsqueeze(-1)),
         torch.zeros_like(gt_sdf)
     ), torch.where(
         gt_sdf != 0,
         (torch.sum( eigenvalues, dim=-1 ).unsqueeze(-1) - 4 * torch.ones_like(gt_sdf)) ** 2,
+        torch.zeros_like(gt_sdf)
+    ), torch.where(
+        gt_sdf == 0,
+        -1 * torch.minimum( torch.prod(eigenvalues, dim=-1), torch.Tensor([0]).to(torch.device(0)) ).unsqueeze(-1),
         torch.zeros_like(gt_sdf)
     )
     
@@ -116,7 +119,7 @@ def loss_ndf(model_output, gt, features, loss_weights):
     indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
     gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
     
-    principal_curvature_constraint, laplacian_constraint = principal_curvature_alignment(gt_sdf, gt_normals, pred_sdf, coords)
+    principal_curvature_constraint, laplacian_constraint, minimum_constraint = principal_curvature_alignment(gt_sdf, gt_normals, pred_sdf, coords)
 
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * loss_weights[0],
@@ -124,7 +127,8 @@ def loss_ndf(model_output, gt, features, loss_weights):
         'grad_constraint': gradient_constraint(gt_sdf, gradient).mean() * loss_weights[2],
         'hessian_constraint': principal_curvature_constraint.mean() * loss_weights[3],
         'laplacian_constraint': laplacian_constraint.mean() * loss_weights[4],
-        'total_variation': total_variation( gradient, coords, gt_sdf ).mean() * loss_weights[5]
+        'total_variation': total_variation( gradient, coords, gt_sdf ).mean() * loss_weights[5],
+        'minimum_constraint': minimum_constraint.mean() * loss_weights[6]
     }
 
 

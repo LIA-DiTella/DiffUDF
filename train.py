@@ -137,7 +137,7 @@ def setup_train( parameter_dict, cuda_device ):
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
         curvatureFractions=sampling_config["curvature_iteration_fractions"],
         curvaturePercentiles=sampling_config["curvature_percentile_thresholds"],
-        squared_dist=sampling_config.get(['squared_dist'], True)
+        squared_dist=sampling_config.get('squared_dist', True)
     )
 
     network_params = parameter_dict["network"]
@@ -207,7 +207,8 @@ def setup_train( parameter_dict, cuda_device ):
         'device': cuda_device,
         'surf_thresh': 1e-3,
         'joint': 0,
-        'width': 512
+        'width': 512,
+        'power': 2 if sampling_config.get('squared_dist', True) else 1
     }
 
     generate_df( model, parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)

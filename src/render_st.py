@@ -91,9 +91,6 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, r
         hits[alive] += mask
         alive[alive] *= np.logical_not(mask)
 
-        #hits[alive] += steps.flatten() < surface_eps
-        #alive[alive] *= steps.flatten() > surface_eps
-
         alive *= np.logical_and( np.all( samples > -1, axis=1 ), np.all( samples < 1, axis=1 ) )
         
         iteration += 1
@@ -107,10 +104,10 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, r
     gradients = np.zeros((amount_hits, 3))
 
     for i in range(refinement_steps):    
-            udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
-            steps = np.zeros_like(udfs)
-            np.sqrt(udfs, where=udfs >= 0, out=steps)
-            samples[hits] -= normalize(gradients) * steps #(udfs * 0.7)
+        udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
+        steps = np.zeros_like(udfs)
+        np.sqrt(udfs, where=udfs >= 0, out=steps)
+        samples[hits] -= normalize(gradients) * steps #(udfs * 0.7)
 
     hessians = np.zeros((amount_hits, 3, 3))
     udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians, device=device)
