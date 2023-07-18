@@ -3,6 +3,7 @@ import matplotlib.cm as cm
 from src.util import normalize
 import torch
 from src.evaluate import evaluate
+from src.inverses import inverse
 
 def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, refinement_steps ):
     device_torch = torch.device(0)
@@ -67,7 +68,7 @@ def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, re
     cmap = cm.get_cmap('turbo')
     return cmap( (np.clip( samples[:, 2].reshape((LADO, LADO)), -1, 1) + np.ones((LADO, LADO))) / 2 )[:,:,:3], values
 
-def create_projectional_image( model, sample_count, surface_eps, gradient_eps, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
+def create_projectional_image( model, sample_count, surface_eps, gradient_eps, alpha, beta, gt_mode, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     LADO = int(np.sqrt(sample_count))
 
@@ -83,8 +84,9 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, r
         udfs = evaluate( model, samples[ alive ], gradients=gradients, device=device)
 
         gradient_norms = np.sum( gradients ** 2, axis=-1)
-        steps = np.ones_like(udfs) * 0.01 # minimum step
-        np.sqrt(udfs, out=steps, where=udfs > 0)
+
+        steps = inverse( gt_mode, udfs, alpha, beta )
+
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
         mask = np.logical_and(gradient_norms < gradient_eps, steps.flatten() < surface_eps)
@@ -103,18 +105,21 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, r
     hessians = np.zeros( (amount_hits, 3, 3) )
     gradients = np.zeros((amount_hits, 3))
 
-    for i in range(refinement_steps):    
+    for _ in range(refinement_steps):    
         udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
-        steps = np.zeros_like(udfs)
-        np.sqrt(udfs, where=udfs >= 0, out=steps)
-        samples[hits] -= normalize(gradients) * steps #(udfs * 0.7)
+        steps = inverse_function[gt_mode]( udfs, alpha, beta, min_step=0 )
+        samples[hits] -= normalize(gradients) * steps
 
     hessians = np.zeros((amount_hits, 3, 3))
     udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians, device=device)
-    normals = np.array( [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians ] )
+
+    if gt_mode == 'siren':
+        normals = gradients
+    else:
+        normals = np.array( [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians ] )
+        # podria ser que las normales apunten para el otro lado. las tengo que invertir si  < direccion, normal > = cos(tita) > 0
+        normals *= np.where( np.expand_dims(np.sum(normals * directions[hits], axis=1),1) > 0, -1 * np.ones( (normals.shape[0], 1)), np.ones( (normals.shape[0], 1)) )
     
-    # podria ser que las normales apunten para el otro lado. las tengo que invertir si  < direccion, normal > = cos(tita) > 0
-    normals *= np.where( np.expand_dims(np.sum(normals * directions[hits], axis=1),1) > 0, -1 * np.ones( (normals.shape[0], 1)), np.ones( (normals.shape[0], 1)) )
 
     return phong_shading(light_position, shininess, hits, samples, normals).reshape((LADO,LADO,3))  #final_samples, np.linalg.norm( gradients, axis=1)
 

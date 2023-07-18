@@ -7,12 +7,13 @@ import sys
 from collections import defaultdict
 import src.diff_operators as diff
 from src.evaluate import evaluate
+from src.inverses import inverse
 
 import sys
 sys.path.append('src/marching_cubes')
 from _marching_cubes_lewiner import udf_mc_lewiner
 
-def get_udf_normals_grid(decoder, latent_vec, N, level_set ):
+def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha, beta, surf_thresh, grad_thresh, t_focus ):
     """
     Fills a dense N*N*N regular grid by querying the decoder network
     Inputs: 
@@ -47,10 +48,12 @@ def get_udf_normals_grid(decoder, latent_vec, N, level_set ):
     samples.pin_memory()
     
     gradients = np.zeros((samples.shape[0], 3))
-    udfs = torch.sqrt( torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients ) ).float().squeeze(1) )
+    pred_df =  evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients )
+    udfs = torch.from_numpy( inverse( gt_mode, pred_df, alpha, beta, min_step=0 ) ).float().squeeze(1)
     gradients_torch = torch.from_numpy( gradients )
+    gradient_norms = torch.sum(gradients_torch ** 2, dim=1)
 
-    samples[..., 3] = torch.clip( torch.where( udfs > 0.09, udfs, 4 * torch.sum(gradients_torch ** 2, dim=1) ) - level_set, min=0 )
+    samples[..., 3] = torch.clip( t_focus * (udfs - surf_thresh) + (1- t_focus) * (gradient_norms - grad_thresh) , min=0 )
     samples[..., 4:] = - F.normalize( gradients_torch, dim= 1)
 
     # Separate values in DF / gradients
@@ -61,7 +64,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, level_set ):
 
     return df_values, vecs
 
-def get_mesh_udf(decoder, latent_vec, N_MC, device, smooth_borders=False, level_set=0):
+def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, beta, surf_thresh, grad_thresh, t_focus, smooth_borders=False, **kwargs ):
     """
     Computes a triangulated mesh from a distance field network conditioned on the latent vector
     Inputs: 
@@ -85,7 +88,7 @@ def get_mesh_udf(decoder, latent_vec, N_MC, device, smooth_borders=False, level_
         indices: tensor representing the coordinates that need updating in the next iteration
     """
     ### 1: sample grid
-    df_values, normals = get_udf_normals_grid(decoder, latent_vec, N=N_MC, level_set=level_set )
+    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, alpha, beta, surf_thresh, grad_thresh, t_focus )
     df_values[df_values < 0] = 0
     ### 2: run our custom MC on it
     N = df_values.shape[0]
@@ -93,14 +96,19 @@ def get_mesh_udf(decoder, latent_vec, N_MC, device, smooth_borders=False, level_
     verts, faces, _, _ = udf_mc_lewiner(df_values.cpu().detach().numpy(),
                                         normals.cpu().detach().numpy(),
                                         spacing=[voxel_size] * 3)
+    
     verts = verts - 1 # since voxel_origin = [-1, -1, -1]
     ### 3: evaluate vertices DF, and remove the ones that are too far
     verts_torch = torch.from_numpy(verts).float().to(device)
     xyz = verts_torch
-    pred_df_verts = evaluate(decoder, xyz, latent_vec )
+    pred_df_verts = inverse( gt_mode, evaluate(decoder, xyz, latent_vec ), alpha, beta, min_step=0 )
 
     # Remove faces that have vertices far from the surface
-    filtered_faces = faces[np.max(pred_df_verts[faces], axis=1)[:,0] < voxel_size / 6]
+    filtered_faces = faces #faces[np.max(pred_df_verts[faces], axis=1)[:,0] < voxel_size / 6]
+    
+    if len(filtered_faces) == 0:
+        raise ValueError("Could not find surface in volume")
+    
     filtered_mesh = trimesh.Trimesh(verts, filtered_faces)
     ### 4: clean the mesh a bit
     # Remove NaNs, flat triangles, duplicate faces

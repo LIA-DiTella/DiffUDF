@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_curvs, loss_ndf
+from src.loss_functions import loss_siren, loss_cosine, loss_squared, loss_tanh
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
@@ -53,7 +53,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             #print(input_data.device)
             outputs = model( input_data )
             
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'])
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'], config["alpha"], config["beta"])
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -136,8 +136,7 @@ def setup_train( parameter_dict, cuda_device ):
         samplingPercentiles=parameter_dict["sampling_percentiles"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
         curvatureFractions=sampling_config["curvature_iteration_fractions"],
-        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"],
-        squared_dist=sampling_config.get('squared_dist', True)
+        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
     )
 
     network_params = parameter_dict["network"]
@@ -168,10 +167,12 @@ def setup_train( parameter_dict, cuda_device ):
 
     if parameter_dict["loss"] == "loss_siren":
         loss_fn = loss_siren
-    elif parameter_dict["loss"] == "loss_curvs":
-        loss_fn = loss_curvs
-    elif parameter_dict["loss"] == "loss_ndf":
-        loss_fn = loss_ndf
+    elif parameter_dict["loss"] == "loss_squared":
+        loss_fn = loss_squared
+    elif parameter_dict["loss"] == "loss_cosine":
+        loss_fn = loss_cosine
+    elif parameter_dict["loss"] == "loss_tanh":
+        loss_fn = loss_tanh
     else:
         raise ValueError("Loss unknown")
 
@@ -183,7 +184,9 @@ def setup_train( parameter_dict, cuda_device ):
         "log_path": full_path,
         "optimizer": optimizer,
         "loss_fn": loss_fn,
-        "loss_weights": parameter_dict["loss_weights"]
+        "loss_weights": parameter_dict["loss_weights"],
+        "alpha": parameter_dict["alpha"],
+        "beta": parameter_dict.get("beta", 1)
     }
 
     losses, best_weights = train_model(
@@ -208,7 +211,9 @@ def setup_train( parameter_dict, cuda_device ):
         'surf_thresh': 1e-3,
         'joint': 0,
         'width': 512,
-        'power': 2 if sampling_config.get('squared_dist', True) else 1
+        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+        'alpha': parameter_dict['alpha'],
+        'beta':parameter_dict['beta']
     }
 
     generate_df( model, parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)

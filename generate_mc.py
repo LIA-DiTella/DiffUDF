@@ -1,38 +1,41 @@
 from src.render_mc import get_mesh_udf
 from src.model import SIREN
 import torch
-import trimesh as tm
 import argparse
+import json
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser(description='Generate mesh through marching cubes from trained model')
-    parser.add_argument('model_path', metavar='path/to/pth', type=str,
-                        help='path to input model')
-    parser.add_argument('output_path', metavar='path/to/output/mesh.obj', type=str,
-                        help='path to output mesh')
-    parser.add_argument('-n', '--nsamples', type=int, default=128, help='number of samples')
-    parser.add_argument('-d', '--device', type=int, default=0, help='torch device')
-    parser.add_argument('-l', '--level_set', type=float, default=0, help='level set for surface extraction')
-    parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
+	parser = argparse.ArgumentParser(description='Generate mesh through marching cubes from trained model')
+	parser.add_argument('config_path', metavar='path/to/json', type=str,
+					help='path to render config')
 
-    args = parser.parse_args()
+	args = parser.parse_args()
 
-    device_torch = torch.device(args.device)
+	with open(args.config_path) as config_file:
+		config_dict = json.load(config_file)	
 
-    model = SIREN(
-            n_in_features= 3,
-            n_out_features=1,
-            hidden_layer_config=[256,256,256,256],
-            w0=args.weight0,
-            ww=None
-    )
+	device_torch = torch.device(config_dict["device"])
 
-    model.load_state_dict( torch.load(args.model_path, map_location=device_torch))
-    model.to(device_torch)
+	model = SIREN(
+		n_in_features= 3,
+		n_out_features=1,
+		hidden_layer_config=[256,256,256,256],
+		w0=config_dict["w0"],
+		ww=None
+	)
 
-    print('Generating mesh...')
-    vertices, faces, mesh = get_mesh_udf( model, torch.Tensor([[]]).to(device_torch), N_MC=args.nsamples, device=device_torch, level_set=args.level_set )
+	model.load_state_dict( torch.load(config_dict["model_path"], map_location=device_torch))
+	model.to(device_torch)
 
-    mesh.export(args.output_path)
-    print(f'Saved to {args.output_path}')
+	del config_dict['device']
+	print('Generating mesh...')
+	vertices, faces, mesh = get_mesh_udf( 
+		model, 
+		torch.Tensor([[]]).to(device_torch),
+		device=device_torch,
+		**config_dict
+	)
+
+	mesh.export(config_dict["output_path"])
+	print(f'Saved to {config_dict["output_path"]}')
 

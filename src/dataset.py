@@ -58,8 +58,7 @@ def sampleTrainingData(
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
         curvatureFractions: list = [],
         curvatureBins: list = [],
-        nearSurfaceStd: float=0.01,
-        squared_dist: bool=True
+        nearSurfaceStd: float=0.01
 ):
         ## samples on surface
     surfacePoints = torch.cat([
@@ -80,8 +79,6 @@ def sampleTrainingData(
     ), dtype=o3c.Dtype.Float32) for _ in range(len(meshes))]
 
     farDomainSDFs = torch.cat( [ torch.from_numpy(scene.compute_distance(points).numpy()) for scene, points in zip(scenes, farDomainPoints)], dim=0)
-    if squared_dist:
-        farDomainSDFs = torch.pow( farDomainSDFs, 2)
     farDomainPoints = torch.cat( [ torch.from_numpy(points.numpy()) for points in farDomainPoints ] )
 
         ## samples near surface
@@ -96,8 +93,6 @@ def sampleTrainingData(
     )[..., :3] + displacement.sample( torch.Size([samplesNearSurface]) ) for mesh, exceptions, bins in zip(meshes, onSurfaceExceptions, curvatureBins)]
     
     nearDomainSDFs = torch.cat( [ torch.from_numpy(scene.compute_distance(o3c.Tensor(points.numpy())).numpy()) for scene, points in zip(scenes, nearDomainPoints)], dim=0)
-    if squared_dist:
-        nearDomainSDFs = torch.pow( nearDomainSDFs, 2)
     nearDomainPoints = torch.cat(nearDomainPoints, dim=0)
 
     domainNormals = torch.zeros((samplesNearSurface + samplesFarSurface, 3))
@@ -189,13 +184,11 @@ class PointCloud(IterableDataset):
                  samplingPercentiles: list,
                  batchesPerEpoch : int,
                  curvatureFractions: list = [],
-                 curvaturePercentiles: list = [],
-                 squared_dist: bool=True):
+                 curvaturePercentiles: list = []):
         super().__init__()
 
         print(f"Loading meshes \"{jsonPath}\".")
         self.features, self.meshes, self.means, self.covs = readJson(jsonPath)
-        self.squared_dist=squared_dist
         
         self.batchSize = batchSize
         self.samplesOnSurface = int(self.batchSize * samplingPercentiles[0])
@@ -234,8 +227,7 @@ class PointCloud(IterableDataset):
                 curvatureFractions=self.curvatureFractions,
                 curvatureBins=self.curvatureBins,
                 distributions= [ MultivariateNormal( mean, cov ) if mean.shape[0] > 1 else Normal( mean, cov ) for mean, cov in zip(self.means, self.covs)],
-                onSurfaceExceptions= [[] for _ in range(len(self.meshes))],
-                squared_dist=self.squared_dist
+                onSurfaceExceptions= [[] for _ in range(len(self.meshes))]
             )
     
 if __name__ == "__main__":

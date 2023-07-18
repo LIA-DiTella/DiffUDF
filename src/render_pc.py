@@ -3,6 +3,9 @@ import numpy as np
 from src.model import SIREN
 from src.evaluate import evaluate
 from src.util import normalize
+import warnings
+import tqdm
+from src.inverses import inverse
 
 class Sampler:
     def __init__(self, n_in_features, hidden_layers=[256,256,256,256], w0=30, ww=None, checkpoint = None, device =0):
@@ -20,16 +23,14 @@ class Sampler:
 
         self.decoder.load_state_dict( torch.load(checkpoint, map_location=self.device))
 
-
-    def generate_point_cloud_squared(self, code, num_steps = 5, num_points = 20000, grad_thresh=0.001, surf_thresh = 0.01, max_iter=1000 ):
+    def generate_point_cloud(self, code, gt_mode, alpha, beta, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
 
         surface_points = np.zeros((0, 3))
         normals = np.zeros((0,3))
-        iterations = 0
-        while len(surface_points) < num_points and iterations < max_iter :
+        for iterations in tqdm.tqdm(range(max_iter), leave=False):
             samples = np.random.uniform(-1, 1, (num_points, 3) )
             gradients = np.zeros( (num_points, 3 ) )
             udfs = None
@@ -40,10 +41,11 @@ class Sampler:
                 else:
                     udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
 
-                steps = np.zeros_like(udfs)
-                np.sqrt(udfs, where=udfs > 0, out=steps)
-                samples -= gradients * steps
+                udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
+                steps = inverse(gt_mode, udfs, alpha, beta, min_step=0)
 
+                samples -= steps * normalize(gradients)
+        
             gradient_norms = np.sum( gradients ** 2, axis=1)
         
             mask_points_on_surf = np.logical_and( gradient_norms < grad_thresh, steps.flatten() < surf_thresh)
@@ -52,42 +54,15 @@ class Sampler:
                 samples_near_surf = samples[ mask_points_on_surf ]
                 surface_points = np.vstack((surface_points, samples_near_surf))
 
-                normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
+                if gt_mode == 'siren':
+                    normals = np.vstack( ( normals, normalize(gradients)[mask_points_on_surf]) )
+                else:
+                    normals = np.vstack( ( normals, [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians[mask_points_on_surf] ]) )
             
-            iterations += 1
+            if len(surface_points) >= num_points:
+                break
 
-        if iterations == max_iter:
-            print(f'Max iterations reached. Only sampled {len(surface_points)} surface points.')
-
-        return surface_points, normals
-    
-    def generate_point_cloud(self, code, num_steps = 5, num_points = 20000, surf_thresh = 0.01, max_iter=1000 ):
-
-        for param in self.decoder.parameters():
-            param.requires_grad = False
-
-        surface_points = np.zeros((0, 3))
-        normals = np.zeros((0,3))
-        iterations = 0
-        while len(surface_points) < num_points and iterations < max_iter :
-            samples = np.random.uniform(-1, 1, (num_points, 3) )
-            gradients = np.zeros( (num_points, 3 ) )
-            udfs = None
-            for step in range(num_steps):
-                udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
-
-                gradients_norm = normalize(gradients)
-                samples -= udfs * gradients_norm
-        
-            mask_points_on_surf = udfs.flatten() < surf_thresh
-
-            if np.sum(mask_points_on_surf) > 0:
-                surface_points = np.vstack((surface_points, samples[ mask_points_on_surf ]))
-                normals = np.vstack( ( normals, gradients_norm[mask_points_on_surf]) )
-            
-            iterations += 1
-
-        if iterations == max_iter:
-            print(f'Max iterations reached. Only sampled {len(surface_points)} surface points.')
+        if len(surface_points) < num_points:
+            warnings.warn( '\033[93m' + f'Max iterations reached. Only sampled {len(surface_points)} surface points.' + '\033[0m', RuntimeWarning )
 
         return surface_points, normals

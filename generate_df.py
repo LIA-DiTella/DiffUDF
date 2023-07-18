@@ -70,12 +70,22 @@ def generate_df( model, json_path, output_path, options ):
     gradients = np.zeros((SAMPLES, 3))
 
     pred_distances = evaluate( model, inputs, device=device_torch, gradients=gradients )
-    pred_grad_norm = np.sum( gradients ** 2, axis=1 ).reshape((SAMPLES, 1)) #np.linalg.norm(gradients, axis=1).reshape( (SAMPLES, 1))
+    pred_grad_norm = np.linalg.norm( gradients , axis=1 ).reshape((SAMPLES, 1))
     pred_grad_cm = ( normalize(gradients) + np.ones_like(gradients) ) / 2
 
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(mesh)
-    gt_distances = (scene.compute_distance( o3c.Tensor(samples, dtype=o3c.float32) ).numpy() ** options['power']).reshape((SAMPLES, 1))
+    gt_distances = (scene.compute_distance( o3c.Tensor(samples, dtype=o3c.float32) ).numpy()).reshape((SAMPLES, 1))
+    if options['gt_mode'] == 'squared':
+        gt_distances = options['alpha'] * (gt_distances ** 2)
+    elif options['gt_mode'] == 'cosine':
+        gt_distances = options['beta'] * ( 1 - np.cosine(options['alpha'] * gt_distances) )
+    elif options['gt_mode'] == 'tanh':
+        gt_distances = gt_distances * np.tanh( options['alpha'] * gt_distances)
+    elif options['gt_mode'] == 'siren':
+        gt_distances = gt_distances
+    else:
+        raise ValueError('gt_mode not valid')
 
     imagen_dist( output_path + 'pred_field.png',pred_distances / np.max(pred_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
     imagen_dist( output_path + 'gt_field.png',gt_distances / np.max(gt_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
@@ -97,7 +107,9 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--width', type=int, default=512, help='width of generated image')
     parser.add_argument('-t', '--surf_thresh', type=float, default=1e-3, help='on surface threshold')
     parser.add_argument('-j', '--joint', type=int, default=0, help="joint number to render")
-    parser.add_argument('-p', '--power', type=int, default=2, help='power of distance for ground truth')
+    parser.add_argument('--gt_mode', type=str, default='siren', help='ground truth function')
+    parser.add_argument('-a', '--alpha', type=float, default=1, help='alpha for ground truth')
+    parser.add_argument('-b', '--beta', type=float, default=1, help='beta for ground truth')
 
     args = parser.parse_args()
 
