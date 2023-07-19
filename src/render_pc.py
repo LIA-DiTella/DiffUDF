@@ -48,7 +48,8 @@ class Sampler:
         
             gradient_norms = np.sum( gradients ** 2, axis=1)
         
-            mask_points_on_surf = np.logical_and( gradient_norms < grad_thresh, steps.flatten() < surf_thresh)
+            mask_points_on_domain = np.prod( np.logical_and( samples >= -1, samples <= 1 ), axis=1 ).astype(np.bool8)
+            mask_points_on_surf = np.logical_and( gradient_norms < grad_thresh, steps.flatten() < surf_thresh) * mask_points_on_domain
 
             if np.sum(mask_points_on_surf) > 0:
                 samples_near_surf = samples[ mask_points_on_surf ]

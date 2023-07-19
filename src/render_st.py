@@ -107,7 +107,7 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
 
     for _ in range(refinement_steps):    
         udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
-        steps = inverse_function[gt_mode]( udfs, alpha, beta, min_step=0 )
+        steps = inverse( gt_mode, udfs, alpha, beta, min_step=0 )
         samples[hits] -= normalize(gradients) * steps
 
     hessians = np.zeros((amount_hits, 3, 3))

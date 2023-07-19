@@ -279,7 +279,7 @@ def save( path, graph, root, submeshes, scale, full=False ):
             i += 1
     return jsonPath
 
-def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6, full=False, subdiv_it=0, normalize=True ):
+def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5, beta=15, std=6, full=False, subdiv_it=0, not_normalize=True ):
     mesh = o3d.io.read_triangle_mesh( meshFile )
 
     if subdiv_it > 0:
@@ -291,7 +291,7 @@ def preprocessMesh( path, meshFile, skeletonFile, correspondanceFile, alpha=7.5,
 
     if full:
         scale = 1
-        if normalize:
+        if not not_normalize:
             scale = normalizeFullMesh(mesh)
 
         return save(path,None, None, mesh, scale, full=full)

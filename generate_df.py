@@ -77,12 +77,17 @@ def generate_df( model, json_path, output_path, options ):
     scene.add_triangles(mesh)
     gt_distances = (scene.compute_distance( o3c.Tensor(samples, dtype=o3c.float32) ).numpy()).reshape((SAMPLES, 1))
     if options['gt_mode'] == 'squared':
+        gt_grad_norm = 2 * options['alpha'] * gt_distances
         gt_distances = options['alpha'] * (gt_distances ** 2)
     elif options['gt_mode'] == 'cosine':
-        gt_distances = options['beta'] * ( 1 - np.cosine(options['alpha'] * gt_distances) )
+        gt_grad_norm = options['beta'] * options['alpha'] * np.sin( options['alpha'] * gt_distances )
+        gt_distances = options['beta'] * ( 1 - np.cos(options['alpha'] * gt_distances) )
     elif options['gt_mode'] == 'tanh':
-        gt_distances = gt_distances * np.tanh( options['alpha'] * gt_distances)
+        tanh = np.tanh( options['alpha'] * gt_distances ) 
+        gt_grad_norm = tanh + options['alpha'] * gt_distances * (1 - tanh ** 2)
+        gt_distances = gt_distances * tanh
     elif options['gt_mode'] == 'siren':
+        gt_grad_norm = np.where( gt_distances < options['surf_thresh'], np.zeros_like(gt_distances), np.ones_like(gt_distances))
         gt_distances = gt_distances
     else:
         raise ValueError('gt_mode not valid')
@@ -90,6 +95,7 @@ def generate_df( model, json_path, output_path, options ):
     imagen_dist( output_path + 'pred_field.png',pred_distances / np.max(pred_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
     imagen_dist( output_path + 'gt_field.png',gt_distances / np.max(gt_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
     imagen_dist( output_path + 'pred_grad_norm.png',pred_grad_norm / np.max(pred_grad_norm), np.linspace(0,1,10), color_map='turbo', eps=options['surf_thresh'] )
+    imagen_dist( output_path + 'gt_grad_norm.png',gt_grad_norm / np.max(gt_grad_norm), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
 
     im = Image.fromarray((pred_grad_cm.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
     im.save( output_path +'pred_grad.png', 'PNG')
