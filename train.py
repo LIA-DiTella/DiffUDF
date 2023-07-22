@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_cosine, loss_squared, loss_tanh
+from src.loss_functions import loss_siren, loss_squared, loss_tanh
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
@@ -53,7 +53,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             #print(input_data.device)
             outputs = model( input_data )
             
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'], config["alpha"], config["beta"])
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'], config["alpha"] )
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -169,8 +169,6 @@ def setup_train( parameter_dict, cuda_device ):
         loss_fn = loss_siren
     elif parameter_dict["loss"] == "loss_squared":
         loss_fn = loss_squared
-    elif parameter_dict["loss"] == "loss_cosine":
-        loss_fn = loss_cosine
     elif parameter_dict["loss"] == "loss_tanh":
         loss_fn = loss_tanh
     else:
@@ -185,8 +183,7 @@ def setup_train( parameter_dict, cuda_device ):
         "optimizer": optimizer,
         "loss_fn": loss_fn,
         "loss_weights": parameter_dict["loss_weights"],
-        "alpha": parameter_dict["alpha"],
-        "beta": parameter_dict.get("beta", 1)
+        "alpha": parameter_dict["alpha"]
     }
 
     losses, best_weights = train_model(
@@ -212,8 +209,7 @@ def setup_train( parameter_dict, cuda_device ):
         'joint': 0,
         'width': 512,
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-        'alpha': parameter_dict['alpha'],
-        'beta':parameter_dict['beta']
+        'alpha': parameter_dict['alpha']
     }
 
     generate_df( model, parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)

@@ -23,7 +23,6 @@ def generate_pc( config ):
                 num_steps=config['ref_steps'], 
                 surf_thresh=config['surf_thresh'],
                 alpha=config['alpha'],
-                beta=config['beta'],
                 gt_mode=config['gt_mode'],
                 max_iter=config['max_iter']
             )

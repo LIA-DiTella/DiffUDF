@@ -68,11 +68,9 @@ def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, re
     cmap = cm.get_cmap('turbo')
     return cmap( (np.clip( samples[:, 2].reshape((LADO, LADO)), -1, 1) + np.ones((LADO, LADO))) / 2 )[:,:,:3], values
 
-def create_projectional_image( model, sample_count, surface_eps, gradient_eps, alpha, beta, gt_mode, refinement_steps, origin, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
+def create_projectional_image( model, sample_count, surface_eps, gradient_eps, alpha, gt_mode, refinement_steps, directions, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     LADO = int(np.sqrt(sample_count))
-
-    directions = normalize( image - np.tile( origin, (image.shape[0],1) ))
 
     alive = np.ones(sample_count, dtype=np.bool8)
     hits = np.zeros(sample_count, dtype=np.bool8)
@@ -85,7 +83,7 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
 
         gradient_norms = np.sum( gradients ** 2, axis=-1)
 
-        steps = inverse( gt_mode, udfs, alpha, beta )
+        steps = inverse( gt_mode, udfs, alpha )
 
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
@@ -107,7 +105,7 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
 
     for _ in range(refinement_steps):    
         udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
-        steps = inverse( gt_mode, udfs, alpha, beta, min_step=0 )
+        steps = inverse( gt_mode, udfs, alpha, min_step=0 )
         samples[hits] -= normalize(gradients) * steps
 
     hessians = np.zeros((amount_hits, 3, 3))
@@ -136,11 +134,11 @@ def phong_shading(light_position, shininess, hits, samples, normals):
     specular = np.zeros_like(lambertian)
     specular[lambertian > 0] = np.expand_dims(np.power(spec_angles, shininess),1)[lambertian > 0]
 
-    colors = np.zeros_like(samples)
+    colors = np.ones_like(samples)
 
-    diffuse_color = np.array([0.3, 0.4, 0.7] )
+    diffuse_color = np.array([0.7, 0.7, 0.7] )
     specular_color = np.array([1, 1, 1])
-    ambient_color = np.array( [0.0, 0.1, 0.4])
+    ambient_color = np.array( [0.2, 0.2, 0.2])
     colors[hits] = np.clip( 
         np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + 
         np.tile( specular_color, (normals.shape[0],1)) * specular +

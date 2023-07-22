@@ -32,5 +32,8 @@ def load_experiment_parameters(parameters_path):
     return parameter_dict
 
 def normalize( arr ):
+    if len(arr.shape) == 1:
+        return arr / np.linalg.norm(arr)
+    
     norm_arr = np.linalg.norm( arr, axis=1 )
     return arr / np.vstack( [norm_arr, norm_arr, norm_arr] ).T

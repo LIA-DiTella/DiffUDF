@@ -30,6 +30,10 @@ def calculateCurvature( verts, faces ):
     d = pyMeshset.apply_filter("compute_scalar_by_discrete_curvature_per_vertex", curvaturetype='Mean Curvature')
     pyMeshset.compute_new_custom_scalar_attribute_per_vertex(name="v_curv", expr="q")
     v_curv = pyMesh.vertex_custom_scalar_attribute_array('v_curv')
+
+    if len(v_curv) != len(verts):
+        raise ValueError('The mesh has repeated vertices')
+    
     return np.clip( v_curv, a_min = -1 * float(d['90_percentile']), a_max = float(d['90_percentile']))
 
 def computeJoints( graph, alpha, beta ):
@@ -216,8 +220,8 @@ def save( path, graph, root, submeshes, scale, full=False ):
     
     jsonPath= path + '.json'
 
+    i = 1
     if not full:
-        i = 1
         stop = True
         while stop:
             try:

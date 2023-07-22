@@ -23,7 +23,7 @@ class Sampler:
 
         self.decoder.load_state_dict( torch.load(checkpoint, map_location=self.device))
 
-    def generate_point_cloud(self, code, gt_mode, alpha, beta, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
+    def generate_point_cloud(self, code, gt_mode, alpha, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
@@ -31,7 +31,13 @@ class Sampler:
         surface_points = np.zeros((0, 3))
         normals = np.zeros((0,3))
         for iterations in tqdm.tqdm(range(max_iter), leave=False):
-            samples = np.random.uniform(-1, 1, (num_points, 3) )
+
+            if len(surface_points) != 0:
+                samples = surface_points[ np.random.uniform(0, len(surface_points), num_points // 2).astype(np.uint32) ] + np.random.normal(0, 0.1, (num_points // 2, 3))
+                samples = np.concatenate( [samples, np.random.uniform(-1, 1, (num_points // 2, 3) )] )
+            else:
+                samples = np.random.uniform(-1, 1, (num_points, 3) )
+
             gradients = np.zeros( (num_points, 3 ) )
             udfs = None
             for step in range(num_steps):
@@ -42,7 +48,7 @@ class Sampler:
                     udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
 
                 udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
-                steps = inverse(gt_mode, udfs, alpha, beta, min_step=0)
+                steps = inverse(gt_mode, udfs, alpha, min_step=0)
 
                 samples -= steps * normalize(gradients)
         

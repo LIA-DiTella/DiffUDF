@@ -79,9 +79,6 @@ def generate_df( model, json_path, output_path, options ):
     if options['gt_mode'] == 'squared':
         gt_grad_norm = 2 * options['alpha'] * gt_distances
         gt_distances = options['alpha'] * (gt_distances ** 2)
-    elif options['gt_mode'] == 'cosine':
-        gt_grad_norm = options['beta'] * options['alpha'] * np.sin( options['alpha'] * gt_distances )
-        gt_distances = options['beta'] * ( 1 - np.cos(options['alpha'] * gt_distances) )
     elif options['gt_mode'] == 'tanh':
         tanh = np.tanh( options['alpha'] * gt_distances ) 
         gt_grad_norm = tanh + options['alpha'] * gt_distances * (1 - tanh ** 2)
@@ -115,7 +112,6 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--joint', type=int, default=0, help="joint number to render")
     parser.add_argument('--gt_mode', type=str, default='siren', help='ground truth function')
     parser.add_argument('-a', '--alpha', type=float, default=1, help='alpha for ground truth')
-    parser.add_argument('-b', '--beta', type=float, default=1, help='beta for ground truth')
 
     args = parser.parse_args()
 
