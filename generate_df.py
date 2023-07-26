@@ -6,40 +6,35 @@ import open3d.core as o3c
 import argparse
 from src.model import SIREN
 from src.evaluate import evaluate
-import matplotlib.cm as cm
 from PIL import Image
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 from src.util import normalize
 
-def imagen_dist( path, distancias, niveles, eps=0.0005, negs=False, color_map='br'):
-    def lines( distancias, niveles, eps ):
-        res = np.ones_like(distancias, dtype=np.bool8)
-        
-        for v in niveles:
-            res = np.logical_and( np.logical_not( np.logical_and( distancias > v - eps, distancias < v + eps)), res)
-
-        return res
-
-
-    mask = lines(distancias, niveles, eps)
-
-    if color_map == 'br':
-        cmap = cm.get_cmap('binary')
-        colores = np.expand_dims(cmap( distancias[mask] )[:, 0], axis=1)
-        colores = np.hstack( [np.ones_like(colores) - colores, np.zeros_like(colores), colores])
-    else:
-        cmap = cm.get_cmap(color_map)
-        colores = cmap( distancias[mask] )[:, :3]
-
-    imagen = np.ones((len(distancias),3))
-    imagen[mask.squeeze(1)] = colores
+def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='br', max_val=1.5):
+    masked_distancias = distancias
+    for v in niveles:
+        masked_distancias = np.ma.masked_inside( masked_distancias, v / max_val - eps, v / max_val + eps )
 
     if negs:
-        imagen[distancias.squeeze(1) < 0] = np.tile( np.eye( 1, 3, k=1) * 255, (np.sum(distancias < 0),1)).astype(np.uint32)
+        masked_distancias = np.ma.masked_less(masked_distancias, 0)
+    
+    pos = axis.imshow( masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)), cmap=color_map, interpolation='none', vmin=0, vmax=max_val )
+    axis.set_xticks([])
+    axis.set_yticks([])
 
-    im = Image.fromarray((imagen.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32), 3) * 255).astype(np.uint8))
-    im.save(path, 'PNG')
+    return pos
+    
+def generate_df( model_path, json_path, output_path, options ):
 
-def generate_df( model, json_path, output_path, options ):
+    model = SIREN(
+            n_in_features= 3,
+            n_out_features=1,
+            hidden_layer_config=[256,256,256,256],
+            w0=options['w0'],
+            ww=None
+    )
+    model.load_state_dict( torch.load(model_path))
 
     SAMPLES = options['width'] ** 2
     BORDES = [1, -1]
@@ -88,11 +83,27 @@ def generate_df( model, json_path, output_path, options ):
         gt_distances = gt_distances
     else:
         raise ValueError('gt_mode not valid')
+    
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams.update({'font.size': 16})
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10,9), dpi=500)
 
-    imagen_dist( output_path + 'pred_field.png',pred_distances / np.max(pred_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
-    imagen_dist( output_path + 'gt_field.png',gt_distances / np.max(gt_distances), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
-    imagen_dist( output_path + 'pred_grad_norm.png',pred_grad_norm / np.max(pred_grad_norm), np.linspace(0,1,10), color_map='turbo', eps=options['surf_thresh'] )
-    imagen_dist( output_path + 'gt_grad_norm.png',gt_grad_norm / np.max(gt_grad_norm), np.linspace(0,1,10), negs=True, color_map='turbo', eps=options['surf_thresh'])
+    #max_val = np.max( np.concatenate([gt_distances,pred_distances,gt_grad_norm,pred_grad_norm]))
+
+    imagen_dist( axes.flat[0] ,np.clip(gt_distances, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
+    imagen_dist( axes.flat[1] ,np.clip(pred_distances,a_min=None, a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
+    imagen_dist( axes.flat[2] ,np.clip(gt_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
+    pos = imagen_dist( axes.flat[3] ,np.clip(pred_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
+
+    axes.flat[0].set_title(r'Ground truth slices')
+    axes.flat[1].set_title(r'Predicted value slices')
+    axes.flat[0].set_ylabel(r'$f$', rotation=0, labelpad=12, size='large')
+    axes.flat[2].set_ylabel(r'$\left \| \nabla f \right \|$', rotation=0, labelpad=24, size='large')
+
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    fig.colorbar(pos, cax=cbar_ax)
+    fig.savefig(output_path + 'distance_fields.png')
 
     im = Image.fromarray((pred_grad_cm.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
     im.save( output_path +'pred_grad.png', 'PNG')
@@ -115,14 +126,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    model = SIREN(
-            n_in_features= 3,
-            n_out_features=1,
-            hidden_layer_config=[256,256,256,256],
-            w0=args.weight0,
-            ww=None
-    )
-    model.load_state_dict( torch.load(args.model_path))
-
-    generate_df(model, args.json_path, args.output_path, vars(args))
+    generate_df(args.model_path, args.json_path, args.output_path, vars(args))
 

@@ -45,34 +45,19 @@ def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
            torch.exp(-radius * torch.abs(pred_sdf))
         )
 
-def total_variation_constraint( gradient, coords, alpha, udf ):
-    return (torch.linalg.norm( dif.gradient( torch.sum( gradient ** 2, dim=-1), coords ), dim=-1 ) - 8 * (alpha ** 2) * udf.squeeze(-1) ) ** 2
+def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha ):
+    surface_points_mask = torch.flatten(udf == 0)
 
-
-def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha, gt_curvatures ):
     hessians, status_hess = dif.hessian(pred_sdf, coords)
 
     if status_hess == -1:
         print('STATUS: -1')
         return torch.zeros_like(udf)
-
-    eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
-
-    #shape_op, status_jac = dif.jacobian(eigenvectors[..., 2] * torch.sign(F.cosine_similarity(eigenvectors[...,2], gt_vectors, dim=-1)).unsqueeze(-1), coords)
-    divergence = dif.divergence( torch.bmm( hessians[0,...], gt_vectors[0,...].unsqueeze(-1)), coords)
-
+    
     return torch.where(
-        udf == 0,
-        1 - torch.abs(F.cosine_similarity(gt_vectors, eigenvectors[..., 2], dim=-1)).unsqueeze(-1),
-        torch.zeros_like(udf)
-    ),torch.where(
-        udf.squeeze(-1) == 0,
-        torch.abs( eigenvalues[..., 2] - alpha * 2) + torch.abs( eigenvalues[..., 0] ) + torch.abs( eigenvalues[..., 1] ),
-        torch.zeros_like(udf.squeeze(-1))
-    ),torch.where(
-        udf == 0,
-        torch.abs(divergence - 2*gt_curvatures),
-        torch.zeros_like(udf)
+        surface_points_mask,
+        torch.abs( torch.flatten(torch.bmm( gt_vectors[0,...].unsqueeze(1), torch.bmm( hessians[0,...], gt_vectors[0,...].unsqueeze(-1)))) - 2*alpha ),
+        torch.zeros_like(surface_points_mask)
     )
 
 def loss_siren(model_output, gt, features, loss_weights, alpha=None ):
@@ -104,27 +89,19 @@ def loss_squared( model_output, gt, features, loss_weights, alpha  ):
     gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
     
     gt_udf = alpha * (udf ** 2)
-    principal_direction_constraint, principal_curvature_constraint = principal_curvature_alignment(udf, gt_normals, pred_sdf, coords, alpha)
+    principal_direction_constraint = principal_curvature_alignment(udf, gt_normals, pred_sdf, coords, alpha )
     grad_constraint = torch.abs(torch.linalg.norm(gradient, dim=-1) - 2 * alpha * udf.squeeze(-1))
 
     return {
         'sdf_on_surf': sdf_constraint_on_surf( gt_udf, pred_sdf).mean() * loss_weights[0],
         'sdf_off_surf': sdf_constraint_off_surf( gt_udf, pred_sdf).mean() * loss_weights[1],
         'hessian_constraint': principal_direction_constraint.mean() * loss_weights[2],
-        'grad_constraint': grad_constraint.mean() * loss_weights[3],
-        'curvature_constraint': principal_curvature_constraint.mean() * loss_weights[4],
-        'total_variation': 
-            torch.where( 
-                udf.squeeze(-1) != 0, 
-                torch.abs( torch.linalg.norm( dif.gradient( torch.linalg.norm( gradient, dim=-1), coords ), dim=-1 ) - 2 * alpha), 
-                torch.zeros_like(udf).squeeze(-1)
-            ).mean() * loss_weights[5]
+        'grad_constraint': grad_constraint.mean() * loss_weights[3]
     }
 
 def loss_tanh( model_output, gt, features, loss_weights, alpha ):
     udf = gt['sdf']
     gt_normals = gt['normals']
-    gt_curvatures = gt['curvature']
 
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
@@ -133,7 +110,7 @@ def loss_tanh( model_output, gt, features, loss_weights, alpha ):
     gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
     
     gt_udf = udf * torch.tanh( alpha * udf )
-    principal_direction_constraint, principal_curvature_constraint, surface_curvature_constraint = principal_curvature_alignment( udf, gt_normals, pred_sdf, coords, alpha, gt_curvatures )
+    principal_direction_constraint = principal_curvature_alignment( udf, gt_normals, pred_sdf, coords, alpha )
     tan = torch.tanh( alpha * udf )
     grad_constraint = torch.abs( torch.linalg.norm(gradient, dim=-1) - torch.abs( tan + udf * alpha * (1 - tan ** 2) ).squeeze(-1) )
 
@@ -141,12 +118,5 @@ def loss_tanh( model_output, gt, features, loss_weights, alpha ):
         'sdf_on_surf': sdf_constraint_on_surf( gt_udf, pred_sdf).mean() * loss_weights[0],
         'sdf_off_surf': sdf_constraint_off_surf( gt_udf, pred_sdf).mean() * loss_weights[1],
         'hessian_constraint': principal_direction_constraint.mean() * loss_weights[2],
-        'grad_constraint': grad_constraint.mean() * loss_weights[3],
-        #'curvature_constraint': principal_curvature_constraint.mean() * loss_weights[4],
-        #'total_variation': 
-        #    torch.where( 
-        #        udf.squeeze(-1) != 0, 
-        #        torch.linalg.norm( dif.gradient( torch.linalg.norm( gradient, dim=-1), coords ), dim=-1 ), 
-        #        torch.zeros_like(udf).squeeze(-1)).mean() * loss_weights[5],
-        'surface_curvature_constraint': surface_curvature_constraint.mean() * loss_weights[6]
+        'grad_constraint': grad_constraint.mean() * loss_weights[3]
     }

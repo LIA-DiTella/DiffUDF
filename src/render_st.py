@@ -4,6 +4,9 @@ from src.util import normalize
 import torch
 from src.evaluate import evaluate
 from src.inverses import inverse
+import open3d as o3d
+import open3d.core as o3c
+import json
 
 def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, refinement_steps ):
     device_torch = torch.device(0)
@@ -112,7 +115,7 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
     udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians, device=device)
 
     if gt_mode == 'siren':
-        normals = gradients
+        normals = normalize(gradients)
     else:
         normals = np.array( [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians ] )
         # podria ser que las normales apunten para el otro lado. las tengo que invertir si  < direccion, normal > = cos(tita) > 0
@@ -145,3 +148,49 @@ def phong_shading(light_position, shininess, hits, samples, normals):
         ambient_color , 0, 1)
     
     return colors
+
+def create_projectional_image_gt( mesh_file, sample_count, directions, image, light_position, shininess=40, surface_eps=0.001, max_iterations=30 ):
+    # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
+    LADO = int(np.sqrt(sample_count))
+
+
+    device = o3c.Device('CPU:0')
+
+    with open(mesh_file) as jsonFile:
+        skel = json.load(jsonFile)
+        mesh = o3d.t.geometry.TriangleMesh(device)
+        mesh.vertex["positions"] = o3c.Tensor(np.array(skel['joints'][0]['vertices']), dtype=o3c.float32)
+        mesh.triangle["indices"] = o3c.Tensor(np.array(skel['joints'][0]['triangles']), dtype=o3c.int32)
+
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(mesh)
+
+    alive = np.ones(sample_count, dtype=np.bool8)
+    hits = np.zeros(sample_count, dtype=np.bool8)
+    samples = image.copy()
+    iteration = 0
+    while np.sum(alive) > 0 and iteration < max_iterations:
+        udfs = np.expand_dims(scene.compute_distance( o3c.Tensor(samples[alive], dtype=o3c.float32) ).numpy(), -1)
+
+        samples[alive] += directions[alive] * np.hstack([udfs, udfs, udfs])
+
+        mask = udfs.squeeze(-1) < surface_eps
+        hits[alive] += mask
+        alive[alive] *= np.logical_not(mask)
+
+        alive *= np.logical_and( np.all( samples > -1.3, axis=1 ), np.all( samples < 1.3, axis=1 ) )
+        
+        iteration += 1
+    
+    if np.sum(hits) == 0:
+        raise ValueError(f"Ray tracing did not converge in {max_iterations} iterations to any point at distance {surface_eps} or lower from surface.")
+
+    grad_eps = 0.0001
+    normals = normalize( np.vstack( [
+        (scene.compute_signed_distance( o3c.Tensor(samples[hits] + np.tile( np.eye(1, 3, i), (np.sum(hits),1)) * grad_eps, dtype=o3c.float32) ).numpy() -
+        scene.compute_signed_distance( o3c.Tensor(samples[hits] - np.tile( np.eye(1, 3, i), (np.sum(hits),1)) * grad_eps, dtype=o3c.float32) ).numpy()) / (2*grad_eps)
+        for i in range(3)]).T )
+    
+    normals *= np.where( np.expand_dims(np.sum(normals * directions[hits], axis=1),1) > 0, -1 * np.ones( (normals.shape[0], 1)), np.ones( (normals.shape[0], 1)) )
+
+    return phong_shading(light_position, shininess, hits, samples, normals).reshape((LADO,LADO,3))  #final_samples, np.linalg.norm( gradients, axis=1)

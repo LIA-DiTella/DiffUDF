@@ -16,7 +16,9 @@ from src.loss_functions import loss_siren, loss_squared, loss_tanh
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
-
+from generate_pc import generate_pc
+from generate_st import generate_st
+import open3d as o3d
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
     epochs = config["epochs"]
@@ -208,11 +210,56 @@ def setup_train( parameter_dict, cuda_device ):
         'surf_thresh': 1e-3,
         'joint': 0,
         'width': 512,
+        'w0': network_params["w0"],
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
         'alpha': parameter_dict['alpha']
     }
 
-    generate_df( model, parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
+    generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
+
+    print('Generating point cloud')
+    point_cloud_params = parameter_dict['point_cloud']
+    pc_options = {
+        'json_path': parameter_dict['dataset'],
+        'model_path': osp.join(full_path, "models", "model_best.pth"),
+        'device': cuda_device,
+        'w0': network_params["w0"],
+        'ref_steps': 3,
+        'surf_thresh': point_cloud_params['surf_thresh'],
+        'grad_thresh': point_cloud_params['grad_thresh'],
+        'nsamples': point_cloud_params['nsamples'],
+        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+        'alpha': parameter_dict['alpha'],
+        'max_iter': 10
+    }
+
+    for generated_points, generated_normals in generate_pc(pc_options):
+        p_cloud = o3d.geometry.PointCloud( )
+        p_cloud.points = o3d.utility.Vector3dVector(generated_points)
+        p_cloud.normals = o3d.utility.Vector3dVector(generated_normals)
+        o3d.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), p_cloud)
+
+    print('Generating sphere tracing render')
+    sphere_tracing_params = parameter_dict['sphere_tracing']
+    st_options = {
+        'model_path': osp.join(full_path, "models", "model_best.pth"),
+        'output_path': osp.join(full_path, "reconstructions", "sphere_tracing.png"),
+        'device': cuda_device,
+        'w0': network_params["w0"],
+        'layers': network_params["hidden_layer_nodes"],
+        'ref_steps': 2,
+        'alpha': parameter_dict['alpha'],
+        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+        'max_iter': 100,
+        "width": sphere_tracing_params["width"],
+        "surf_thresh": sphere_tracing_params["surf_thresh"],
+        "grad_thresh": sphere_tracing_params["grad_thresh"],
+        "origin": sphere_tracing_params["origin"],
+        "distance": sphere_tracing_params["distance"],
+        "light_pos": sphere_tracing_params["light_pos"]
+    }
+
+    generate_st( st_options )
 
 
 if __name__ == "__main__":

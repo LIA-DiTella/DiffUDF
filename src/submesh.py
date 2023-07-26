@@ -191,10 +191,10 @@ def normalizeMeshes( graphOfJoints, submeshes ):
         max_coord = max( np.max( np.abs( np.asarray(submesh.vertices))) , max_coord )
 
     for joint, (submesh, curv) in submeshes.items():
-        S = np.block([ [np.eye(3,3) * (1 / max_coord), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
+        S = np.block([ [np.eye(3,3) * (1 / (max_coord + max_coord*0.2)), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
         submesh.transform( S )
 
-    return 1 / max_coord
+    return 1 / (max_coord + max_coord * 0.2)
 
 def normalizeFullMesh( mesh ):
     T = np.block( [ [np.eye(3,3), -1 * mesh.get_center().reshape((3,1))], [np.eye(1,4,k=3)]])
@@ -203,10 +203,10 @@ def normalizeFullMesh( mesh ):
 
     max_coord = np.max( np.abs( np.asarray(mesh.vertices)))
 
-    S = np.block([ [np.eye(3,3) * (1 / max_coord), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
+    S = np.block([ [np.eye(3,3) * (1 / (max_coord + max_coord * 0.2)), np.zeros((3,1))], [np.eye(1,4,k=3)] ]) 
     mesh.transform( S )
 
-    return 1 / max_coord
+    return 1 / (max_coord + max_coord * 0.2)
 
 def save( path, graph, root, submeshes, scale, full=False ):
 

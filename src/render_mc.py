@@ -7,12 +7,17 @@ import sys
 from collections import defaultdict
 from src.evaluate import evaluate
 from src.inverses import inverse
+import numpy as np
+from skimage.measure import marching_cubes
+import torch
 
 import sys
 sys.path.append('src/marching_cubes')
 from _marching_cubes_lewiner import udf_mc_lewiner
 
-def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha, surf_thresh, grad_thresh, t_focus ):
+# Paper MeshUDF
+
+def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     """
     Fills a dense N*N*N regular grid by querying the decoder network
     Inputs: 
@@ -50,10 +55,9 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha, surf_thresh, gr
     pred_df =  evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients )
     udfs = torch.from_numpy( inverse( gt_mode, pred_df, alpha, min_step=0 ) ).float().squeeze(1)
     gradients_torch = torch.from_numpy( gradients )
-    gradient_norms = torch.sum(gradients_torch ** 2, dim=1)
-
-    samples[..., 3] = torch.clip( t_focus * (udfs - surf_thresh) + (1- t_focus) * (gradient_norms - grad_thresh) , min=0 )
-    samples[..., 4:] = - F.normalize( gradients_torch, dim= 1)
+    
+    samples[..., 3] = udfs
+    samples[..., 4:] = F.normalize( gradients_torch, dim= 1)
 
     # Separate values in DF / gradients
     df_values = samples[:, 3]
@@ -63,7 +67,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha, surf_thresh, gr
 
     return df_values, vecs
 
-def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, surf_thresh, grad_thresh, t_focus, smooth_borders=False, **kwargs ):
+def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_borders=False, **kwargs ):
     """
     Computes a triangulated mesh from a distance field network conditioned on the latent vector
     Inputs: 
@@ -87,7 +91,7 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, surf_thr
         indices: tensor representing the coordinates that need updating in the next iteration
     """
     ### 1: sample grid
-    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, alpha, surf_thresh, grad_thresh, t_focus )
+    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, alpha )
     df_values[df_values < 0] = 0
     ### 2: run our custom MC on it
     N = df_values.shape[0]
@@ -160,3 +164,154 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, surf_thr
             filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
 
     return torch.tensor(filtered_mesh.vertices).float().cuda(), torch.tensor(filtered_mesh.faces).long().cuda(), filtered_mesh
+
+
+def gen_sdf_coordinate_grid(N: int, voxel_size: float,
+                           device: torch.device,
+                           voxel_origin: list = [-1, -1, -1]) -> torch.Tensor:
+    """Creates the coordinate grid for inference and marching cubes run.
+
+    Parameters
+    ----------
+    N: int
+        Number of elements in each dimension. Total grid size will be N ** 3
+
+    voxel_size: number
+        Size of each voxel
+
+    t: float, optional
+        Reconstruction time. Required for space-time models. Default value is
+        None, meaning that time is not a model parameter
+
+    device: string, optional
+        Device to store tensors. Default is CPU
+
+    voxel_origin: list[number, number, number], optional
+        Origin coordinates of the volume. Must be the (bottom, left, down)
+        coordinates. Default is [-1, -1, -1]
+
+    Returns
+    -------
+    samples: torch.Tensor
+        A (N**3, 3) shaped tensor with samples' coordinates. If t is not None,
+        then the return tensor is has 4 columns instead of 3, with the last
+        column equalling `t`.
+    """
+    overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
+
+    sdf_coord = 3
+
+    # (x,y,z,sdf) if we are not considering time
+    # (x,y,z,t,sdf) otherwise
+    samples = torch.zeros(N ** 3, sdf_coord + 1, device=device,
+                          requires_grad=False)
+
+    # transform first 3 columns
+    # to be the x, y, z index
+    samples[:, 2] = overall_index % N
+    samples[:, 1] = (overall_index.long() / N) % N
+    samples[:, 0] = ((overall_index.long() / N) / N) % N
+
+    # transform first 3 columns
+    # to be the x, y, z coordinate
+    samples[:, 0] = (samples[:, 0] * voxel_size) + voxel_origin[2]
+    samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
+    samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
+
+    return samples
+
+
+def get_mesh_sdf(
+    decoder,
+    N=256,
+    device=torch.device(0),
+    max_batch=64 ** 3,
+    offset=None,
+    scale=None,
+):
+    decoder.eval()
+    # NOTE: the voxel_origin is actually the (bottom, left, down) corner, not
+    # the middle
+    voxel_origin = [-1, -1, -1]
+    voxel_size = 2.0 / (N - 1)
+
+    samples = gen_sdf_coordinate_grid(N, voxel_size, device=device)
+
+    sdf_coord = 3
+
+    num_samples = N ** 3
+    head = 0
+
+    while head < num_samples:
+        # print(head)
+        sample_subset = samples[head:min(head + max_batch, num_samples), 0:sdf_coord]
+
+        samples[head:min(head + max_batch, num_samples), sdf_coord] = (
+            decoder(sample_subset)["model_out"]
+            .squeeze()
+            .detach()
+            .cpu()
+        )
+        head += max_batch
+
+    sdf_values = samples[:, sdf_coord]
+    sdf_values = sdf_values.reshape(N, N, N)
+
+    verts, faces, normals, values = convert_sdf_samples_to_ply(
+        sdf_values.data.cpu(),
+        voxel_origin,
+        voxel_size,
+        offset,
+        scale,
+    )
+
+    return verts, faces, trimesh.Trimesh(vertices=verts, faces=faces, vertex_normals=normals)
+
+def convert_sdf_samples_to_ply(
+    pytorch_3d_sdf_tensor,
+    voxel_grid_origin,
+    voxel_size,
+    offset=None,
+    scale=None,
+):
+    """
+    Convert sdf samples to .ply
+
+    :param pytorch_3d_sdf_tensor: a torch.FloatTensor of shape (n,n,n)
+    :voxel_grid_origin: a list of three floats: the bottom, left, down origin of the voxel grid
+    :voxel_size: float, the size of the voxels
+    :ply_filename_out: string, path of the filename to save to
+
+    This function adapted from: https://github.com/RobotLocomotion/spartan
+    """
+    if isinstance(pytorch_3d_sdf_tensor, torch.Tensor):
+        numpy_3d_sdf_tensor = pytorch_3d_sdf_tensor.numpy()
+    else:
+        numpy_3d_sdf_tensor = pytorch_3d_sdf_tensor
+
+    verts, faces, normals, values = np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)), np.zeros(0)
+
+    # Check if the cubes contains the zero-level set
+    level = 0.0
+    if level < numpy_3d_sdf_tensor.min() or level > numpy_3d_sdf_tensor.max():
+        print(f"Surface level must be within volume data range.")
+    else:
+        verts, faces, normals, values = marching_cubes(
+            numpy_3d_sdf_tensor, level, spacing=[voxel_size] * 3
+        )
+
+    # transform from voxel coordinates to camera coordinates
+    # note x and y are flipped in the output of marching_cubes
+    mesh_points = np.zeros_like(verts)
+    mesh_points[:, 0] = voxel_grid_origin[0] + verts[:, 0]
+    mesh_points[:, 1] = voxel_grid_origin[1] + verts[:, 1]
+    mesh_points[:, 2] = voxel_grid_origin[2] + verts[:, 2]
+
+    # apply additional offset and scale
+    if scale is not None:
+        mesh_points = mesh_points / scale
+    if offset is not None:
+        mesh_points = mesh_points - offset
+
+    return mesh_points, faces, normals, values
+
