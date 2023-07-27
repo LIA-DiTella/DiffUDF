@@ -1,0 +1,40 @@
+{
+    "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
+    "num_epochs": 300,
+    "sampling_opts": {
+        "curvature_iteration_fractions": [0.2, 0.4, 0.4],
+        "curvature_percentile_thresholds": [0.6, 0.85]
+    },
+    "dataset": "data/segmented/pruebas/sedan.json",
+    "batch_size": 20000,
+    "sampling_percentiles": [0.5, 0.5, 0.0],
+    "batches_per_epoch": 1,
+    "checkpoint_path": "results/sedan",
+    "experiment_name": "tanh",
+    "epochs_to_checkpoint": 400,
+    "loss": "loss_tanh",
+    "loss_weights": [ 1e3, 1e3, 1e1, 1e3 ],
+    "alpha": 10,
+    "optimizer": {
+        "type": "adam",
+        "lr": 1e-4
+    },
+    "network": {
+        "hidden_layer_nodes": [256,256,256,256],
+        "w0": 60,
+        "pretrained_dict": "results/sphere/tanh/models/model_best.pth"
+    },
+    "point_cloud":{
+        "surf_thresh": 0.007,
+        "grad_thresh": 0.007,
+        "nsamples": 200000
+    },
+    "sphere_tracing": {
+        "width": 512,
+        "surf_thresh": 0.04,
+        "grad_thresh": 0.04,
+        "origin": [1.7,0,1.7],
+        "distance": 1,
+        "light_pos": [1,1,2]
+    }
+}

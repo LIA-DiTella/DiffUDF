@@ -1,0 +1,17 @@
+{
+    "model_path": "results/sedan/siren/models/model_best.pth",
+    "output_path": "results/sedan/siren/reconstructions/sphere_tracing_inside.png",
+    "device": 0,
+    "w0": 60,
+    "layers": [256,256,256,256],
+    "width": 512,
+    "surf_thresh": 0.015,
+    "grad_thresh": 3,
+    "ref_steps": 2,
+    "alpha": 10,
+    "gt_mode": "siren",
+    "max_iter": 100,
+    "origin": [2,0,0],
+    "distance": 2,
+    "light_pos": [2,1,0]
+}

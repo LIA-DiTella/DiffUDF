@@ -1,0 +1,15 @@
+{
+    "json_path": "data/segmented/pruebas/happy_buddha.json",
+    "model_path": "results/happy_buddha/tanh/models/model_best.pth",
+    "output_path": "results/happy_buddha/tanh/reconstructions/point_cloud.ply",
+    "device": 0,
+    "w0": 60,
+    "nsamples": 1000000,
+    "surf_thresh": 0.007,
+    "grad_thresh": 0.007,
+    "ref_steps": 3,
+    "alpha": 10,
+    "beta": 1,
+    "gt_mode": "tanh",
+    "max_iter": 100
+}

@@ -1,0 +1,14 @@
+{
+    "json_path": "data/segmented/sphere.json",
+    "model_path": "results/sphere/squared/models/model_best.pth",
+    "output_path": "results/sphere/squared/reconstructions/point_cloud.ply",
+    "device": 0,
+    "w0": 60,
+    "nsamples": 200000,
+    "surf_thresh": 0.01,
+    "grad_thresh": 0.01,
+    "ref_steps": 5,
+    "alpha": 6,
+    "gt_mode": "squared",
+    "max_iter": 10
+}

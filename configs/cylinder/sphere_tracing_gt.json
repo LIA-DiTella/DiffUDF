@@ -1,0 +1,12 @@
+{
+    "json_path": "data/segmented/pruebas/cylinder.json",
+    "output_path": "results/cylinder/gt_sphere_tracing.png",
+    "device": 0,
+    "width": 1024,
+    "surf_thresh": 0.00001,
+    "gt_mode": "gt",
+    "max_iter": 100,
+    "origin": [1.7,1.7,-1.7],
+    "distance": 1,
+    "light_pos": [1,0,-2]
+}

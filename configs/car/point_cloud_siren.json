@@ -1,0 +1,15 @@
+{
+    "json_path": "data/segmented/pruebas/car.json",
+    "model_path": "results/car/siren/models/model_best.pth",
+    "output_path": "results/car/siren/reconstructions/point_cloud.ply",
+    "device": 0,
+    "w0": 60,
+    "nsamples": 200000,
+    "surf_thresh": 0.09,
+    "grad_thresh": 3,
+    "ref_steps": 3,
+    "alpha": 6,
+    "beta": 1,
+    "gt_mode": "siren",
+    "max_iter": 10
+}

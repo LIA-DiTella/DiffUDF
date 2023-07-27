@@ -1,0 +1,17 @@
+{
+    "model_path": "results/car/tanh/models/model_best.pth",
+    "output_path": "results/car/tanh/reconstructions/sphere_tracing.png",
+    "device": 0,
+    "w0": 60,
+    "layers": [256,256,256,256],
+    "width": 512,
+    "surf_thresh": 0.07,
+    "grad_thresh": 0.07,
+    "ref_steps": 2,
+    "alpha": 10,
+    "gt_mode": "tanh",
+    "max_iter": 100,
+    "origin": [1.7,0,1.7],
+    "distance": 1,
+    "light_pos": [1,1,2]
+}

@@ -1,0 +1,12 @@
+{
+    "json_path": "data/segmented/pruebas/car.json",
+    "output_path": "results/car/gt_sphere_tracing.png",
+    "device": 0,
+    "width": 512,
+    "surf_thresh": 0.01,
+    "gt_mode": "gt",
+    "max_iter": 100,
+    "origin": [1.7,0,1.7],
+    "distance": 1,
+    "light_pos": [1,1,2]
+}

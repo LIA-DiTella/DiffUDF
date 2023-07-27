@@ -6,7 +6,6 @@ results/
 *.ply
 *.off
 .vscode/
-*.json
 *.png
 .ipynb_checkpoints
 *.ipynb

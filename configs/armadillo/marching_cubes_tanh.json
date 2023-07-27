@@ -1,0 +1,9 @@
+{
+    "model_path": "results/armadillo/tanh_new/models/model_best.pth",
+    "output_path": "results/armadillo/tanh_new/reconstructions/mc_mesh.obj",
+    "device": 0,
+    "w0": 60,
+    "nsamples": 512,
+    "alpha": 10,
+    "gt_mode": "tanh"
+}

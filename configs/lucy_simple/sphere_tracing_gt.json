@@ -1,0 +1,12 @@
+{
+    "json_path": "data/segmented/pruebas/lucy_simple.json",
+    "output_path": "results/lucy_simple/gt_sphere_tracing.png",
+    "device": 0,
+    "width": 1024,
+    "surf_thresh": 0.1,
+    "gt_mode": "gt",
+    "max_iter": 100,
+    "origin": [-1.2,1.2,1.2],
+    "distance": 1,
+    "light_pos": [-1,1,2]
+}

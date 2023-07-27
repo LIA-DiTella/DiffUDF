@@ -1,0 +1,14 @@
+{
+    "json_path": "data/segmented/pruebas/armadillo.json",
+    "model_path": "results/armadillo/siren/models/model_best.pth",
+    "output_path": "results/armadillo/siren/reconstructions/point_cloud.ply",
+    "device": 0,
+    "w0": 60,
+    "nsamples": 200000,
+    "surf_thresh": 0.1,
+    "grad_thresh": 0.1,
+    "ref_steps": 3,
+    "alpha": 6,
+    "gt_mode": "siren",
+    "max_iter": 10
+}
