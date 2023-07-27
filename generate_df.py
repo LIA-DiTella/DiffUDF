@@ -25,13 +25,13 @@ def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='b
 
     return pos
     
-def generate_df( model_path, json_path, output_path, options ):
+def generate_df( model_path, mesh_path, output_path, options ):
 
     model = SIREN(
             n_in_features= 3,
             n_out_features=1,
             hidden_layer_config=[256,256,256,256],
-            w0=options['w0'],
+            w0=options['weight0'],
             ww=None
     )
     model.load_state_dict( torch.load(model_path))
@@ -41,16 +41,10 @@ def generate_df( model_path, json_path, output_path, options ):
     EJEPLANO = [0,2,1]
     OFFSETPLANO = 0.0
 
-    device = o3c.Device('CPU:0')
     device_torch = torch.device(options['device'])
     model.to(device_torch)
 
-    with open(json_path) as jsonFile:
-        skel = json.load(jsonFile)
-        code = np.tile( skel['joints'][options['joint']]['mean'], (SAMPLES, 1))
-        mesh = o3d.t.geometry.TriangleMesh(device)
-        mesh.vertex["positions"] = o3c.Tensor(np.array(skel['joints'][options['joint']]['vertices']), dtype=o3c.float32)
-        mesh.triangle["indices"] = o3c.Tensor(np.array(skel['joints'][options['joint']]['triangles']), dtype=o3c.int32)
+    mesh = o3d.t.io.read_triangle_mesh(mesh_path)
 
     ranges = np.linspace(BORDES[0], BORDES[1], options['width'])
     i_1, i_2 = np.meshgrid( ranges, ranges )
@@ -61,10 +55,9 @@ def generate_df( model_path, json_path, output_path, options ):
                         , axis=2 ),
             axis=0)
 
-    inputs = np.hstack([code, samples])
     gradients = np.zeros((SAMPLES, 3))
 
-    pred_distances = evaluate( model, inputs, device=device_torch, gradients=gradients )
+    pred_distances = evaluate( model, samples, device=device_torch, gradients=gradients )
     pred_grad_norm = np.linalg.norm( gradients , axis=1 ).reshape((SAMPLES, 1))
     pred_grad_cm = ( normalize(gradients) + np.ones_like(gradients) ) / 2
 
@@ -110,8 +103,8 @@ def generate_df( model_path, json_path, output_path, options ):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate dense point cloud from trained model')
-    parser.add_argument('json_path', metavar='path/to/json', type=str,
-                        help='path to input json (preprocessed mesh)')
+    parser.add_argument('mesh_path', metavar='path/to/mesh.ply', type=str,
+                        help='path to input preprocessed mesh')
     parser.add_argument('model_path', metavar='path/to/pth', type=str,
                         help='path to input model')
     parser.add_argument('output_path', metavar='path/to/output/', type=str,
@@ -120,11 +113,10 @@ if __name__ == '__main__':
     parser.add_argument('-w0', '--weight0', type=float, default=30, help='w0 parameter of SIREN')
     parser.add_argument('-w', '--width', type=int, default=512, help='width of generated image')
     parser.add_argument('-t', '--surf_thresh', type=float, default=1e-3, help='on surface threshold')
-    parser.add_argument('-j', '--joint', type=int, default=0, help="joint number to render")
     parser.add_argument('--gt_mode', type=str, default='siren', help='ground truth function')
     parser.add_argument('-a', '--alpha', type=float, default=1, help='alpha for ground truth')
 
     args = parser.parse_args()
 
-    generate_df(args.model_path, args.json_path, args.output_path, vars(args))
+    generate_df(args.model_path, args.mesh_path, args.output_path, vars(args))
 

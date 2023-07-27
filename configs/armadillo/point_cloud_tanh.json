@@ -1,10 +1,10 @@
 {
     "json_path": "data/segmented/pruebas/armadillo.json",
     "model_path": "results/armadillo/tanh/models/model_best.pth",
-    "output_path": "results/armadillo/tanh/reconstructions/point_cloud.ply",
+    "output_path": "results/armadillo/tanh/reconstructions/point_cloud_2.ply",
     "device": 0,
     "w0": 60,
-    "nsamples": 1000000,
+    "nsamples": 100000,
     "surf_thresh": 0.007,
     "grad_thresh": 0.007,
     "ref_steps": 3,

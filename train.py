@@ -43,7 +43,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     best_weights = None
     for epoch in range(epochs):
         running_loss = dict()
-        for input_data, normals, sdf, curvature in iter(dataset):
+        for input_data, normals, sdf in iter(dataset):
             # zero the parameter gradients
             optim.zero_grad()
             
@@ -51,11 +51,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             input_data = input_data.to( device )
             normals = normals.to(device)
             sdf = sdf.to(device)
-            curvature = curvature.to(device)
-            #print(input_data.device)
+            
             outputs = model( input_data )
             
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf, 'curvature': curvature}, dataset.features, config['loss_weights'], config["alpha"] )
+            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"] )
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -109,8 +108,6 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
                 osp.join(log_path, "models", "model_current.pth")
             )
 
-
-
     return losses, best_weights
 
 def setup_train( parameter_dict, cuda_device ):
@@ -133,7 +130,7 @@ def setup_train( parameter_dict, cuda_device ):
 
     sampling_config = parameter_dict["sampling_opts"]
     dataset = PointCloud(
-        jsonPath= parameter_dict["dataset"],
+        meshPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
         samplingPercentiles=parameter_dict["sampling_percentiles"],
         batchesPerEpoch = parameter_dict["batches_per_epoch"],
@@ -143,7 +140,7 @@ def setup_train( parameter_dict, cuda_device ):
 
     network_params = parameter_dict["network"]
     model = SIREN(
-        n_in_features= dataset.features + 3,
+        n_in_features= 3,
         n_out_features=1,
         hidden_layer_config=network_params["hidden_layer_nodes"],
         w0=network_params["w0"],
@@ -210,7 +207,7 @@ def setup_train( parameter_dict, cuda_device ):
         'surf_thresh': 1e-3,
         'joint': 0,
         'width': 512,
-        'w0': network_params["w0"],
+        'weight0': network_params["w0"],
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
         'alpha': parameter_dict['alpha']
     }
@@ -233,11 +230,10 @@ def setup_train( parameter_dict, cuda_device ):
         'max_iter': 10
     }
 
-    for generated_points, generated_normals in generate_pc(pc_options):
-        p_cloud = o3d.geometry.PointCloud( )
-        p_cloud.points = o3d.utility.Vector3dVector(generated_points)
-        p_cloud.normals = o3d.utility.Vector3dVector(generated_normals)
-        o3d.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), p_cloud)
+    point_cloud = generate_pc(pc_options)
+    print('     Re-orienting normals')
+    point_cloud.orient_normals_consistent_tangent_plane(10)
+    o3d.t.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), point_cloud)
 
     print('Generating sphere tracing render')
     sphere_tracing_params = parameter_dict['sphere_tracing']

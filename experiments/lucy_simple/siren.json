@@ -5,7 +5,7 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/segmented/pruebas/lucy_simple.json",
+    "dataset": "data/Preprocess/lucy_simple.ply",
     "batch_size": 20000,
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
@@ -27,10 +27,10 @@
     "point_cloud":{
         "surf_thresh": 0.007,
         "grad_thresh": 0.007,
-        "nsamples": 200000
+        "nsamples": 1000000
     },
     "sphere_tracing": {
-        "width": 512,
+        "width": 1024,
         "surf_thresh": 0.015,
         "grad_thresh": 3,
         "origin": [-1.2,1.2,1.2],

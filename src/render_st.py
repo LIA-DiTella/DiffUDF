@@ -153,14 +153,7 @@ def create_projectional_image_gt( mesh_file, sample_count, directions, image, li
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     LADO = int(np.sqrt(sample_count))
 
-
-    device = o3c.Device('CPU:0')
-
-    with open(mesh_file) as jsonFile:
-        skel = json.load(jsonFile)
-        mesh = o3d.t.geometry.TriangleMesh(device)
-        mesh.vertex["positions"] = o3c.Tensor(np.array(skel['joints'][0]['vertices']), dtype=o3c.float32)
-        mesh.triangle["indices"] = o3c.Tensor(np.array(skel['joints'][0]['triangles']), dtype=o3c.int32)
+    mesh = o3d.t.io.read_triangle_mesh(mesh_file)
 
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(mesh)

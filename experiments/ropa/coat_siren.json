@@ -30,7 +30,7 @@
         "nsamples": 200000
     },
     "sphere_tracing": {
-        "width": 512,
+        "width": 1024,
         "surf_thresh": 0.015,
         "grad_thresh": 3,
         "origin": [-1.2,1.2,-2],

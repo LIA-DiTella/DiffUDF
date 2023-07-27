@@ -5,7 +5,7 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/segmented/pruebas/happy_buddha.json",
+    "dataset": "data/Preprocess/happy_buddha.ply",
     "batch_size": 20000,
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
@@ -30,7 +30,7 @@
         "nsamples": 200000
     },
     "sphere_tracing": {
-        "width": 512,
+        "width": 1024,
         "surf_thresh": 0.04,
         "grad_thresh": 0.04,
         "origin": [1.5,0.9,2],

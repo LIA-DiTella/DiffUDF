@@ -5,7 +5,7 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/segmented/pruebas/LongCoat0.json",
+    "dataset": "data/Preprocess/LongCoat0.ply",
     "batch_size": 20000,
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
@@ -30,11 +30,11 @@
         "nsamples": 200000
     },
     "sphere_tracing": {
-        "width": 512,
+        "width": 1024,
         "surf_thresh": 0.04,
         "grad_thresh": 0.04,
-        "origin": [-1.7,1.3,1.7],
+        "origin": [-1.2,1.2,-2],
         "distance": 1,
-        "light_pos": [-1,1,2]
+        "light_pos": [-1,0,-2]
     }
 }

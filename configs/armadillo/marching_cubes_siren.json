@@ -3,6 +3,6 @@
     "output_path": "results/armadillo/siren/reconstructions/mc_mesh.obj",
     "device": 0,
     "w0": 60,
-    "nsamples": 128,
+    "nsamples": 512,
     "gt_mode": "siren"
 }

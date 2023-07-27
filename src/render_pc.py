@@ -8,7 +8,7 @@ import tqdm
 from src.inverses import inverse
 
 class Sampler:
-    def __init__(self, n_in_features, hidden_layers=[256,256,256,256], w0=30, ww=None, checkpoint = None, device =0):
+    def __init__(self, n_in_features=3, hidden_layers=[256,256,256,256], w0=30, ww=None, checkpoint = None, device =0):
         self.decoder = SIREN(
             n_in_features= n_in_features,
             n_out_features=1,
@@ -23,14 +23,14 @@ class Sampler:
 
         self.decoder.load_state_dict( torch.load(checkpoint, map_location=self.device))
 
-    def generate_point_cloud(self, code, gt_mode, alpha, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
+    def generate_point_cloud(self, gt_mode, alpha, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
 
         surface_points = np.zeros((0, 3))
         normals = np.zeros((0,3))
-        for iterations in tqdm.tqdm(range(max_iter), leave=False):
+        for iterations in tqdm.tqdm(range(max_iter)):
 
             if len(surface_points) != 0:
                 samples = surface_points[ np.random.uniform(0, len(surface_points), num_points // 2).astype(np.uint32) ] + np.random.normal(0, 0.1, (num_points // 2, 3))
@@ -43,11 +43,11 @@ class Sampler:
             for step in range(num_steps):
                 if step == num_steps - 1:
                     hessians = np.zeros( (num_points, 3, 3))
-                    udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, hessians=hessians, device=self.device )
+                    udfs = evaluate( self.decoder, samples, gradients=gradients, hessians=hessians, device=self.device )
                 else:
-                    udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
+                    udfs = evaluate( self.decoder, samples, gradients=gradients, device=self.device )
 
-                udfs = evaluate( self.decoder, np.hstack( [ np.tile(code, (num_points, 1)), samples] ), gradients=gradients, device=self.device )
+                udfs = evaluate( self.decoder, samples, gradients=gradients, device=self.device )
                 steps = inverse(gt_mode, udfs, alpha, min_step=0)
 
                 samples -= steps * normalize(gradients)

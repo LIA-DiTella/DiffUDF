@@ -60,15 +60,14 @@ def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha ):
         torch.zeros_like(surface_points_mask)
     )
 
-def loss_siren(model_output, gt, features, loss_weights, alpha=None ):
+def loss_siren(model_output, gt, loss_weights, alpha=None ):
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
 
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
-    gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
+    gradient = dif.gradient(pred_sdf, coords).squeeze(0)
 
     # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {
@@ -78,15 +77,14 @@ def loss_siren(model_output, gt, features, loss_weights, alpha=None ):
         'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * loss_weights[3]
     }
 
-def loss_squared( model_output, gt, features, loss_weights, alpha  ):
+def loss_squared( model_output, gt, loss_weights, alpha  ):
     udf = gt['sdf']
     gt_normals = gt['normals']
 
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
-    gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
+    gradient = dif.gradient(pred_sdf, coords).squeeze(0)
     
     gt_udf = alpha * (udf ** 2)
     principal_direction_constraint = principal_curvature_alignment(udf, gt_normals, pred_sdf, coords, alpha )
@@ -99,15 +97,14 @@ def loss_squared( model_output, gt, features, loss_weights, alpha  ):
         'grad_constraint': grad_constraint.mean() * loss_weights[3]
     }
 
-def loss_tanh( model_output, gt, features, loss_weights, alpha ):
+def loss_tanh( model_output, gt, loss_weights, alpha ):
     udf = gt['sdf']
     gt_normals = gt['normals']
 
     coords = model_output['model_in']
     pred_sdf = model_output['model_out']
 
-    indexes = torch.tensor( [features, features + 1, features + 2] ).to(pred_sdf.device)
-    gradient = torch.index_select( dif.gradient(pred_sdf, coords).squeeze(0), 1, indexes)
+    gradient = dif.gradient(pred_sdf, coords).squeeze(0)
     
     gt_udf = udf * torch.tanh( alpha * udf )
     principal_direction_constraint = principal_curvature_alignment( udf, gt_normals, pred_sdf, coords, alpha )

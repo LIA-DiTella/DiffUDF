@@ -46,7 +46,7 @@ def generate_st( config_dict ):
 
     if config_dict['gt_mode'] == 'gt':
         colores = create_projectional_image_gt( 
-            mesh_file=config_dict['json_path'], 
+            mesh_file=config_dict['mesh_path'], 
             sample_count=config_dict["width"] ** 2, 
             image=plane, 
             directions=directions, 
