@@ -27,7 +27,7 @@
     "point_cloud":{
         "surf_thresh": 0.007,
         "grad_thresh": 0.007,
-        "nsamples": 200000
+        "nsamples": 1000000
     },
     "sphere_tracing": {
         "width": 1024,

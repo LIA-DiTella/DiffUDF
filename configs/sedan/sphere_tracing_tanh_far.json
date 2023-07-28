@@ -4,7 +4,7 @@
     "device": 0,
     "w0": 60,
     "layers": [256,256,256,256],
-    "width": 512,
+    "width": 1024,
     "surf_thresh": 0.015,
     "grad_thresh": 0.2,
     "ref_steps": 2,
