@@ -5,7 +5,7 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/Preprocess/ShirtNoCoat0.ply",
+    "dataset": "data/Preprocess/shirt.ply",
     "batch_size": 20000,
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
