@@ -5,15 +5,15 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/Preprocess/cylinder.ply",
+    "dataset": "data/Preprocess/armadillo.ply",
     "batch_size": 20000,
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
-    "checkpoint_path": "results/cylinder",
-    "experiment_name": "tanh",
-    "epochs_to_checkpoint": 300,
+    "checkpoint_path": "results/armadillo",
+    "experiment_name": "tanh_sin_tv",
+    "epochs_to_checkpoint": 400,
     "loss": "loss_tanh",
-    "loss_weights": [ 1e4, 1e3, 1e1, 1e1, 1e1 ],
+    "loss_weights": [ 1e4, 1e3, 1e1, 1e1, 0 ],
     "alpha": 10,
     "optimizer": {
         "type": "adam",
@@ -24,18 +24,17 @@
         "w0": 30,
         "pretrained_dict": "None"
     },
-
     "point_cloud":{
         "surf_thresh": 0.007,
         "grad_thresh": 0.007,
         "nsamples": 1000
     },
     "sphere_tracing": {
-        "width": 32,
+        "width": 128,
         "surf_thresh": 0.01,
-        "grad_thresh": 0.09,
-        "origin": [1.7,1.7,-1.7],
+        "grad_thresh": 0.2,
+        "origin": [-0.5,0.5,-2],
         "distance": 1,
-        "light_pos": [1,0,-2]
+        "light_pos": [-1,0,-2]
     }
 }

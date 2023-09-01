@@ -17,7 +17,7 @@ def sampleTrainingData(
         mesh: list,
         samplesOnSurface: int,
         samplesFarSurface: int,
-        scene: list,
+        scene,
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
         curvatureFractions: list = [],
         curvatureBins: list = []
@@ -54,7 +54,7 @@ def sampleTrainingData(
     ))
     fullSDFs = torch.cat((
         torch.zeros(len(surfacePoints)),
-        farDomainSDFs
+        farDomainSDFs # torch.ones(len(surfacePoints))
     )).unsqueeze(1)
 
     return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)

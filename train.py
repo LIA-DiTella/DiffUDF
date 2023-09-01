@@ -209,7 +209,8 @@ def setup_train( parameter_dict, cuda_device ):
         'width': 512,
         'weight0': network_params["w0"],
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-        'alpha': parameter_dict['alpha']
+        'alpha': parameter_dict['alpha'],
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }
 
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
@@ -227,6 +228,7 @@ def setup_train( parameter_dict, cuda_device ):
         'nsamples': point_cloud_params['nsamples'],
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
         'alpha': parameter_dict['alpha'],
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
         'max_iter': 10
     }
 
@@ -242,7 +244,7 @@ def setup_train( parameter_dict, cuda_device ):
         'output_path': osp.join(full_path, "reconstructions", "sphere_tracing.png"),
         'device': cuda_device,
         'w0': network_params["w0"],
-        'layers': network_params["hidden_layer_nodes"],
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
         'ref_steps': 2,
         'alpha': parameter_dict['alpha'],
         'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],

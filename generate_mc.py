@@ -1,4 +1,5 @@
 from src.render_mc import get_mesh_udf, get_mesh_sdf
+from src.render_mc_CAP import extract_geometry
 from src.model import SIREN
 import torch
 import argparse
@@ -21,7 +22,7 @@ if __name__=='__main__':
 	model = SIREN(
 		n_in_features= 3,
 		n_out_features=1,
-		hidden_layer_config=[256,256,256,256],
+		hidden_layer_config=config_dict["hidden_layer_nodes"],
 		w0=config_dict["w0"],
 		ww=None
 	)
@@ -39,7 +40,9 @@ if __name__=='__main__':
 			device=device_torch,
 			**config_dict
 		)
-		mesh = tm.smoothing.filter_laplacian( mesh, iterations=3 )
+		#mesh = tm.smoothing.filter_laplacian( mesh, iterations=2 )
+
+		#mesh = extract_geometry(config_dict["nsamples"], model, device_torch)
 	else:
 		vertices, faces, mesh = get_mesh_sdf( 
 			model,

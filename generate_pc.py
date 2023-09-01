@@ -4,7 +4,7 @@ import open3d as o3d
 import argparse
 
 def generate_pc( config ):
-        gen = Sampler( 3, checkpoint=config['model_path'], device=config['device'], w0=config['w0'] )
+        gen = Sampler( 3, checkpoint=config['model_path'], device=config['device'], w0=config['w0'], hidden_layers=config["hidden_layer_nodes"] )
             
         points, normals = gen.generate_point_cloud(
             num_points=config['nsamples'], 

@@ -16,8 +16,9 @@ def inv_squared( pred_df, alpha, min_step ):
     return inverse
 
 def inv_tanh( pred_df, alpha, min_step ):
-    # es muy parecida al modulo. devuelvo eso
-    return np.where( pred_df > 0, pred_df, np.ones_like(pred_df) * min_step ) 
+    sqrt = np.zeros_like(pred_df)
+    np.sqrt(pred_df / alpha, where=pred_df>0, out=sqrt)    
+    return np.where( pred_df > 0, np.where( pred_df < 0.15, sqrt, pred_df ), np.ones_like(pred_df) * min_step ) 
 
 def inv_siren( pred_df, alpha, min_step ):
     return np.where( pred_df > 0, pred_df, np.ones_like(pred_df) * min_step ) 

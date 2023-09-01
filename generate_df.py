@@ -30,7 +30,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
     model = SIREN(
             n_in_features= 3,
             n_out_features=1,
-            hidden_layer_config=[256,256,256,256],
+            hidden_layer_config=options['hidden_layer_nodes'],
             w0=options['weight0'],
             ww=None
     )
@@ -77,7 +77,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
     else:
         raise ValueError('gt_mode not valid')
     
-    plt.rcParams['text.usetex'] = True
+    #plt.rcParams['text.usetex'] = True
     plt.rcParams.update({'font.size': 16})
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10,9), dpi=500)
 

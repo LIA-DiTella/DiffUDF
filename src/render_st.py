@@ -90,11 +90,10 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
 
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
-        mask = np.logical_and(gradient_norms < gradient_eps, steps.flatten() < surface_eps)
-        hits[alive] += mask
-        alive[alive] *= np.logical_not(mask)
-
-        alive *= np.logical_and( np.all( samples > -1, axis=1 ), np.all( samples < 1, axis=1 ) )
+        threshold_mask = np.logical_and(gradient_norms < gradient_eps, steps.flatten() < surface_eps)
+        indomain_mask = np.logical_and( np.all( samples[alive] > -1, axis=1 ), np.all( samples[alive] < 1, axis=1 ))
+        hits[alive] += np.logical_and( threshold_mask, indomain_mask)
+        alive[alive] *= np.logical_and( np.logical_not(threshold_mask), indomain_mask )
         
         iteration += 1
 

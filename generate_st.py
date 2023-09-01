@@ -59,7 +59,7 @@ def generate_st( config_dict ):
         model = SIREN(
                 n_in_features= 3,
                 n_out_features=1,
-                hidden_layer_config=config_dict["layers"],
+                hidden_layer_config=config_dict["hidden_layer_nodes"],
                 w0=config_dict["w0"],
                 ww=None
         )

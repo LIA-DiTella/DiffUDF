@@ -163,26 +163,34 @@ def gauss_bonnet_integral(grad,hess):
     return torch.sum(Kg)/(Kg.shape[1]*0.5)
  
 
+# def hessian(y, x):
+#     ''' hessian of y wrt x
+#     y: shape (meta_batch_size, num_observations, channels)
+#     x: shape (meta_batch_size, num_observations, 2)
+#     '''
+#     meta_batch_size, num_observations = y.shape[:2]
+#     grad_y = torch.ones_like(y[..., 0]).to(y.device)
+#     h = torch.zeros(meta_batch_size, num_observations, y.shape[-1], x.shape[-1], x.shape[-1]).to(y.device)
+#     for i in range(y.shape[-1]):
+#         # calculate dydx over batches for each feature value of y
+#         dydx = grad(y[..., i], x, grad_y, create_graph=True)[0]
+
+#         # calculate hessian on y for each x value
+#         for j in range(x.shape[-1]):
+#             h[..., i, j, :] = grad(dydx[..., j], x, grad_y, create_graph=True)[0][..., :]
+
+#     status = 0
+#     if torch.any(torch.isnan(h)):
+#         status = -1
+#     return h.squeeze(2), status
+
 def hessian(y, x):
-    ''' hessian of y wrt x
-    y: shape (meta_batch_size, num_observations, channels)
-    x: shape (meta_batch_size, num_observations, 2)
-    '''
-    meta_batch_size, num_observations = y.shape[:2]
-    grad_y = torch.ones_like(y[..., 0]).to(y.device)
-    h = torch.zeros(meta_batch_size, num_observations, y.shape[-1], x.shape[-1], x.shape[-1]).to(y.device)
-    for i in range(y.shape[-1]):
-        # calculate dydx over batches for each feature value of y
-        dydx = grad(y[..., i], x, grad_y, create_graph=True)[0]
-
-        # calculate hessian on y for each x value
-        for j in range(x.shape[-1]):
-            h[..., i, j, :] = grad(dydx[..., j], x, grad_y, create_graph=True)[0][..., :]
-
-    status = 0
-    if torch.any(torch.isnan(h)):
-        status = -1
-    return h.squeeze(2), status
+    g = gradient(y, x).squeeze(0)
+    h0 = gradient(g[:,0], x).squeeze(0)[:,None,:]
+    h1 = gradient(g[:,1], x).squeeze(0)[:,None,:]
+    h2 = gradient(g[:,2], x).squeeze(0)[:,None,:]
+    h = torch.cat((h0,h1,h2), dim=1)
+    return h.unsqueeze(0)
 
 
 def laplace(y, x):

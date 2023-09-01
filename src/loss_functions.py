@@ -20,6 +20,7 @@ def sdf_constraint_off_surf(gt_sdf, pred_sdf):
         gt_sdf != 0,
         #F.smooth_l1_loss(pred_sdf, gt_sdf, beta=1e-5, reduction='none'),
         torch.abs(gt_sdf - pred_sdf),
+        #torch.exp(-1e2 * torch.nn.functional.relu(pred_sdf)),
         #( pred_sdf - gt_sdf ) ** 2,
         torch.zeros_like(pred_sdf)
     )
@@ -48,16 +49,23 @@ def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
 def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha ):
     surface_points_mask = torch.flatten(udf == 0)
 
-    hessians, status_hess = dif.hessian(pred_sdf, coords)
+    hessians = dif.hessian(pred_sdf.squeeze(-1), coords)
 
-    if status_hess == -1:
-        print('STATUS: -1')
-        return torch.zeros_like(udf)
+    #if status_hess == -1:
+    #    print('STATUS: -1')
+    #    return torch.zeros_like(udf)
     
     return torch.where(
         surface_points_mask,
         torch.abs( torch.flatten(torch.bmm( gt_vectors[0,...].unsqueeze(1), torch.bmm( hessians[0,...], gt_vectors[0,...].unsqueeze(-1)))) - 2*alpha ),
         torch.zeros_like(surface_points_mask)
+    )
+
+def total_variation(  udf, gradient, coords ):
+    return torch.where(
+        udf > 0.15,
+        torch.linalg.norm( dif.gradient( torch.linalg.norm(gradient, dim=-1), coords ), dim=-1 )[..., None],
+        torch.zeros_like(udf)
     )
 
 def loss_siren(model_output, gt, loss_weights, alpha=None ):
@@ -115,5 +123,6 @@ def loss_tanh( model_output, gt, loss_weights, alpha ):
         'sdf_on_surf': sdf_constraint_on_surf( gt_udf, pred_sdf).mean() * loss_weights[0],
         'sdf_off_surf': sdf_constraint_off_surf( gt_udf, pred_sdf).mean() * loss_weights[1],
         'hessian_constraint': principal_direction_constraint.mean() * loss_weights[2],
-        'grad_constraint': grad_constraint.mean() * loss_weights[3]
+        'grad_constraint': grad_constraint.mean() * loss_weights[3],
+        'total_variation': total_variation( gt_udf, gradient, coords ).mean() * loss_weights[4]
     }

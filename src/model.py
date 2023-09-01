@@ -119,4 +119,5 @@ class SIREN(nn.Module):
         coords_org = x.clone().detach().requires_grad_(True)
         coords = coords_org
         y = self.net(coords)
+    
         return {"model_in": coords_org, "model_out": y}
