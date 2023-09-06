@@ -16,8 +16,9 @@ from src.loss_functions import loss_siren, loss_squared, loss_tanh
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
-from generate_pc import generate_pc
-from generate_st import generate_st
+from generate_mc import generate_mc
+#from generate_pc import generate_pc
+#from generate_st import generate_st
 import open3d as o3d
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
@@ -42,8 +43,13 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     best_loss = np.inf
     best_weights = None
     for epoch in range(epochs):
+        
+        #if epoch == 700:
+        #    dataset.sampleNear = True
+            
         running_loss = dict()
         for input_data, normals, sdf in iter(dataset):
+
             # zero the parameter gradients
             optim.zero_grad()
             
@@ -53,8 +59,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             sdf = sdf.to(device)
             
             outputs = model( input_data )
-            
-            loss = loss_fn(outputs, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"] )
+
+            loss = loss_fn( outputs, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"] )
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -102,6 +108,9 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
                 model.state_dict(),
                 osp.join(log_path, "models", f"model_{epoch}.pth")
             )
+            print(f"Generating mesh")
+            generate_mc( model, config["gt_mode"], device, 128, osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'))
+
         else:
             torch.save(
                 model.state_dict(),
@@ -178,6 +187,7 @@ def setup_train( parameter_dict, cuda_device ):
         "warmup_epochs": parameter_dict.get("warmup_epochs", 0),
         "batch_size": parameter_dict["batch_size"],
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
+        "gt_mode": parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
         "log_path": full_path,
         "optimizer": optimizer,
         "loss_fn": loss_fn,
@@ -215,49 +225,46 @@ def setup_train( parameter_dict, cuda_device ):
 
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
 
-    print('Generating point cloud')
-    point_cloud_params = parameter_dict['point_cloud']
-    pc_options = {
-        'json_path': parameter_dict['dataset'],
-        'model_path': osp.join(full_path, "models", "model_best.pth"),
-        'device': cuda_device,
-        'w0': network_params["w0"],
-        'ref_steps': 3,
-        'surf_thresh': point_cloud_params['surf_thresh'],
-        'grad_thresh': point_cloud_params['grad_thresh'],
-        'nsamples': point_cloud_params['nsamples'],
-        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-        'alpha': parameter_dict['alpha'],
-        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
-        'max_iter': 10
-    }
-
-    point_cloud = generate_pc(pc_options)
-    print('     Re-orienting normals')
-    point_cloud.orient_normals_consistent_tangent_plane(10)
-    o3d.t.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), point_cloud)
-
-    print('Generating sphere tracing render')
-    sphere_tracing_params = parameter_dict['sphere_tracing']
-    st_options = {
-        'model_path': osp.join(full_path, "models", "model_best.pth"),
-        'output_path': osp.join(full_path, "reconstructions", "sphere_tracing.png"),
-        'device': cuda_device,
-        'w0': network_params["w0"],
-        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
-        'ref_steps': 2,
-        'alpha': parameter_dict['alpha'],
-        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-        'max_iter': 100,
-        "width": sphere_tracing_params["width"],
-        "surf_thresh": sphere_tracing_params["surf_thresh"],
-        "grad_thresh": sphere_tracing_params["grad_thresh"],
-        "origin": sphere_tracing_params["origin"],
-        "distance": sphere_tracing_params["distance"],
-        "light_pos": sphere_tracing_params["light_pos"]
-    }
-
-    generate_st( st_options )
+    #print('Generating point cloud')
+    #point_cloud_params = parameter_dict['point_cloud']
+    #pc_options = {
+    #    'json_path': parameter_dict['dataset'],
+    #    'model_path': osp.join(full_path, "models", "model_best.pth"),
+    #    'device': cuda_device,
+    #    'w0': network_params["w0"],
+    #    'ref_steps': 3,
+    #    'surf_thresh': point_cloud_params['surf_thresh'],
+    #    'grad_thresh': point_cloud_params['grad_thresh'],
+    #    'nsamples': point_cloud_params['nsamples'],
+    #    'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+    #    'alpha': parameter_dict['alpha'],
+    #    'hidden_layer_nodes': network_params["hidden_layer_nodes"],
+    #    'max_iter': 10
+    #}
+    #point_cloud = generate_pc(pc_options)
+    #print('     Re-orienting normals')
+    #point_cloud.orient_normals_consistent_tangent_plane(10)
+    #o3d.t.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), point_cloud)
+    #print('Generating sphere tracing render')
+    #sphere_tracing_params = parameter_dict['sphere_tracing']
+    #st_options = {
+    #    'model_path': osp.join(full_path, "models", "model_best.pth"),
+    #    'output_path': osp.join(full_path, "reconstructions", "sphere_tracing.png"),
+    #    'device': cuda_device,
+    #    'w0': network_params["w0"],
+    #    'hidden_layer_nodes': network_params["hidden_layer_nodes"],
+    #    'ref_steps': 2,
+    #    'alpha': parameter_dict['alpha'],
+    #    'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+    #    'max_iter': 100,
+    #    "width": sphere_tracing_params["width"],
+    #    "surf_thresh": sphere_tracing_params["surf_thresh"],
+    #    "grad_thresh": sphere_tracing_params["grad_thresh"],
+    #    "origin": sphere_tracing_params["origin"],
+    #    "distance": sphere_tracing_params["distance"],
+    #    "light_pos": sphere_tracing_params["light_pos"]
+    #}
+    #generate_st( st_options )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
     "output_path": "results/cylinder/tanh/reconstructions/mc_mesh.obj",
     "device": 0,
     "w0": 30,
-    "nsamples": 64,
+    "nsamples": 128,
     "gt_mode": "tanh",
     "alpha": 10,
     "hidden_layer_nodes": [256,256,256,256,256,256,256,256]

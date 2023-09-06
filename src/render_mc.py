@@ -52,12 +52,13 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     samples.pin_memory()
     
     gradients = np.zeros((samples.shape[0], 3))
-    pred_df =  evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients)
-    udfs = torch.from_numpy( inverse( gt_mode, pred_df, alpha, min_step=0 ) ).float()
+    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients ) )
+    #udfs = torch.from_numpy( inverse( gt_mode, pred_df, alpha, min_step=0 ) ).float()
+    
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
     
-    samples[..., 3] = udfs.squeeze(1)
+    samples[..., 3] = pred_df.squeeze(1)
     samples[..., 4:] = gradients
 
     # Separate values in DF / gradients

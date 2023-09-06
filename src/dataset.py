@@ -16,11 +16,12 @@ def getCurvatureBins(curvature: torch.Tensor, percentiles: list) -> list:
 def sampleTrainingData(
         mesh: list,
         samplesOnSurface: int,
-        samplesFarSurface: int,
+        samplesOffSurface: int,
         scene,
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
         curvatureFractions: list = [],
-        curvatureBins: list = []
+        curvatureBins: list = [],
+        sampleNear: bool=False
 ):
         ## samples on surface
     surfacePoints = pointSegmentationByCurvature(
@@ -32,21 +33,27 @@ def sampleTrainingData(
 
     surfacePoints = torch.from_numpy(surfacePoints.numpy())
 
+    if sampleNear:
+        indexes = torch.randint(0, samplesOnSurface, (samplesOffSurface,1))
+        domainPoints = surfacePoints[indexes] + torch.random.normal(0, 0.01, (samplesOffSurface, 3))
+        domainSDFs = torch.ones( (samplesOffSurface,1))
+
+    else:
         ## samples uniformly in domain (far)
-    farDomainPoints = o3c.Tensor(np.random.uniform(
-        domainBounds[0], domainBounds[1],
-        (samplesFarSurface, 3)
-    ), dtype=o3c.Dtype.Float32)
+        domainPoints = o3c.Tensor(np.random.uniform(
+            domainBounds[0], domainBounds[1],
+            (samplesOffSurface, 3)
+        ), dtype=o3c.Dtype.Float32)
 
-    farDomainSDFs = torch.from_numpy(scene.compute_distance(farDomainPoints).numpy())
-    farDomainPoints = torch.from_numpy(farDomainPoints.numpy())
+        domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
+        domainPoints = torch.from_numpy(domainPoints.numpy())
 
-    domainNormals = torch.zeros((samplesFarSurface, 3))
+    domainNormals = torch.zeros((samplesOffSurface, 3))
 
     # full dataset:
     fullSamples = torch.row_stack((
         surfacePoints[..., :3],
-        farDomainPoints
+        domainPoints
     ))
     fullNormals = torch.row_stack((
         surfacePoints[..., 3:6],
@@ -54,7 +61,7 @@ def sampleTrainingData(
     ))
     fullSDFs = torch.cat((
         torch.zeros(len(surfacePoints)),
-        farDomainSDFs # torch.ones(len(surfacePoints))
+        domainSDFs
     )).unsqueeze(1)
 
     return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)
@@ -126,15 +133,16 @@ class PointCloud(IterableDataset):
         self.curvatureFractions = curvatureFractions
 
         self.curvatureBins = getCurvatureBins( torch.from_numpy(self.mesh.vertex.curvature.numpy()), curvaturePercentiles)
-        
+        self.sampleNear = False
         
     def __iter__(self):
         for _ in range(self.batchesPerEpoch):
             yield sampleTrainingData(
                 mesh=self.mesh,
                 samplesOnSurface=self.samplesOnSurface,
-                samplesFarSurface=self.samplesFarSurface,
+                samplesOffSurface=self.samplesFarSurface,
                 scene=self.scene,
                 curvatureFractions=self.curvatureFractions,
-                curvatureBins=self.curvatureBins
+                curvatureBins=self.curvatureBins,
+                sampleNear=self.sampleNear
             )

@@ -1,6 +1,6 @@
 {
     "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
-    "num_epochs": 2000,
+    "num_epochs": 1000,
     "sampling_opts": {
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
@@ -11,9 +11,9 @@
     "batches_per_epoch": 1,
     "checkpoint_path": "results/cylinder",
     "experiment_name": "tanh",
-    "epochs_to_checkpoint": 300,
+    "epochs_to_checkpoint": 700,
     "loss": "loss_tanh",
-    "loss_weights": [ 1e4, 1e3, 1e1, 1e1, 1e1 ],
+    "loss_weights": [ 1e4, 1e3, 1e3, 1e1 ],
     "alpha": 10,
     "optimizer": {
         "type": "adam",

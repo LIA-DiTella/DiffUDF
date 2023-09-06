@@ -3,9 +3,27 @@ from src.render_mc_CAP import extract_geometry
 from src.model import SIREN
 import torch
 import argparse
-import trimesh as tm
 import json
-import numpy as np
+
+def generate_mc(model, gt_mode, device, N, output_path):
+	if gt_mode != 'siren':
+		#vertices, faces, mesh = get_mesh_udf( 
+		#	model, 
+		#	torch.Tensor([[]]).to(device_torch),
+		#	device=device_torch,
+		#	**config_dict
+		#)
+
+		mesh = extract_geometry(N, model, device)
+	else:
+		vertices, faces, mesh = get_mesh_sdf( 
+			model,
+			N=N,
+			device=device
+		)
+
+	mesh.export(output_path)
+	print(f'Saved to {output_path}')
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Generate mesh through marching cubes from trained model')
@@ -30,27 +48,7 @@ if __name__=='__main__':
 	model.load_state_dict( torch.load(config_dict["model_path"], map_location=device_torch))
 	model.to(device_torch)
 
-	del config_dict['device']
 	print('Generating mesh...')
 
-	if config_dict['gt_mode'] != 'siren':
-		vertices, faces, mesh = get_mesh_udf( 
-			model, 
-			torch.Tensor([[]]).to(device_torch),
-			device=device_torch,
-			**config_dict
-		)
-		#mesh = tm.smoothing.filter_laplacian( mesh, iterations=2 )
-
-		#mesh = extract_geometry(config_dict["nsamples"], model, device_torch)
-	else:
-		vertices, faces, mesh = get_mesh_sdf( 
-			model,
-			N=config_dict['nsamples'],
-			device=device_torch
-		)
-
-
-	mesh.export(config_dict["output_path"])
-	print(f'Saved to {config_dict["output_path"]}')
+	generate_mc(model, config_dict['gt_mode'], device_torch, config_dict['nsamples'], config_dict['output_path'])
 
