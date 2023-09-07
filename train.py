@@ -44,8 +44,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     best_weights = None
     for epoch in range(epochs):
         
-        #if epoch == 700:
-        #    dataset.sampleNear = True
+        if epoch == 0:
+            dataset.sampleNear = True
+
+        dataset.nearStd += 0.00005
             
         running_loss = dict()
         for input_data, normals, sdf in iter(dataset):
@@ -58,9 +60,9 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             normals = normals.to(device)
             sdf = sdf.to(device)
             
-            outputs = model( input_data )
+            #outputs = model( input_data )
 
-            loss = loss_fn( outputs, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"] )
+            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"], epoch > 0)
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():

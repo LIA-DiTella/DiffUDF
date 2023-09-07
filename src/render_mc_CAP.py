@@ -38,7 +38,7 @@ def extract_fields( resolution, model, device):
 
                 u[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.abs(val).reshape((32,32,32))
                 g[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.where(
-                    np.hstack([grad_norms, grad_norms, grad_norms]) < .01,
+                    np.hstack([grad_norms, grad_norms, grad_norms]) < .1,
                     pred_normals,
                     normalize(gradients)
                 ).reshape((32,32,32,3))
