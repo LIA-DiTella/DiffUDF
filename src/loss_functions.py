@@ -52,12 +52,8 @@ def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
            torch.exp(-radius * torch.abs(pred_sdf))
         )
 
-def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha ):
+def principal_curvature_alignment( udf, gt_vectors, pred_normals ): # hessians, alpha ):
     surface_points_mask = torch.flatten(udf == 0)
-
-    hessians = dif.hessian(pred_sdf.squeeze(-1), coords)
-    eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
-    pred_normals = eigenvectors[..., 2]
 
     return torch.where(
         surface_points_mask,
@@ -65,11 +61,6 @@ def principal_curvature_alignment( udf, gt_vectors, pred_sdf, coords, alpha ):
         (1 - torch.abs(F.cosine_similarity(gt_vectors, pred_normals,dim=-1))),
         torch.zeros_like(surface_points_mask)
     )
-    #, torch.where(
-    #        surface_points_mask,
-    #    torch.abs(eigenvalues[..., 0]),
-    #    torch.zeros_like(surface_points_mask)
-    #)
 
 def total_variation(  alpha, udf, gradient, coords ):
     f = 1 - torch.tanh(alpha * udf) ** 2
@@ -81,6 +72,15 @@ def total_variation(  alpha, udf, gradient, coords ):
         ),
         torch.zeros_like(udf)
     )
+
+def grad_consistency( model, coords, gt_normals ):
+    steps = torch.normal(0, 0.05, (coords.shape[0], coords.shape[1], 1)).to(coords.device)
+    samples = coords + gt_normals * steps
+
+    model_output = model(samples)
+    gradients = F.normalize(dif.gradient(model_output['model_out'], model_output['model_in']), dim=-1)
+
+    return 1 - F.cosine_similarity( gradients, gt_normals * torch.sign(steps) ,dim=-1 ), torch.abs(model_output['model_out'] - torch.abs(steps))
 
 def loss_siren(model_output, gt, loss_weights, alpha=None ):
     gt_sdf = gt['sdf']
@@ -119,7 +119,7 @@ def loss_squared( model_output, gt, loss_weights, alpha  ):
         'grad_constraint': grad_constraint.mean() * loss_weights[3]
     }
 
-def loss_tanh( model, model_input, gt, loss_weights, alpha, flag_gc ):
+def loss_tanh( model, model_input, gt, loss_weights, alpha ):
     model_output = model(model_input)
     
     udf = gt['sdf']
@@ -130,39 +130,26 @@ def loss_tanh( model, model_input, gt, loss_weights, alpha, flag_gc ):
 
     gradient = dif.gradient(pred_sdf, coords)
     
+    if loss_weights[2] != 0:
+        hessians = dif.hessian(pred_sdf.squeeze(-1), coords)
+        eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
+        pred_normals = eigenvectors[..., 2]
+
+        pc = principal_curvature_alignment( udf, gt_normals, pred_normals ).mean()
+    else:
+        print('ups!')
+        pc= torch.Tensor([0]).to(coords.device)
+
     tdf = udf * torch.tanh( alpha * udf )
-    principal_direction_constraint = principal_curvature_alignment( udf, gt_normals, pred_sdf, coords, alpha )
     tan = torch.tanh( alpha * udf )
     grad_constraint = torch.abs( torch.linalg.norm(gradient.squeeze(0), dim=-1) - torch.abs( tan + udf * alpha * (1 - tan ** 2) ).squeeze(-1) )
 
-    if flag_gc:
-        mask_off_surf = (udf != 0).squeeze(-1)
-        abs_pred = torch.abs(pred_sdf)
-        #step = torch.where( abs_pred < 0.15, torch.sqrt(abs_pred / alpha), abs_pred )
-        step = udf
-        projections = coords[mask_off_surf] - F.normalize( gradient[mask_off_surf], dim=-1 ) * step[mask_off_surf]
-        proj_output = model(projections)
-
-        gradients_proj = dif.gradient(proj_output['model_out'].squeeze(-1), proj_output['model_in'])
-        #hessians_proj = dif.hessian(proj_output['model_out'].squeeze(-1), proj_output['model_in'])
-        #eigenvalues, eigenvectors = torch.linalg.eigh( hessians_proj )
-        #pred_normals = eigenvectors[..., 2]
-        
-        #grad_consistency = 1 - torch.abs(F.cosine_similarity(F.normalize(gradient[mask_off_surf], dim=-1), F.normalize(gradients_proj, dim=-1), dim=-1))[...,None]
-        grad_consistency = torch.where(
-            proj_output['model_out'] < 0.01,
-            #1 - torch.abs(F.cosine_similarity(F.normalize(gradient[mask_off_surf], dim=-1), pred_normals, dim=-1))[...,None],
-            1 - F.cosine_similarity(F.normalize(gradient[mask_off_surf], dim=-1), F.normalize(gradients_proj, dim=-1), dim=-1)[...,None],
-            torch.zeros_like(proj_output['model_out'])
-        )
-    
-    else:
-        grad_consistency = torch.zeros_like(udf).to(coords.device)
+    grad_const, off_surf = grad_consistency( model, coords[:,(udf == 0).flatten(),:], gt_normals[:,(udf == 0).flatten(),:] )
 
     return {
         'sdf_on_surf': sdf_constraint_on_surf( udf, pred_sdf).mean() * loss_weights[0],
-        'sdf_off_surf': sdf_constraint_off_surf( udf, tdf, pred_sdf).mean() * loss_weights[1],
-        'hessian_constraint': principal_direction_constraint.mean() * loss_weights[2],
+        'sdf_off_surf': (sdf_constraint_off_surf( udf, tdf, pred_sdf).mean() + off_surf.mean()) * loss_weights[1],
+        'hessian_constraint': pc * loss_weights[2],
         'grad_constraint': grad_constraint.mean() * loss_weights[3],
-        'grad_consistency': grad_consistency.mean() * loss_weights[4]
+        'grad_consistency': grad_const.mean() * loss_weights[4]
     }

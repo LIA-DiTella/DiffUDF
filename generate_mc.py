@@ -5,16 +5,18 @@ import torch
 import argparse
 import json
 
-def generate_mc(model, gt_mode, device, N, output_path):
+def generate_mc(model, gt_mode, device, N, output_path, alpha=10):
 	if gt_mode != 'siren':
-		#vertices, faces, mesh = get_mesh_udf( 
-		#	model, 
-		#	torch.Tensor([[]]).to(device_torch),
-		#	device=device_torch,
-		#	**config_dict
-		#)
+		vertices, faces, mesh = get_mesh_udf( 
+			model, 
+			torch.Tensor([[]]).to(device),
+			device=device,
+			gt_mode=gt_mode,
+			nsamples=N,
+			alpha=alpha
+		)
 
-		mesh = extract_geometry(N, model, device)
+		#mesh = extract_geometry(N, model, device)
 	else:
 		vertices, faces, mesh = get_mesh_sdf( 
 			model,

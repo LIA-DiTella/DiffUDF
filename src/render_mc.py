@@ -52,14 +52,28 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     samples.pin_memory()
     
     gradients = np.zeros((samples.shape[0], 3))
-    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients ) )
-    #udfs = torch.from_numpy( inverse( gt_mode, pred_df, alpha, min_step=0 ) ).float()
+    hessians = np.zeros((gradients.shape[0],3,3))
+    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians ) )
     
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
+
+    eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
+    pred_normals = eigenvectors[..., 2]
+
+    pred_normals = torch.where(
+        torch.sum( gradients * pred_normals ) < 0,
+        torch.ones( (pred_normals.shape[0],1)) * -1,
+        torch.ones( (pred_normals.shape[0],1))
+    ) * pred_normals
+    grad_norms = torch.linalg.norm(gradients, axis=-1)[:,None]
     
     samples[..., 3] = pred_df.squeeze(1)
-    samples[..., 4:] = gradients
+    samples[..., 4:] = torch.where(
+        torch.hstack([grad_norms, grad_norms, grad_norms]) < .2,
+        pred_normals,
+        gradients
+    )
 
     # Separate values in DF / gradients
     df_values = samples[:, 3]

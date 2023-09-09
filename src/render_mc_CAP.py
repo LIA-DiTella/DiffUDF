@@ -23,7 +23,7 @@ def extract_fields( resolution, model, device):
                 pts = torch.cat([xx.reshape(-1, 1), yy.reshape(-1, 1), zz.reshape(-1, 1)], dim=-1).numpy()
                 gradients = np.zeros_like(pts)
                 hessians = np.zeros((gradients.shape[0],3,3))
-                val = evaluate( model, pts, device=device, gradients=gradients, hessians=hessians )
+                val = inverse( 'tanh', evaluate( model, pts, device=device, gradients=gradients, hessians=hessians ), 10)
 
                 eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
 
@@ -38,7 +38,7 @@ def extract_fields( resolution, model, device):
 
                 u[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.abs(val).reshape((32,32,32))
                 g[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.where(
-                    np.hstack([grad_norms, grad_norms, grad_norms]) < .1,
+                    np.hstack([grad_norms, grad_norms, grad_norms]) < .00000,
                     pred_normals,
                     normalize(gradients)
                 ).reshape((32,32,32,3))
@@ -83,7 +83,7 @@ def extract_geometry( resolution, model, device):
 def surface_extraction(ndf, grad, resolution):
     v_all = []
     t_all = []
-    threshold = 0.01   # accelerate extraction
+    threshold = 0.05   # accelerate extraction
     v_num = 0
     for i in range(resolution-1):
         for j in range(resolution-1):

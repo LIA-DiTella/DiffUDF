@@ -10,10 +10,10 @@
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
     "checkpoint_path": "results/cylinder",
-    "experiment_name": "tanh",
+    "experiment_name": "tanh_more_grad",
     "epochs_to_checkpoint": 450,
     "loss": "loss_tanh",
-    "loss_weights": [ 1e4, 1e3, 1e3, 1e1, 1e2 ],
+    "loss_weights": [ 1e4, 1e3, 1e3, 1e2, 1e2 ],
     "alpha": 10,
     "optimizer": {
         "type": "adam",

@@ -20,9 +20,7 @@ def sampleTrainingData(
         scene,
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
         curvatureFractions: list = [],
-        curvatureBins: list = [],
-        sampleNear: bool=False,
-        nearStd: float=0.01,
+        curvatureBins: list = []
 ):
         ## samples on surface
     surfacePoints = pointSegmentationByCurvature(
@@ -32,20 +30,15 @@ def sampleTrainingData(
         curvatureFractions
     )
 
-    if sampleNear:
-        indexes = torch.randint(0, samplesOnSurface, (samplesOffSurface,1))
-        domainPoints = surfacePoints[indexes, :3].squeeze(1) + torch.normal(0, nearStd, (samplesOffSurface, 3))
-        domainSDFs = torch.from_numpy(scene.compute_distance( o3c.Tensor(domainPoints.numpy(), dtype=o3c.Dtype.Float32) ).numpy())
 
-    else:
-        ## samples uniformly in domain (far)
-        domainPoints = o3c.Tensor(np.random.uniform(
-            domainBounds[0], domainBounds[1],
-            (samplesOffSurface, 3)
-        ), dtype=o3c.Dtype.Float32)
+    ## samples uniformly in domain (far)
+    domainPoints = o3c.Tensor(np.random.uniform(
+        domainBounds[0], domainBounds[1],
+        (samplesOffSurface, 3)
+    ), dtype=o3c.Dtype.Float32)
 
-        domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
-        domainPoints = torch.from_numpy(domainPoints.numpy())
+    domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
+    domainPoints = torch.from_numpy(domainPoints.numpy())
 
     domainNormals = torch.zeros((samplesOffSurface, 3))
 
@@ -132,8 +125,6 @@ class PointCloud(IterableDataset):
         self.curvatureFractions = curvatureFractions
 
         self.curvatureBins = getCurvatureBins( torch.from_numpy(self.mesh.vertex.curvature.numpy()), curvaturePercentiles)
-        self.sampleNear = False
-        self.nearStd = 0.01
         
     def __iter__(self):
         for _ in range(self.batchesPerEpoch):
@@ -144,6 +135,4 @@ class PointCloud(IterableDataset):
                 scene=self.scene,
                 curvatureFractions=self.curvatureFractions,
                 curvatureBins=self.curvatureBins,
-                sampleNear=self.sampleNear,
-                nearStd=self.nearStd
             )
