@@ -10,17 +10,18 @@
     "sampling_percentiles": [0.5, 0.5, 0.0],
     "batches_per_epoch": 1,
     "checkpoint_path": "results/armadillo",
-    "experiment_name": "tanh_more_more_hess",
-    "epochs_to_checkpoint": 400,
+    "experiment_name": "tanh_no_gc_curvs",
+    "epochs_to_checkpoint": 600,
+    "gt_mode": "tanh",
     "loss": "loss_tanh",
-    "loss_weights": [ 1e4, 1e3, 1e5, 1e2, 1e2 ],
+    "loss_weights": [ 1e4, 5e2, 1e3, 1e1, 1e3 ],
     "alpha": 10,
     "optimizer": {
         "type": "adam",
         "lr": 1e-4
     },
     "network": {
-        "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
+        "hidden_layer_nodes": [64,64,64,64,64,64,64,64],
         "w0": 30,
         "pretrained_dict": "None"
     },

@@ -6,84 +6,54 @@ from src.evaluate import evaluate
 from src.inverses import inverse
 from src.util import normalize
 
-def extract_fields( resolution, model, device):
-    N = 32
-    X = torch.linspace(-1, 1, resolution).split(N)
-    Y = torch.linspace(-1, 1, resolution).split(N)
-    Z = torch.linspace(-1, 1, resolution).split(N)
-
-    u = np.zeros([resolution, resolution, resolution], dtype=np.float32)
-    g = np.zeros([resolution, resolution, resolution, 3], dtype=np.float32)
+def extract_fields( resolution, model, device, bbox_min, bbox_max ):
+    X = np.linspace(bbox_min[0], bbox_max[0], resolution)
+    Y = np.linspace(bbox_min[1], bbox_max[1], resolution)
+    Z = np.linspace(bbox_min[2], bbox_max[2], resolution)
     # with torch.no_grad():
-    for xi, xs in enumerate(X):
-        for yi, ys in enumerate(Y):
-            for zi, zs in enumerate(Z):
-                xx, yy, zz = torch.meshgrid(xs, ys, zs, indexing='ij')
 
-                pts = torch.cat([xx.reshape(-1, 1), yy.reshape(-1, 1), zz.reshape(-1, 1)], dim=-1).numpy()
-                gradients = np.zeros_like(pts)
-                hessians = np.zeros((gradients.shape[0],3,3))
-                val = inverse( 'tanh', evaluate( model, pts, device=device, gradients=gradients, hessians=hessians ), 10)
+    xx, yy, zz = np.meshgrid( X, Y, Z, indexing='ij' )
 
-                eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
+    pts = np.concatenate([xx[...,None], yy[...,None], zz[...,None]], axis=-1)
+    
+    gradients = np.zeros((resolution**3,3))
+    hessians = np.zeros((resolution**3,3,3))
 
-                pred_normals = eigenvectors[..., 2].numpy()
+    val = evaluate( model, pts.reshape(resolution**3, 3), device=device, gradients=gradients, hessians=hessians )
 
-                pred_normals = np.where(
-                    np.sum( gradients * pred_normals ) < 0,
-                    np.ones( (pred_normals.shape[0],1)) * -1,
-                    np.ones( (pred_normals.shape[0],1))
-                ) * pred_normals
-                grad_norms = np.linalg.norm(gradients, axis=-1)[:,None]
+    eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
 
-                u[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.abs(val).reshape((32,32,32))
-                g[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.where(
-                    np.hstack([grad_norms, grad_norms, grad_norms]) < .00000,
-                    pred_normals,
-                    normalize(gradients)
-                ).reshape((32,32,32,3))
+    pred_normals = eigenvectors[..., 2].numpy()
 
-                # if np.min(val) < 0.05:
-                #     projections = pts - normalize(gradients) * inverse('tanh', val, 10)
-                #     hessians = np.zeros((gradients.shape[0],3,3))
-                #     proj_gradients = np.zeros_like(pts)
-                #     evaluate( model, projections, device=device, gradients=proj_gradients, hessians=hessians )
-                #     eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
+    pred_normals = np.where(
+        np.sum( gradients * pred_normals ) < 0,
+        np.ones( (pred_normals.shape[0],1)) * -1,
+        np.ones( (pred_normals.shape[0],1))
+    ) * pred_normals
+    grad_norms = np.linalg.norm(gradients, axis=-1)[:,None]
 
-                #     pred_normals = eigenvectors[..., 2].numpy()
-
-                #     pred_normals = np.where(
-                #         np.sum( (pts - projections) * pred_normals ) < 0,
-                #         np.ones( (pred_normals.shape[0],1)) ,
-                #         np.ones( (pred_normals.shape[0],1)) * -1
-                #     ) * pred_normals
-                #     grad_norms = np.linalg.norm(proj_gradients, axis=-1)[:,None]
-
-                #     u[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = val.reshape((32,32,32))
-                #     g[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = np.where(
-                #         np.hstack([grad_norms, grad_norms, grad_norms]) < 0.001,
-                #         pred_normals,
-                #         normalize(proj_gradients)
-                #     ).reshape((32,32,32,3))
-                # else:
-                #     u[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = val.reshape((32,32,32))
-                #     g[xi * N: xi * N + len(xs), yi * N: yi * N + len(ys), zi * N: zi * N + len(zs)] = normalize(gradients).reshape((32,32,32,3))
+    u = inverse('tanh', val - np.min(val), 10).reshape((resolution, resolution, resolution))
+    g = np.where(
+        np.hstack([grad_norms, grad_norms, grad_norms]) < .1,
+        pred_normals,
+        normalize(gradients)
+    ).reshape((resolution, resolution, resolution,3))
 
     return u, g
 
-def extract_geometry( resolution, model, device):
+def extract_geometry( resolution, model, device, bbox_min, bbox_max):
 
     print('Extracting mesh with resolution: {}'.format(resolution))
-    u, g = extract_fields( resolution, model, device)
-    mesh = surface_extraction(u, g, resolution)
+    u, g = extract_fields( resolution, model, device, bbox_min, bbox_max)
+    mesh = surface_extraction(u, g, resolution, bbox_min, bbox_max)
 
     return mesh
 
 
-def surface_extraction(ndf, grad, resolution):
+def surface_extraction(ndf, grad, resolution, bbox_min, bbox_max):
     v_all = []
     t_all = []
-    threshold = 0.05   # accelerate extraction
+    threshold = 0.0037   # accelerate extraction
     v_num = 0
     for i in range(resolution-1):
         for j in range(resolution-1):
@@ -102,7 +72,7 @@ def surface_extraction(ndf, grad, resolution):
                     for jj in range(2):
                         for kk in range(2):
                             if np.dot(grad_loc[0][0][0], grad_loc[ii][jj][kk]) < 0:
-                                res[ii][jj][kk] = -ndf_loc[ii][jj][kk]
+                                res[ii][jj][kk] = -1 * ndf_loc[ii][jj][kk]
                             else:
                                 res[ii][jj][kk] = ndf_loc[ii][jj][kk]
 
@@ -111,10 +81,10 @@ def surface_extraction(ndf, grad, resolution):
                         res, 0)
                     # print(vertices)
                     # vertices -= 1.5
-                    # vertices /= 128
-                    vertices[:,0] += i #/ resolution
-                    vertices[:,1] += j #/ resolution
-                    vertices[:,2] += k #/ resolution
+
+                    vertices[:,0] += i
+                    vertices[:,1] += j
+                    vertices[:,2] += k
                     triangles += v_num
                     # vertices = 
                     # vertices[:,1] /= 3  # TODO
@@ -127,8 +97,9 @@ def surface_extraction(ndf, grad, resolution):
     v_all = np.concatenate(v_all)
     t_all = np.concatenate(t_all)
     # Create mesh
-    v_all = v_all / (resolution - 1.0) * (np.array([1]) - np.array([-1]))[None, :] + np.array([-1])[None, :]
-    
+    #print(v_all.shape)
+    v_all = v_all / (resolution - 1.0) * (bbox_max - bbox_min)[None, :] + bbox_min[None, :]
+    #print(v_all.shape)
     mesh = trimesh.Trimesh(v_all, t_all, process=False)
     
     return mesh

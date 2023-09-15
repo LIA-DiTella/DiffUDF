@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_squared, loss_tanh
+from src.loss_functions import loss_siren, loss_squared, loss_tanh, loss_tanh_gc, loss_tanh_tv, loss_tanh_hessian
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
@@ -56,7 +56,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             
             #outputs = model( input_data )
 
-            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"] )
+            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"])#, epoch > 3000 )
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -105,7 +105,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
                 osp.join(log_path, "models", f"model_{epoch}.pth")
             )
             print(f"Generating mesh")
-            generate_mc( model, config["gt_mode"], device, 128, osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'))
+            generate_mc( model, config["gt_mode"], device, 256, 
+                        osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'), alpha=config['alpha'])
 
         else:
             torch.save(
@@ -175,6 +176,12 @@ def setup_train( parameter_dict, cuda_device ):
         loss_fn = loss_squared
     elif parameter_dict["loss"] == "loss_tanh":
         loss_fn = loss_tanh
+    elif parameter_dict["loss"] == "loss_tanh_gc":
+        loss_fn = loss_tanh_gc
+    elif parameter_dict["loss"] == "loss_tanh_tv":
+        loss_fn = loss_tanh_tv
+    elif parameter_dict["loss"] == "loss_tanh_hessian":
+        loss_fn = loss_tanh_hessian
     else:
         raise ValueError("Loss unknown")
 
@@ -183,7 +190,7 @@ def setup_train( parameter_dict, cuda_device ):
         "warmup_epochs": parameter_dict.get("warmup_epochs", 0),
         "batch_size": parameter_dict["batch_size"],
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
-        "gt_mode": parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+        "gt_mode": parameter_dict["gt_mode"],
         "log_path": full_path,
         "optimizer": optimizer,
         "loss_fn": loss_fn,
@@ -214,7 +221,7 @@ def setup_train( parameter_dict, cuda_device ):
         'joint': 0,
         'width': 512,
         'weight0': network_params["w0"],
-        'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
+        'gt_mode': parameter_dict["gt_mode"],
         'alpha': parameter_dict['alpha'],
         'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }

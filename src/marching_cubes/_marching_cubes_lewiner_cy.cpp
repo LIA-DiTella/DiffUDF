@@ -1651,7 +1651,7 @@ typedef struct {
 
 /* #### Code section: numeric_typedefs ### */
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":731
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":730
  * # in Cython to enable them only on the right systems.
  * 
  * ctypedef npy_int8       int8_t             # <<<<<<<<<<<<<<
@@ -1660,7 +1660,7 @@ typedef struct {
  */
 typedef npy_int8 __pyx_t_5numpy_int8_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":732
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":731
  * 
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t             # <<<<<<<<<<<<<<
@@ -1669,7 +1669,7 @@ typedef npy_int8 __pyx_t_5numpy_int8_t;
  */
 typedef npy_int16 __pyx_t_5numpy_int16_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":733
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":732
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t             # <<<<<<<<<<<<<<
@@ -1678,7 +1678,7 @@ typedef npy_int16 __pyx_t_5numpy_int16_t;
  */
 typedef npy_int32 __pyx_t_5numpy_int32_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":734
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":733
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t
  * ctypedef npy_int64      int64_t             # <<<<<<<<<<<<<<
@@ -1687,7 +1687,7 @@ typedef npy_int32 __pyx_t_5numpy_int32_t;
  */
 typedef npy_int64 __pyx_t_5numpy_int64_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":738
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":737
  * #ctypedef npy_int128     int128_t
  * 
  * ctypedef npy_uint8      uint8_t             # <<<<<<<<<<<<<<
@@ -1696,7 +1696,7 @@ typedef npy_int64 __pyx_t_5numpy_int64_t;
  */
 typedef npy_uint8 __pyx_t_5numpy_uint8_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":739
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":738
  * 
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t             # <<<<<<<<<<<<<<
@@ -1705,7 +1705,7 @@ typedef npy_uint8 __pyx_t_5numpy_uint8_t;
  */
 typedef npy_uint16 __pyx_t_5numpy_uint16_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":740
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":739
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t             # <<<<<<<<<<<<<<
@@ -1714,7 +1714,7 @@ typedef npy_uint16 __pyx_t_5numpy_uint16_t;
  */
 typedef npy_uint32 __pyx_t_5numpy_uint32_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":741
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":740
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t
  * ctypedef npy_uint64     uint64_t             # <<<<<<<<<<<<<<
@@ -1723,7 +1723,7 @@ typedef npy_uint32 __pyx_t_5numpy_uint32_t;
  */
 typedef npy_uint64 __pyx_t_5numpy_uint64_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":745
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":744
  * #ctypedef npy_uint128    uint128_t
  * 
  * ctypedef npy_float32    float32_t             # <<<<<<<<<<<<<<
@@ -1732,7 +1732,7 @@ typedef npy_uint64 __pyx_t_5numpy_uint64_t;
  */
 typedef npy_float32 __pyx_t_5numpy_float32_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":746
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":745
  * 
  * ctypedef npy_float32    float32_t
  * ctypedef npy_float64    float64_t             # <<<<<<<<<<<<<<
@@ -1741,61 +1741,43 @@ typedef npy_float32 __pyx_t_5numpy_float32_t;
  */
 typedef npy_float64 __pyx_t_5numpy_float64_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":755
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":754
  * # The int types are mapped a bit surprising --
  * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t             # <<<<<<<<<<<<<<
- * ctypedef npy_longlong   long_t
- * ctypedef npy_longlong   longlong_t
- */
-typedef npy_long __pyx_t_5numpy_int_t;
-
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":756
- * # numpy.int corresponds to 'l' and numpy.long to 'q'
- * ctypedef npy_long       int_t
- * ctypedef npy_longlong   long_t             # <<<<<<<<<<<<<<
  * ctypedef npy_longlong   longlong_t
  * 
  */
-typedef npy_longlong __pyx_t_5numpy_long_t;
+typedef npy_long __pyx_t_5numpy_int_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":757
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":755
+ * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t
- * ctypedef npy_longlong   long_t
  * ctypedef npy_longlong   longlong_t             # <<<<<<<<<<<<<<
  * 
  * ctypedef npy_ulong      uint_t
  */
 typedef npy_longlong __pyx_t_5numpy_longlong_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":759
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":757
  * ctypedef npy_longlong   longlong_t
  * 
  * ctypedef npy_ulong      uint_t             # <<<<<<<<<<<<<<
- * ctypedef npy_ulonglong  ulong_t
  * ctypedef npy_ulonglong  ulonglong_t
+ * 
  */
 typedef npy_ulong __pyx_t_5numpy_uint_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":760
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":758
  * 
  * ctypedef npy_ulong      uint_t
- * ctypedef npy_ulonglong  ulong_t             # <<<<<<<<<<<<<<
- * ctypedef npy_ulonglong  ulonglong_t
- * 
- */
-typedef npy_ulonglong __pyx_t_5numpy_ulong_t;
-
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":761
- * ctypedef npy_ulong      uint_t
- * ctypedef npy_ulonglong  ulong_t
  * ctypedef npy_ulonglong  ulonglong_t             # <<<<<<<<<<<<<<
  * 
  * ctypedef npy_intp       intp_t
  */
 typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":763
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":760
  * ctypedef npy_ulonglong  ulonglong_t
  * 
  * ctypedef npy_intp       intp_t             # <<<<<<<<<<<<<<
@@ -1804,7 +1786,7 @@ typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
  */
 typedef npy_intp __pyx_t_5numpy_intp_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":764
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":761
  * 
  * ctypedef npy_intp       intp_t
  * ctypedef npy_uintp      uintp_t             # <<<<<<<<<<<<<<
@@ -1813,7 +1795,7 @@ typedef npy_intp __pyx_t_5numpy_intp_t;
  */
 typedef npy_uintp __pyx_t_5numpy_uintp_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":766
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":763
  * ctypedef npy_uintp      uintp_t
  * 
  * ctypedef npy_double     float_t             # <<<<<<<<<<<<<<
@@ -1822,7 +1804,7 @@ typedef npy_uintp __pyx_t_5numpy_uintp_t;
  */
 typedef npy_double __pyx_t_5numpy_float_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":767
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":764
  * 
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t             # <<<<<<<<<<<<<<
@@ -1831,7 +1813,7 @@ typedef npy_double __pyx_t_5numpy_float_t;
  */
 typedef npy_double __pyx_t_5numpy_double_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":768
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":765
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t
  * ctypedef npy_longdouble longdouble_t             # <<<<<<<<<<<<<<
@@ -1905,7 +1887,7 @@ struct __pyx_opt_args_7cpython_11contextvars_get_value_no_default {
   PyObject *default_value;
 };
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":770
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":767
  * ctypedef npy_longdouble longdouble_t
  * 
  * ctypedef npy_cfloat      cfloat_t             # <<<<<<<<<<<<<<
@@ -1914,7 +1896,7 @@ struct __pyx_opt_args_7cpython_11contextvars_get_value_no_default {
  */
 typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":771
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":768
  * 
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t             # <<<<<<<<<<<<<<
@@ -1923,7 +1905,7 @@ typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":772
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":769
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t
  * ctypedef npy_clongdouble clongdouble_t             # <<<<<<<<<<<<<<
@@ -1932,7 +1914,7 @@ typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
  */
 typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":774
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":771
  * ctypedef npy_clongdouble clongdouble_t
  * 
  * ctypedef npy_cdouble     complex_t             # <<<<<<<<<<<<<<
@@ -3974,8 +3956,10 @@ static const char __pyx_k_TILING13_2[] = "TILING13_2";
 static const char __pyx_k_TILING13_3[] = "TILING13_3";
 static const char __pyx_k_TILING13_4[] = "TILING13_4";
 static const char __pyx_k_ValueError[] = "ValueError";
+static const char __pyx_k_avg_thresh[] = "avg_thresh";
 static const char __pyx_k_faces_ok_2[] = "faces_ok_";
 static const char __pyx_k_get_values[] = "get_values";
+static const char __pyx_k_max_thresh[] = "max_thresh";
 static const char __pyx_k_pyx_result[] = "__pyx_result";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
 static const char __pyx_k_vertices_2[] = "vertices_";
@@ -4163,7 +4147,7 @@ static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_3Lut_8__setstate_cython__
 static int __pyx_pf_26_marching_cubes_lewiner_cy_11LutProvider___init__(struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_self, PyObject *__pyx_v_EDGESRELX, PyObject *__pyx_v_EDGESRELY, PyObject *__pyx_v_EDGESRELZ, PyObject *__pyx_v_CASESCLASSIC, PyObject *__pyx_v_CASES, PyObject *__pyx_v_TILING1, PyObject *__pyx_v_TILING2, PyObject *__pyx_v_TILING3_1, PyObject *__pyx_v_TILING3_2, PyObject *__pyx_v_TILING4_1, PyObject *__pyx_v_TILING4_2, PyObject *__pyx_v_TILING5, PyObject *__pyx_v_TILING6_1_1, PyObject *__pyx_v_TILING6_1_2, PyObject *__pyx_v_TILING6_2, PyObject *__pyx_v_TILING7_1, PyObject *__pyx_v_TILING7_2, PyObject *__pyx_v_TILING7_3, PyObject *__pyx_v_TILING7_4_1, PyObject *__pyx_v_TILING7_4_2, PyObject *__pyx_v_TILING8, PyObject *__pyx_v_TILING9, PyObject *__pyx_v_TILING10_1_1, PyObject *__pyx_v_TILING10_1_1_, PyObject *__pyx_v_TILING10_1_2, PyObject *__pyx_v_TILING10_2, PyObject *__pyx_v_TILING10_2_, PyObject *__pyx_v_TILING11, PyObject *__pyx_v_TILING12_1_1, PyObject *__pyx_v_TILING12_1_1_, PyObject *__pyx_v_TILING12_1_2, PyObject *__pyx_v_TILING12_2, PyObject *__pyx_v_TILING12_2_, PyObject *__pyx_v_TILING13_1, PyObject *__pyx_v_TILING13_1_, PyObject *__pyx_v_TILING13_2, PyObject *__pyx_v_TILING13_2_, PyObject *__pyx_v_TILING13_3, PyObject *__pyx_v_TILING13_3_, PyObject *__pyx_v_TILING13_4, PyObject *__pyx_v_TILING13_5_1, PyObject *__pyx_v_TILING13_5_2, PyObject *__pyx_v_TILING14, PyObject *__pyx_v_TEST3, PyObject *__pyx_v_TEST4, PyObject *__pyx_v_TEST6, PyObject *__pyx_v_TEST7, PyObject *__pyx_v_TEST10, PyObject *__pyx_v_TEST12, PyObject *__pyx_v_TEST13, PyObject *__pyx_v_SUBCONFIG13); /* proto */
 static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_11LutProvider_2__reduce_cython__(struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_11LutProvider_4__setstate_cython__(struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_im, __Pyx_memviewslice __pyx_v_grads, struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_luts, int __pyx_v_st, CYTHON_UNUSED int __pyx_v_classic, PyArrayObject *__pyx_v_mask); /* proto */
+static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_im, __Pyx_memviewslice __pyx_v_grads, struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_luts, int __pyx_v_st, CYTHON_UNUSED int __pyx_v_classic, float __pyx_v_avg_thresh, float __pyx_v_max_thresh, PyArrayObject *__pyx_v_mask); /* proto */
 static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_4__pyx_unpickle_LutProvider(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_26_marching_cubes_lewiner_cy_Cell(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_26_marching_cubes_lewiner_cy_Lut(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -4459,6 +4443,7 @@ typedef struct {
   PyObject *__pyx_n_s_arrays2;
   PyObject *__pyx_n_s_asyncio_coroutines;
   PyObject *__pyx_n_s_avg_cube_val_thresh;
+  PyObject *__pyx_n_s_avg_thresh;
   PyObject *__pyx_n_s_base;
   PyObject *__pyx_n_s_base_vec;
   PyObject *__pyx_n_s_c;
@@ -4547,6 +4532,7 @@ typedef struct {
   PyObject *__pyx_n_s_max_cube_val_thresh;
   PyObject *__pyx_n_s_max_distance;
   PyObject *__pyx_n_s_max_distance_temp;
+  PyObject *__pyx_n_s_max_thresh;
   PyObject *__pyx_n_s_memview;
   PyObject *__pyx_n_s_mode;
   PyObject *__pyx_n_s_name;
@@ -4660,8 +4646,6 @@ typedef struct {
   PyObject *__pyx_n_s_zi;
   PyObject *__pyx_float_0_0;
   PyObject *__pyx_float_1_0;
-  PyObject *__pyx_float_1_05;
-  PyObject *__pyx_float_1_74;
   PyObject *__pyx_int_0;
   PyObject *__pyx_int_1;
   PyObject *__pyx_int_2;
@@ -4914,6 +4898,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_arrays2);
   Py_CLEAR(clear_module_state->__pyx_n_s_asyncio_coroutines);
   Py_CLEAR(clear_module_state->__pyx_n_s_avg_cube_val_thresh);
+  Py_CLEAR(clear_module_state->__pyx_n_s_avg_thresh);
   Py_CLEAR(clear_module_state->__pyx_n_s_base);
   Py_CLEAR(clear_module_state->__pyx_n_s_base_vec);
   Py_CLEAR(clear_module_state->__pyx_n_s_c);
@@ -5002,6 +4987,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_max_cube_val_thresh);
   Py_CLEAR(clear_module_state->__pyx_n_s_max_distance);
   Py_CLEAR(clear_module_state->__pyx_n_s_max_distance_temp);
+  Py_CLEAR(clear_module_state->__pyx_n_s_max_thresh);
   Py_CLEAR(clear_module_state->__pyx_n_s_memview);
   Py_CLEAR(clear_module_state->__pyx_n_s_mode);
   Py_CLEAR(clear_module_state->__pyx_n_s_name);
@@ -5115,8 +5101,6 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_zi);
   Py_CLEAR(clear_module_state->__pyx_float_0_0);
   Py_CLEAR(clear_module_state->__pyx_float_1_0);
-  Py_CLEAR(clear_module_state->__pyx_float_1_05);
-  Py_CLEAR(clear_module_state->__pyx_float_1_74);
   Py_CLEAR(clear_module_state->__pyx_int_0);
   Py_CLEAR(clear_module_state->__pyx_int_1);
   Py_CLEAR(clear_module_state->__pyx_int_2);
@@ -5347,6 +5331,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_arrays2);
   Py_VISIT(traverse_module_state->__pyx_n_s_asyncio_coroutines);
   Py_VISIT(traverse_module_state->__pyx_n_s_avg_cube_val_thresh);
+  Py_VISIT(traverse_module_state->__pyx_n_s_avg_thresh);
   Py_VISIT(traverse_module_state->__pyx_n_s_base);
   Py_VISIT(traverse_module_state->__pyx_n_s_base_vec);
   Py_VISIT(traverse_module_state->__pyx_n_s_c);
@@ -5435,6 +5420,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_max_cube_val_thresh);
   Py_VISIT(traverse_module_state->__pyx_n_s_max_distance);
   Py_VISIT(traverse_module_state->__pyx_n_s_max_distance_temp);
+  Py_VISIT(traverse_module_state->__pyx_n_s_max_thresh);
   Py_VISIT(traverse_module_state->__pyx_n_s_memview);
   Py_VISIT(traverse_module_state->__pyx_n_s_mode);
   Py_VISIT(traverse_module_state->__pyx_n_s_name);
@@ -5548,8 +5534,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_zi);
   Py_VISIT(traverse_module_state->__pyx_float_0_0);
   Py_VISIT(traverse_module_state->__pyx_float_1_0);
-  Py_VISIT(traverse_module_state->__pyx_float_1_05);
-  Py_VISIT(traverse_module_state->__pyx_float_1_74);
   Py_VISIT(traverse_module_state->__pyx_int_0);
   Py_VISIT(traverse_module_state->__pyx_int_1);
   Py_VISIT(traverse_module_state->__pyx_int_2);
@@ -5892,6 +5876,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_arrays2 __pyx_mstate_global->__pyx_n_s_arrays2
 #define __pyx_n_s_asyncio_coroutines __pyx_mstate_global->__pyx_n_s_asyncio_coroutines
 #define __pyx_n_s_avg_cube_val_thresh __pyx_mstate_global->__pyx_n_s_avg_cube_val_thresh
+#define __pyx_n_s_avg_thresh __pyx_mstate_global->__pyx_n_s_avg_thresh
 #define __pyx_n_s_base __pyx_mstate_global->__pyx_n_s_base
 #define __pyx_n_s_base_vec __pyx_mstate_global->__pyx_n_s_base_vec
 #define __pyx_n_s_c __pyx_mstate_global->__pyx_n_s_c
@@ -5980,6 +5965,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_max_cube_val_thresh __pyx_mstate_global->__pyx_n_s_max_cube_val_thresh
 #define __pyx_n_s_max_distance __pyx_mstate_global->__pyx_n_s_max_distance
 #define __pyx_n_s_max_distance_temp __pyx_mstate_global->__pyx_n_s_max_distance_temp
+#define __pyx_n_s_max_thresh __pyx_mstate_global->__pyx_n_s_max_thresh
 #define __pyx_n_s_memview __pyx_mstate_global->__pyx_n_s_memview
 #define __pyx_n_s_mode __pyx_mstate_global->__pyx_n_s_mode
 #define __pyx_n_s_name __pyx_mstate_global->__pyx_n_s_name
@@ -6093,8 +6079,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_zi __pyx_mstate_global->__pyx_n_s_zi
 #define __pyx_float_0_0 __pyx_mstate_global->__pyx_float_0_0
 #define __pyx_float_1_0 __pyx_mstate_global->__pyx_float_1_0
-#define __pyx_float_1_05 __pyx_mstate_global->__pyx_float_1_05
-#define __pyx_float_1_74 __pyx_mstate_global->__pyx_float_1_74
 #define __pyx_int_0 __pyx_mstate_global->__pyx_int_0
 #define __pyx_int_1 __pyx_mstate_global->__pyx_int_1
 #define __pyx_int_2 __pyx_mstate_global->__pyx_int_2
@@ -20119,7 +20103,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy_7ndarray_4data_data(PyArrayObject *__p
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":776
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":773
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -20136,7 +20120,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew1", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":777
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":774
  * 
  * cdef inline object PyArray_MultiIterNew1(a):
  *     return PyArray_MultiIterNew(1, <void*>a)             # <<<<<<<<<<<<<<
@@ -20144,13 +20128,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
  * cdef inline object PyArray_MultiIterNew2(a, b):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyArray_MultiIterNew(1, ((void *)__pyx_v_a)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 777, __pyx_L1_error)
+  __pyx_t_1 = PyArray_MultiIterNew(1, ((void *)__pyx_v_a)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 774, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":776
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":773
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -20169,7 +20153,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":779
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":776
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -20186,7 +20170,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew2", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":780
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":777
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)             # <<<<<<<<<<<<<<
@@ -20194,13 +20178,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
  * cdef inline object PyArray_MultiIterNew3(a, b, c):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyArray_MultiIterNew(2, ((void *)__pyx_v_a), ((void *)__pyx_v_b)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 780, __pyx_L1_error)
+  __pyx_t_1 = PyArray_MultiIterNew(2, ((void *)__pyx_v_a), ((void *)__pyx_v_b)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 777, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":779
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":776
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -20219,7 +20203,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":782
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":779
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -20236,7 +20220,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew3", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":783
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":780
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)             # <<<<<<<<<<<<<<
@@ -20244,13 +20228,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyArray_MultiIterNew(3, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 783, __pyx_L1_error)
+  __pyx_t_1 = PyArray_MultiIterNew(3, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 780, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":782
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":779
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -20269,7 +20253,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":785
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":782
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -20286,7 +20270,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew4", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":786
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":783
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)             # <<<<<<<<<<<<<<
@@ -20294,13 +20278,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyArray_MultiIterNew(4, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c), ((void *)__pyx_v_d)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 786, __pyx_L1_error)
+  __pyx_t_1 = PyArray_MultiIterNew(4, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c), ((void *)__pyx_v_d)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 783, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":785
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":782
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -20319,7 +20303,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":788
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":785
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -20336,7 +20320,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew5", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":789
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":786
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)             # <<<<<<<<<<<<<<
@@ -20344,13 +20328,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyArray_MultiIterNew(5, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c), ((void *)__pyx_v_d), ((void *)__pyx_v_e)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 789, __pyx_L1_error)
+  __pyx_t_1 = PyArray_MultiIterNew(5, ((void *)__pyx_v_a), ((void *)__pyx_v_b), ((void *)__pyx_v_c), ((void *)__pyx_v_d), ((void *)__pyx_v_e)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 786, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":788
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":785
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -20369,7 +20353,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":791
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":788
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -20383,7 +20367,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("PyDataType_SHAPE", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":792
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":789
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -20393,7 +20377,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   __pyx_t_1 = PyDataType_HASSUBARRAY(__pyx_v_d);
   if (__pyx_t_1) {
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":793
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":790
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):
  *         return <tuple>d.subarray.shape             # <<<<<<<<<<<<<<
@@ -20405,7 +20389,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     __pyx_r = ((PyObject*)__pyx_v_d->subarray->shape);
     goto __pyx_L0;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":792
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":789
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -20414,7 +20398,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
  */
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":795
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":792
  *         return <tuple>d.subarray.shape
  *     else:
  *         return ()             # <<<<<<<<<<<<<<
@@ -20428,7 +20412,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     goto __pyx_L0;
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":791
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":788
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -20443,7 +20427,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":970
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":967
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -20453,9 +20437,13 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
 
 static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_arr, PyObject *__pyx_v_base) {
   __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("set_array_base", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":971
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":968
  * 
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!             # <<<<<<<<<<<<<<
@@ -20464,16 +20452,16 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
   Py_INCREF(__pyx_v_base);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":972
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":969
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!
  *     PyArray_SetBaseObject(arr, base)             # <<<<<<<<<<<<<<
  * 
  * cdef inline object get_array_base(ndarray arr):
  */
-  (void)(PyArray_SetBaseObject(__pyx_v_arr, __pyx_v_base));
+  __pyx_t_1 = PyArray_SetBaseObject(__pyx_v_arr, __pyx_v_base); if (unlikely(__pyx_t_1 == ((int)-1))) __PYX_ERR(2, 969, __pyx_L1_error)
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":970
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":967
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -20482,10 +20470,14 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("numpy.set_array_base", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":974
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":971
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -20500,7 +20492,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("get_array_base", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":975
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":972
  * 
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)             # <<<<<<<<<<<<<<
@@ -20509,7 +20501,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   __pyx_v_base = PyArray_BASE(__pyx_v_arr);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":976
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":973
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -20519,7 +20511,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_t_1 = (__pyx_v_base == NULL);
   if (__pyx_t_1) {
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":977
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":974
  *     base = PyArray_BASE(arr)
  *     if base is NULL:
  *         return None             # <<<<<<<<<<<<<<
@@ -20530,7 +20522,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
     __pyx_r = Py_None; __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":976
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":973
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -20539,7 +20531,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":978
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":975
  *     if base is NULL:
  *         return None
  *     return <object>base             # <<<<<<<<<<<<<<
@@ -20551,7 +20543,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_r = ((PyObject *)__pyx_v_base);
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":974
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":971
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -20566,7 +20558,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":982
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":979
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -20590,7 +20582,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("import_array", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":983
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":980
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20606,16 +20598,16 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":984
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":981
  * cdef inline int import_array() except -1:
  *     try:
  *         __pyx_import_array()             # <<<<<<<<<<<<<<
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")
  */
-      __pyx_t_4 = _import_array(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 984, __pyx_L3_error)
+      __pyx_t_4 = _import_array(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 981, __pyx_L3_error)
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":983
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":980
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20629,7 +20621,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":985
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":982
  *     try:
  *         __pyx_import_array()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -20639,27 +20631,27 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __pyx_t_4 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
     if (__pyx_t_4) {
       __Pyx_AddTraceback("numpy.import_array", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 985, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 982, __pyx_L5_except_error)
       __Pyx_XGOTREF(__pyx_t_5);
       __Pyx_XGOTREF(__pyx_t_6);
       __Pyx_XGOTREF(__pyx_t_7);
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":986
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":983
  *         __pyx_import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
  * 
  * cdef inline int import_umath() except -1:
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 986, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 983, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __PYX_ERR(2, 986, __pyx_L5_except_error)
+      __PYX_ERR(2, 983, __pyx_L5_except_error)
     }
     goto __pyx_L5_except_error;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":983
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":980
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20675,7 +20667,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":982
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":979
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -20698,7 +20690,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":988
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":985
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -20722,7 +20714,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("import_umath", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":989
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":986
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20738,16 +20730,16 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":990
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":987
  * cdef inline int import_umath() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")
  */
-      __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 990, __pyx_L3_error)
+      __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 987, __pyx_L3_error)
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":989
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":986
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20761,7 +20753,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":991
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":988
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -20771,27 +20763,27 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __pyx_t_4 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
     if (__pyx_t_4) {
       __Pyx_AddTraceback("numpy.import_umath", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 991, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 988, __pyx_L5_except_error)
       __Pyx_XGOTREF(__pyx_t_5);
       __Pyx_XGOTREF(__pyx_t_6);
       __Pyx_XGOTREF(__pyx_t_7);
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":992
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":989
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  * 
  * cdef inline int import_ufunc() except -1:
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 992, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 989, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __PYX_ERR(2, 992, __pyx_L5_except_error)
+      __PYX_ERR(2, 989, __pyx_L5_except_error)
     }
     goto __pyx_L5_except_error;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":989
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":986
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20807,7 +20799,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":988
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":985
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -20830,7 +20822,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":994
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":991
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -20854,7 +20846,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("import_ufunc", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":995
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":992
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20870,16 +20862,16 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":996
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":993
  * cdef inline int import_ufunc() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")
  */
-      __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 996, __pyx_L3_error)
+      __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 993, __pyx_L3_error)
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":995
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":992
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20893,7 +20885,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":997
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":994
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -20903,27 +20895,27 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __pyx_t_4 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
     if (__pyx_t_4) {
       __Pyx_AddTraceback("numpy.import_ufunc", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 997, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_5, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(2, 994, __pyx_L5_except_error)
       __Pyx_XGOTREF(__pyx_t_5);
       __Pyx_XGOTREF(__pyx_t_6);
       __Pyx_XGOTREF(__pyx_t_7);
 
-      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":998
+      /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":995
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  * 
  * 
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 998, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 995, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __PYX_ERR(2, 998, __pyx_L5_except_error)
+      __PYX_ERR(2, 995, __pyx_L5_except_error)
     }
     goto __pyx_L5_except_error;
 
-    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":995
+    /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":992
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -20939,7 +20931,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":994
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":991
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -20962,7 +20954,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1001
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":998
  * 
  * 
  * cdef inline bint is_timedelta64_object(object obj):             # <<<<<<<<<<<<<<
@@ -20975,7 +20967,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_timedelta64_object(PyObject *__pyx_v_
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("is_timedelta64_object", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1013
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1010
  *     bool
  *     """
  *     return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)             # <<<<<<<<<<<<<<
@@ -20985,7 +20977,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_timedelta64_object(PyObject *__pyx_v_
   __pyx_r = PyObject_TypeCheck(__pyx_v_obj, (&PyTimedeltaArrType_Type));
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1001
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":998
  * 
  * 
  * cdef inline bint is_timedelta64_object(object obj):             # <<<<<<<<<<<<<<
@@ -20999,7 +20991,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_timedelta64_object(PyObject *__pyx_v_
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1016
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1013
  * 
  * 
  * cdef inline bint is_datetime64_object(object obj):             # <<<<<<<<<<<<<<
@@ -21012,7 +21004,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_datetime64_object(PyObject *__pyx_v_o
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("is_datetime64_object", 0);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1028
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1025
  *     bool
  *     """
  *     return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)             # <<<<<<<<<<<<<<
@@ -21022,7 +21014,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_datetime64_object(PyObject *__pyx_v_o
   __pyx_r = PyObject_TypeCheck(__pyx_v_obj, (&PyDatetimeArrType_Type));
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1016
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1013
  * 
  * 
  * cdef inline bint is_datetime64_object(object obj):             # <<<<<<<<<<<<<<
@@ -21036,7 +21028,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_datetime64_object(PyObject *__pyx_v_o
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1031
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1028
  * 
  * 
  * cdef inline npy_datetime get_datetime64_value(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -21047,7 +21039,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_is_datetime64_object(PyObject *__pyx_v_o
 static CYTHON_INLINE npy_datetime __pyx_f_5numpy_get_datetime64_value(PyObject *__pyx_v_obj) {
   npy_datetime __pyx_r;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1038
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1035
  *     also needed.  That can be found using `get_datetime64_unit`.
  *     """
  *     return (<PyDatetimeScalarObject*>obj).obval             # <<<<<<<<<<<<<<
@@ -21057,7 +21049,7 @@ static CYTHON_INLINE npy_datetime __pyx_f_5numpy_get_datetime64_value(PyObject *
   __pyx_r = ((PyDatetimeScalarObject *)__pyx_v_obj)->obval;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1031
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1028
  * 
  * 
  * cdef inline npy_datetime get_datetime64_value(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -21070,7 +21062,7 @@ static CYTHON_INLINE npy_datetime __pyx_f_5numpy_get_datetime64_value(PyObject *
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1041
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1038
  * 
  * 
  * cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -21081,7 +21073,7 @@ static CYTHON_INLINE npy_datetime __pyx_f_5numpy_get_datetime64_value(PyObject *
 static CYTHON_INLINE npy_timedelta __pyx_f_5numpy_get_timedelta64_value(PyObject *__pyx_v_obj) {
   npy_timedelta __pyx_r;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1045
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1042
  *     returns the int64 value underlying scalar numpy timedelta64 object
  *     """
  *     return (<PyTimedeltaScalarObject*>obj).obval             # <<<<<<<<<<<<<<
@@ -21091,7 +21083,7 @@ static CYTHON_INLINE npy_timedelta __pyx_f_5numpy_get_timedelta64_value(PyObject
   __pyx_r = ((PyTimedeltaScalarObject *)__pyx_v_obj)->obval;
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1041
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1038
  * 
  * 
  * cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -21104,7 +21096,7 @@ static CYTHON_INLINE npy_timedelta __pyx_f_5numpy_get_timedelta64_value(PyObject
   return __pyx_r;
 }
 
-/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1048
+/* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1045
  * 
  * 
  * cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -21115,7 +21107,7 @@ static CYTHON_INLINE npy_timedelta __pyx_f_5numpy_get_timedelta64_value(PyObject
 static CYTHON_INLINE NPY_DATETIMEUNIT __pyx_f_5numpy_get_datetime64_unit(PyObject *__pyx_v_obj) {
   NPY_DATETIMEUNIT __pyx_r;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1052
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1049
  *     returns the unit part of the dtype for a numpy datetime64 object.
  *     """
  *     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base             # <<<<<<<<<<<<<<
@@ -21123,7 +21115,7 @@ static CYTHON_INLINE NPY_DATETIMEUNIT __pyx_f_5numpy_get_datetime64_unit(PyObjec
   __pyx_r = ((NPY_DATETIMEUNIT)((PyDatetimeScalarObject *)__pyx_v_obj)->obmeta.base);
   goto __pyx_L0;
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1048
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":1045
  * 
  * 
  * cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:             # <<<<<<<<<<<<<<
@@ -31150,7 +31142,7 @@ static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_11LutProvider_4__setstate
  * 
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,             # <<<<<<<<<<<<<<
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  */
 
@@ -31176,12 +31168,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_luts = 0;
   int __pyx_v_st;
   CYTHON_UNUSED int __pyx_v_classic;
+  float __pyx_v_avg_thresh;
+  float __pyx_v_max_thresh;
   PyArrayObject *__pyx_v_mask = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[6] = {0,0,0,0,0,0};
+  PyObject* values[8] = {0,0,0,0,0,0,0,0};
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -31198,19 +31192,23 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_im,&__pyx_n_s_grads,&__pyx_n_s_luts,&__pyx_n_s_st,&__pyx_n_s_classic,&__pyx_n_s_mask,0};
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_im,&__pyx_n_s_grads,&__pyx_n_s_luts,&__pyx_n_s_st,&__pyx_n_s_classic,&__pyx_n_s_avg_thresh,&__pyx_n_s_max_thresh,&__pyx_n_s_mask,0};
 
     /* "_marching_cubes_lewiner_cy.pyx":1118
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):             # <<<<<<<<<<<<<<
  *     """ marching_cubes(im, double isovalue, LutProvider luts, int st=1, int classic=0)
  *     Main entry to apply marching cubes.
  */
-    values[5] = __Pyx_Arg_NewRef_FASTCALL((PyObject *)((PyArrayObject *)Py_None));
+    values[7] = __Pyx_Arg_NewRef_FASTCALL((PyObject *)((PyArrayObject *)Py_None));
     if (__pyx_kwds) {
       Py_ssize_t kw_args;
       switch (__pyx_nargs) {
+        case  8: values[7] = __Pyx_Arg_FASTCALL(__pyx_args, 7);
+        CYTHON_FALLTHROUGH;
+        case  7: values[6] = __Pyx_Arg_FASTCALL(__pyx_args, 6);
+        CYTHON_FALLTHROUGH;
         case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
         CYTHON_FALLTHROUGH;
         case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
@@ -31243,7 +31241,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1116, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 6, 1); __PYX_ERR(0, 1116, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 8, 1); __PYX_ERR(0, 1116, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -31253,7 +31251,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         }
         else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1116, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 6, 2); __PYX_ERR(0, 1116, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 8, 2); __PYX_ERR(0, 1116, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -31272,8 +31270,22 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
         CYTHON_FALLTHROUGH;
         case  5:
         if (kw_args > 0) {
-          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_mask);
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_avg_thresh);
           if (value) { values[5] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1116, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  6:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_max_thresh);
+          if (value) { values[6] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1116, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  7:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_mask);
+          if (value) { values[7] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
           else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1116, __pyx_L3_error)
         }
       }
@@ -31283,6 +31295,10 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       }
     } else {
       switch (__pyx_nargs) {
+        case  8: values[7] = __Pyx_Arg_FASTCALL(__pyx_args, 7);
+        CYTHON_FALLTHROUGH;
+        case  7: values[6] = __Pyx_Arg_FASTCALL(__pyx_args, 6);
+        CYTHON_FALLTHROUGH;
         case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
         CYTHON_FALLTHROUGH;
         case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
@@ -31309,11 +31325,21 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
     } else {
       __pyx_v_classic = ((int)((int)0));
     }
-    __pyx_v_mask = ((PyArrayObject *)values[5]);
+    if (values[5]) {
+      __pyx_v_avg_thresh = __pyx_PyFloat_AsFloat(values[5]); if (unlikely((__pyx_v_avg_thresh == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 1117, __pyx_L3_error)
+    } else {
+      __pyx_v_avg_thresh = ((float)((double)1.05));
+    }
+    if (values[6]) {
+      __pyx_v_max_thresh = __pyx_PyFloat_AsFloat(values[6]); if (unlikely((__pyx_v_max_thresh == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 1117, __pyx_L3_error)
+    } else {
+      __pyx_v_max_thresh = ((float)((double)1.75));
+    }
+    __pyx_v_mask = ((PyArrayObject *)values[7]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 6, __pyx_nargs); __PYX_ERR(0, 1116, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("marching_cubes_udf", 0, 3, 8, __pyx_nargs); __PYX_ERR(0, 1116, __pyx_L3_error)
   goto __pyx_L3_error;
   __pyx_L3_error:;
   {
@@ -31336,13 +31362,13 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_luts), __pyx_ptype_26_marching_cubes_lewiner_cy_LutProvider, 1, "luts", 0))) __PYX_ERR(0, 1117, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mask), __pyx_ptype_5numpy_ndarray, 1, "mask", 0))) __PYX_ERR(0, 1118, __pyx_L1_error)
-  __pyx_r = __pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(__pyx_self, __pyx_v_im, __pyx_v_grads, __pyx_v_luts, __pyx_v_st, __pyx_v_classic, __pyx_v_mask);
+  __pyx_r = __pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(__pyx_self, __pyx_v_im, __pyx_v_grads, __pyx_v_luts, __pyx_v_st, __pyx_v_classic, __pyx_v_avg_thresh, __pyx_v_max_thresh, __pyx_v_mask);
 
   /* "_marching_cubes_lewiner_cy.pyx":1116
  * 
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,             # <<<<<<<<<<<<<<
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  */
 
@@ -31363,7 +31389,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_im, __Pyx_memviewslice __pyx_v_grads, struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_luts, int __pyx_v_st, CYTHON_UNUSED int __pyx_v_classic, PyArrayObject *__pyx_v_mask) {
+static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_im, __Pyx_memviewslice __pyx_v_grads, struct __pyx_obj_26_marching_cubes_lewiner_cy_LutProvider *__pyx_v_luts, int __pyx_v_st, CYTHON_UNUSED int __pyx_v_classic, float __pyx_v_avg_thresh, float __pyx_v_max_thresh, PyArrayObject *__pyx_v_mask) {
   int __pyx_v_Nx;
   int __pyx_v_Ny;
   int __pyx_v_Nz;
@@ -31719,7 +31745,7 @@ static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHO
  *     Nx_bound, Ny_bound, Nz_bound = Nx - 2 * st, Ny - 2 * st, Nz - 2 * st  # precalculated index range
  *     cdef float[:] base_vec = np.empty((3), dtype=np.float32)             # <<<<<<<<<<<<<<
  * 
- *     cdef float avg_cube_val_thresh = 1.05 * voxel_size
+ *     cdef float avg_cube_val_thresh = avg_thresh  * voxel_size
  */
   __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1156, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
@@ -31748,25 +31774,31 @@ static PyObject *__pyx_pf_26_marching_cubes_lewiner_cy_2marching_cubes_udf(CYTHO
   /* "_marching_cubes_lewiner_cy.pyx":1158
  *     cdef float[:] base_vec = np.empty((3), dtype=np.float32)
  * 
- *     cdef float avg_cube_val_thresh = 1.05 * voxel_size             # <<<<<<<<<<<<<<
- *     cdef float max_cube_val_thresh = 1.74 * voxel_size
+ *     cdef float avg_cube_val_thresh = avg_thresh  * voxel_size             # <<<<<<<<<<<<<<
+ *     cdef float max_cube_val_thresh = max_thresh  * voxel_size
  * 
  */
-  __pyx_t_8 = PyNumber_Multiply(__pyx_float_1_05, __pyx_v_voxel_size); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1158, __pyx_L1_error)
+  __pyx_t_8 = PyFloat_FromDouble(__pyx_v_avg_thresh); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1158, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_16 = __pyx_PyFloat_AsFloat(__pyx_t_8); if (unlikely((__pyx_t_16 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 1158, __pyx_L1_error)
+  __pyx_t_6 = PyNumber_Multiply(__pyx_t_8, __pyx_v_voxel_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1158, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __pyx_t_16 = __pyx_PyFloat_AsFloat(__pyx_t_6); if (unlikely((__pyx_t_16 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 1158, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_v_avg_cube_val_thresh = __pyx_t_16;
 
   /* "_marching_cubes_lewiner_cy.pyx":1159
  * 
- *     cdef float avg_cube_val_thresh = 1.05 * voxel_size
- *     cdef float max_cube_val_thresh = 1.74 * voxel_size             # <<<<<<<<<<<<<<
+ *     cdef float avg_cube_val_thresh = avg_thresh  * voxel_size
+ *     cdef float max_cube_val_thresh = max_thresh  * voxel_size             # <<<<<<<<<<<<<<
  * 
  *     # BFS data structures
  */
-  __pyx_t_8 = PyNumber_Multiply(__pyx_float_1_74, __pyx_v_voxel_size); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1159, __pyx_L1_error)
+  __pyx_t_6 = PyFloat_FromDouble(__pyx_v_max_thresh); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1159, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_8 = PyNumber_Multiply(__pyx_t_6, __pyx_v_voxel_size); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1159, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_16 = __pyx_PyFloat_AsFloat(__pyx_t_8); if (unlikely((__pyx_t_16 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 1159, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __pyx_v_max_cube_val_thresh = __pyx_t_16;
@@ -41430,7 +41462,7 @@ __pyx_t_50 = __pyx_f_26_marching_cubes_lewiner_cy_dot3(__pyx_v_base_vec, __pyx_t
  * 
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,             # <<<<<<<<<<<<<<
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  */
 
@@ -51520,6 +51552,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_arrays2, __pyx_k_arrays2, sizeof(__pyx_k_arrays2), 0, 0, 1, 1},
     {&__pyx_n_s_asyncio_coroutines, __pyx_k_asyncio_coroutines, sizeof(__pyx_k_asyncio_coroutines), 0, 0, 1, 1},
     {&__pyx_n_s_avg_cube_val_thresh, __pyx_k_avg_cube_val_thresh, sizeof(__pyx_k_avg_cube_val_thresh), 0, 0, 1, 1},
+    {&__pyx_n_s_avg_thresh, __pyx_k_avg_thresh, sizeof(__pyx_k_avg_thresh), 0, 0, 1, 1},
     {&__pyx_n_s_base, __pyx_k_base, sizeof(__pyx_k_base), 0, 0, 1, 1},
     {&__pyx_n_s_base_vec, __pyx_k_base_vec, sizeof(__pyx_k_base_vec), 0, 0, 1, 1},
     {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
@@ -51608,6 +51641,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_max_cube_val_thresh, __pyx_k_max_cube_val_thresh, sizeof(__pyx_k_max_cube_val_thresh), 0, 0, 1, 1},
     {&__pyx_n_s_max_distance, __pyx_k_max_distance, sizeof(__pyx_k_max_distance), 0, 0, 1, 1},
     {&__pyx_n_s_max_distance_temp, __pyx_k_max_distance_temp, sizeof(__pyx_k_max_distance_temp), 0, 0, 1, 1},
+    {&__pyx_n_s_max_thresh, __pyx_k_max_thresh, sizeof(__pyx_k_max_thresh), 0, 0, 1, 1},
     {&__pyx_n_s_memview, __pyx_k_memview, sizeof(__pyx_k_memview), 0, 0, 1, 1},
     {&__pyx_n_s_mode, __pyx_k_mode, sizeof(__pyx_k_mode), 0, 0, 1, 1},
     {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
@@ -51736,7 +51770,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_Ellipsis = __Pyx_GetBuiltinName(__pyx_n_s_Ellipsis); if (!__pyx_builtin_Ellipsis) __PYX_ERR(1, 408, __pyx_L1_error)
   __pyx_builtin_id = __Pyx_GetBuiltinName(__pyx_n_s_id); if (!__pyx_builtin_id) __PYX_ERR(1, 618, __pyx_L1_error)
   __pyx_builtin_IndexError = __Pyx_GetBuiltinName(__pyx_n_s_IndexError); if (!__pyx_builtin_IndexError) __PYX_ERR(1, 914, __pyx_L1_error)
-  __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(2, 986, __pyx_L1_error)
+  __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(2, 983, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -51783,25 +51817,25 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":986
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":983
  *         __pyx_import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
  * 
  * cdef inline int import_umath() except -1:
  */
-  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(2, 986, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(2, 983, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
 
-  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":992
+  /* "../../../miniconda3/envs/tdf/lib/python3.10/site-packages/numpy/__init__.cython-30.pxd":989
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  * 
  * cdef inline int import_ufunc() except -1:
  */
-  __pyx_tuple__10 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(2, 992, __pyx_L1_error)
+  __pyx_tuple__10 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(2, 989, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
 
@@ -51810,7 +51844,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  *     Nx_bound, Ny_bound, Nz_bound = Nx - 2 * st, Ny - 2 * st, Nz - 2 * st  # precalculated index range
  *     cdef float[:] base_vec = np.empty((3), dtype=np.float32)             # <<<<<<<<<<<<<<
  * 
- *     cdef float avg_cube_val_thresh = 1.05 * voxel_size
+ *     cdef float avg_cube_val_thresh = avg_thresh  * voxel_size
  */
   __pyx_tuple__11 = PyTuple_Pack(1, __pyx_int_3); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 1156, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
@@ -52079,13 +52113,13 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,             # <<<<<<<<<<<<<<
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  */
-  __pyx_tuple__46 = PyTuple_Pack(75, __pyx_n_s_im, __pyx_n_s_grads, __pyx_n_s_luts, __pyx_n_s_st, __pyx_n_s_classic, __pyx_n_s_mask, __pyx_n_s_Nx, __pyx_n_s_Ny, __pyx_n_s_Nz, __pyx_n_s_voxel_size, __pyx_n_s_cell, __pyx_n_s_signed_im, __pyx_n_s_signed_im_mask, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_z, __pyx_n_s_x_st, __pyx_n_s_y_st, __pyx_n_s_z_st, __pyx_n_s_xi, __pyx_n_s_yi, __pyx_n_s_zi, __pyx_n_s_x_i, __pyx_n_s_y_i, __pyx_n_s_z_i, __pyx_n_s_dir_x, __pyx_n_s_dir_y, __pyx_n_s_dir_z, __pyx_n_s_cur_x_i, __pyx_n_s_cur_y_i, __pyx_n_s_cur_z_i, __pyx_n_s_nt, __pyx_n_s_case, __pyx_n_s_config, __pyx_n_s_subconfig, __pyx_n_s_no_mask, __pyx_n_s_v0, __pyx_n_s_v1, __pyx_n_s_v2, __pyx_n_s_v3, __pyx_n_s_v4, __pyx_n_s_v5, __pyx_n_s_v6, __pyx_n_s_v7, __pyx_n_s_Nx_bound, __pyx_n_s_Ny_bound, __pyx_n_s_Nz_bound, __pyx_n_s_base_vec, __pyx_n_s_avg_cube_val_thresh, __pyx_n_s_max_cube_val_thresh, __pyx_n_s_visited, __pyx_n_s_queue, __pyx_n_s_unsure_cases_queue, __pyx_n_s_non_trivial_mc_cases_queue, __pyx_n_s_current_tuple, __pyx_n_s_sign_vs, __pyx_n_s_visited_vs, __pyx_n_s_cube_sign, __pyx_n_s_total_cubes, __pyx_n_s_connected_components, __pyx_n_s_vertex_index_array_z, __pyx_n_s_vertex_index_array_y, __pyx_n_s_vertex_index_array_x, __pyx_n_s_directions_z, __pyx_n_s_directions_y, __pyx_n_s_directions_x, __pyx_n_s_max_distance, __pyx_n_s_max_distance_temp, __pyx_n_s_unsure_cases_thresh, __pyx_n_s_change_cube, __pyx_n_s_i, __pyx_n_s_v_index, __pyx_n_s_dir_index, __pyx_n_s_unsure_cases_visit_neighbours, __pyx_n_s_anchor_sign); if (unlikely(!__pyx_tuple__46)) __PYX_ERR(0, 1116, __pyx_L1_error)
+  __pyx_tuple__46 = PyTuple_Pack(77, __pyx_n_s_im, __pyx_n_s_grads, __pyx_n_s_luts, __pyx_n_s_st, __pyx_n_s_classic, __pyx_n_s_avg_thresh, __pyx_n_s_max_thresh, __pyx_n_s_mask, __pyx_n_s_Nx, __pyx_n_s_Ny, __pyx_n_s_Nz, __pyx_n_s_voxel_size, __pyx_n_s_cell, __pyx_n_s_signed_im, __pyx_n_s_signed_im_mask, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_z, __pyx_n_s_x_st, __pyx_n_s_y_st, __pyx_n_s_z_st, __pyx_n_s_xi, __pyx_n_s_yi, __pyx_n_s_zi, __pyx_n_s_x_i, __pyx_n_s_y_i, __pyx_n_s_z_i, __pyx_n_s_dir_x, __pyx_n_s_dir_y, __pyx_n_s_dir_z, __pyx_n_s_cur_x_i, __pyx_n_s_cur_y_i, __pyx_n_s_cur_z_i, __pyx_n_s_nt, __pyx_n_s_case, __pyx_n_s_config, __pyx_n_s_subconfig, __pyx_n_s_no_mask, __pyx_n_s_v0, __pyx_n_s_v1, __pyx_n_s_v2, __pyx_n_s_v3, __pyx_n_s_v4, __pyx_n_s_v5, __pyx_n_s_v6, __pyx_n_s_v7, __pyx_n_s_Nx_bound, __pyx_n_s_Ny_bound, __pyx_n_s_Nz_bound, __pyx_n_s_base_vec, __pyx_n_s_avg_cube_val_thresh, __pyx_n_s_max_cube_val_thresh, __pyx_n_s_visited, __pyx_n_s_queue, __pyx_n_s_unsure_cases_queue, __pyx_n_s_non_trivial_mc_cases_queue, __pyx_n_s_current_tuple, __pyx_n_s_sign_vs, __pyx_n_s_visited_vs, __pyx_n_s_cube_sign, __pyx_n_s_total_cubes, __pyx_n_s_connected_components, __pyx_n_s_vertex_index_array_z, __pyx_n_s_vertex_index_array_y, __pyx_n_s_vertex_index_array_x, __pyx_n_s_directions_z, __pyx_n_s_directions_y, __pyx_n_s_directions_x, __pyx_n_s_max_distance, __pyx_n_s_max_distance_temp, __pyx_n_s_unsure_cases_thresh, __pyx_n_s_change_cube, __pyx_n_s_i, __pyx_n_s_v_index, __pyx_n_s_dir_index, __pyx_n_s_unsure_cases_visit_neighbours, __pyx_n_s_anchor_sign); if (unlikely(!__pyx_tuple__46)) __PYX_ERR(0, 1116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__46);
   __Pyx_GIVEREF(__pyx_tuple__46);
-  __pyx_codeobj__47 = (PyObject*)__Pyx_PyCode_New(6, 0, 0, 75, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__46, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_marching_cubes_lewiner_cy_pyx, __pyx_n_s_marching_cubes_udf, 1116, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__47)) __PYX_ERR(0, 1116, __pyx_L1_error)
+  __pyx_codeobj__47 = (PyObject*)__Pyx_PyCode_New(8, 0, 0, 77, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__46, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_marching_cubes_lewiner_cy_pyx, __pyx_n_s_marching_cubes_udf, 1116, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__47)) __PYX_ERR(0, 1116, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_LutProvider(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
@@ -52105,8 +52139,6 @@ static CYTHON_SMALL_CODE int __Pyx_InitConstants(void) {
   if (__Pyx_CreateStringTabAndInitStrings() < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_float_0_0 = PyFloat_FromDouble(0.0); if (unlikely(!__pyx_float_0_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_float_1_0 = PyFloat_FromDouble(1.0); if (unlikely(!__pyx_float_1_0)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_float_1_05 = PyFloat_FromDouble(1.05); if (unlikely(!__pyx_float_1_05)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_float_1_74 = PyFloat_FromDouble(1.74); if (unlikely(!__pyx_float_1_74)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -52461,17 +52493,17 @@ static int __Pyx_modinit_type_import_code(void) {
   __pyx_ptype_5numpy_flatiter = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "flatiter", sizeof(PyArrayIterObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyArrayIterObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_flatiter) __PYX_ERR(2, 225, __pyx_L1_error)
   __pyx_ptype_5numpy_broadcast = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "broadcast", sizeof(PyArrayMultiIterObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyArrayMultiIterObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_broadcast) __PYX_ERR(2, 229, __pyx_L1_error)
   __pyx_ptype_5numpy_ndarray = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "ndarray", sizeof(PyArrayObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyArrayObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_ndarray) __PYX_ERR(2, 238, __pyx_L1_error)
-  __pyx_ptype_5numpy_generic = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "generic", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_generic) __PYX_ERR(2, 812, __pyx_L1_error)
-  __pyx_ptype_5numpy_number = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "number", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_number) __PYX_ERR(2, 814, __pyx_L1_error)
-  __pyx_ptype_5numpy_integer = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "integer", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_integer) __PYX_ERR(2, 816, __pyx_L1_error)
-  __pyx_ptype_5numpy_signedinteger = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "signedinteger", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_signedinteger) __PYX_ERR(2, 818, __pyx_L1_error)
-  __pyx_ptype_5numpy_unsignedinteger = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "unsignedinteger", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_unsignedinteger) __PYX_ERR(2, 820, __pyx_L1_error)
-  __pyx_ptype_5numpy_inexact = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "inexact", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_inexact) __PYX_ERR(2, 822, __pyx_L1_error)
-  __pyx_ptype_5numpy_floating = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "floating", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_floating) __PYX_ERR(2, 824, __pyx_L1_error)
-  __pyx_ptype_5numpy_complexfloating = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "complexfloating", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_complexfloating) __PYX_ERR(2, 826, __pyx_L1_error)
-  __pyx_ptype_5numpy_flexible = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "flexible", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_flexible) __PYX_ERR(2, 828, __pyx_L1_error)
-  __pyx_ptype_5numpy_character = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "character", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_character) __PYX_ERR(2, 830, __pyx_L1_error)
-  __pyx_ptype_5numpy_ufunc = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "ufunc", sizeof(PyUFuncObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyUFuncObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_ufunc) __PYX_ERR(2, 868, __pyx_L1_error)
+  __pyx_ptype_5numpy_generic = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "generic", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_generic) __PYX_ERR(2, 809, __pyx_L1_error)
+  __pyx_ptype_5numpy_number = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "number", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_number) __PYX_ERR(2, 811, __pyx_L1_error)
+  __pyx_ptype_5numpy_integer = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "integer", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_integer) __PYX_ERR(2, 813, __pyx_L1_error)
+  __pyx_ptype_5numpy_signedinteger = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "signedinteger", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_signedinteger) __PYX_ERR(2, 815, __pyx_L1_error)
+  __pyx_ptype_5numpy_unsignedinteger = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "unsignedinteger", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_unsignedinteger) __PYX_ERR(2, 817, __pyx_L1_error)
+  __pyx_ptype_5numpy_inexact = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "inexact", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_inexact) __PYX_ERR(2, 819, __pyx_L1_error)
+  __pyx_ptype_5numpy_floating = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "floating", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_floating) __PYX_ERR(2, 821, __pyx_L1_error)
+  __pyx_ptype_5numpy_complexfloating = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "complexfloating", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_complexfloating) __PYX_ERR(2, 823, __pyx_L1_error)
+  __pyx_ptype_5numpy_flexible = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "flexible", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_flexible) __PYX_ERR(2, 825, __pyx_L1_error)
+  __pyx_ptype_5numpy_character = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "character", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_character) __PYX_ERR(2, 827, __pyx_L1_error)
+  __pyx_ptype_5numpy_ufunc = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "ufunc", sizeof(PyUFuncObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyUFuncObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_ufunc) __PYX_ERR(2, 865, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = PyImport_ImportModule("array"); if (unlikely(!__pyx_t_1)) __PYX_ERR(4, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -52672,6 +52704,8 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec__marching_cubes_lewiner_cy(PyObjec
   static PyThread_type_lock __pyx_t_8[8];
   int __pyx_t_9;
   double __pyx_t_10;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -53486,7 +53520,7 @@ if (!__Pyx_RefNanny) {
   /* "_marching_cubes_lewiner_cy.pyx":1117
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,
- *                    LutProvider luts, int st=1, int classic=0,             # <<<<<<<<<<<<<<
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,             # <<<<<<<<<<<<<<
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  *     """ marching_cubes(im, double isovalue, LutProvider luts, int st=1, int classic=0)
  */
@@ -53494,51 +53528,61 @@ if (!__Pyx_RefNanny) {
   __Pyx_GOTREF(__pyx_t_7);
   __pyx_t_4 = __Pyx_PyInt_From_int(((int)0)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = PyFloat_FromDouble(((double)1.05)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1117, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_11 = PyFloat_FromDouble(((double)1.75)); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 1117, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_11);
 
   /* "_marching_cubes_lewiner_cy.pyx":1116
  * 
  * 
  * def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,             # <<<<<<<<<<<<<<
- *                    LutProvider luts, int st=1, int classic=0,
+ *                    LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
  *                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
  */
-  __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1116, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_12 = PyTuple_New(5); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 1116, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_12);
   __Pyx_GIVEREF(__pyx_t_7);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7)) __PYX_ERR(0, 1116, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_t_7)) __PYX_ERR(0, 1116, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_4)) __PYX_ERR(0, 1116, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 1, __pyx_t_4)) __PYX_ERR(0, 1116, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_5);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 2, __pyx_t_5)) __PYX_ERR(0, 1116, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_11);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 3, __pyx_t_11)) __PYX_ERR(0, 1116, __pyx_L1_error);
   __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(Py_None);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, Py_None)) __PYX_ERR(0, 1116, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 4, Py_None)) __PYX_ERR(0, 1116, __pyx_L1_error);
   __pyx_t_7 = 0;
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_26_marching_cubes_lewiner_cy_3marching_cubes_udf, 0, __pyx_n_s_marching_cubes_udf, NULL, __pyx_n_s_marching_cubes_lewiner_cy, __pyx_d, ((PyObject *)__pyx_codeobj__47)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1116, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_marching_cubes_udf, __pyx_t_4) < 0) __PYX_ERR(0, 1116, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = 0;
+  __pyx_t_11 = 0;
+  __pyx_t_11 = __Pyx_CyFunction_New(&__pyx_mdef_26_marching_cubes_lewiner_cy_3marching_cubes_udf, 0, __pyx_n_s_marching_cubes_udf, NULL, __pyx_n_s_marching_cubes_lewiner_cy, __pyx_d, ((PyObject *)__pyx_codeobj__47)); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 1116, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_11);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_11, __pyx_t_12);
+  __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_marching_cubes_udf, __pyx_t_11) < 0) __PYX_ERR(0, 1116, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_LutProvider(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_26_marching_cubes_lewiner_cy_5__pyx_unpickle_LutProvider, 0, __pyx_n_s_pyx_unpickle_LutProvider, NULL, __pyx_n_s_marching_cubes_lewiner_cy, __pyx_d, ((PyObject *)__pyx_codeobj__48)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_LutProvider, __pyx_t_4) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_11 = __Pyx_CyFunction_New(&__pyx_mdef_26_marching_cubes_lewiner_cy_5__pyx_unpickle_LutProvider, 0, __pyx_n_s_pyx_unpickle_LutProvider, NULL, __pyx_n_s_marching_cubes_lewiner_cy, __pyx_d, ((PyObject *)__pyx_codeobj__48)); if (unlikely(!__pyx_t_11)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_11);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_LutProvider, __pyx_t_11) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
 
   /* "_marching_cubes_lewiner_cy.pyx":1
  * #cython: cdivision=True             # <<<<<<<<<<<<<<
  * #cython: boundscheck=False
  * #cython: nonecheck=False
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_11 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_11);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_11) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -53547,6 +53591,8 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_11);
+  __Pyx_XDECREF(__pyx_t_12);
   if (__pyx_m) {
     if (__pyx_d && stringtab_initialized) {
       __Pyx_AddTraceback("init _marching_cubes_lewiner_cy", __pyx_clineno, __pyx_lineno, __pyx_filename);

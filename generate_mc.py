@@ -3,20 +3,24 @@ from src.render_mc_CAP import extract_geometry
 from src.model import SIREN
 import torch
 import argparse
+import numpy as np
 import json
 
-def generate_mc(model, gt_mode, device, N, output_path, alpha=10):
+def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbox_max=None,  algorithm='meshudf'):
 	if gt_mode != 'siren':
-		vertices, faces, mesh = get_mesh_udf( 
-			model, 
-			torch.Tensor([[]]).to(device),
-			device=device,
-			gt_mode=gt_mode,
-			nsamples=N,
-			alpha=alpha
-		)
-
-		#mesh = extract_geometry(N, model, device)
+		if algorithm == 'meshudf':
+			vertices, faces, mesh = get_mesh_udf( 
+				model, 
+				torch.Tensor([[]]).to(device),
+				device=device,
+				gt_mode=gt_mode,
+				nsamples=N,
+				alpha=alpha
+			)
+		elif algorithm == 'cap':
+			mesh = extract_geometry(N, model, device, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max))
+		else:
+			raise ValueError('Invalid algorithm')
 	else:
 		vertices, faces, mesh = get_mesh_sdf( 
 			model,
@@ -52,5 +56,5 @@ if __name__=='__main__':
 
 	print('Generating mesh...')
 
-	generate_mc(model, config_dict['gt_mode'], device_torch, config_dict['nsamples'], config_dict['output_path'])
+	generate_mc(model, config_dict['gt_mode'], device_torch, config_dict['nsamples'], config_dict['output_path'], config_dict['alpha'], config_dict['bbox_min'], config_dict['bbox_max'], algorithm=config_dict['algorithm'])
 

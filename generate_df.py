@@ -30,7 +30,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
     model = SIREN(
             n_in_features= 3,
             n_out_features=1,
-            hidden_layer_config=options['hidden_layer_nodes'],
+            hidden_layer_config=[256,256,256,256,256,256,256,256],# options['hidden_layer_nodes'],
             w0=options['weight0'],
             ww=None
     )
@@ -38,7 +38,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
 
     SAMPLES = options['width'] ** 2
     BORDES = [1, -1]
-    EJEPLANO = [0,2,1]
+    EJEPLANO = [0,1,2]
     OFFSETPLANO = 0.0
 
     device_torch = torch.device(options['device'])
@@ -56,10 +56,27 @@ def generate_df( model_path, mesh_path, output_path, options ):
             axis=0)
 
     gradients = np.zeros((SAMPLES, 3))
-
-    pred_distances = evaluate( model, samples, device=device_torch, gradients=gradients )
+    hessians = np.zeros((SAMPLES, 3, 3))
+    pred_distances = evaluate( model, samples, device=device_torch, gradients=gradients, hessians=hessians )
     pred_grad_norm = np.linalg.norm( gradients , axis=1 ).reshape((SAMPLES, 1))
-    pred_grad_cm = ( normalize(gradients) + np.ones_like(gradients) ) / 2
+
+    gradients = normalize(gradients)
+    eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
+    pred_normals = eigenvectors[..., 2].numpy()
+
+    pred_normals = np.where(
+        np.sum( gradients * pred_normals, axis=-1 )[..., None] < 0,
+        np.ones( (pred_normals.shape[0],1)) * -1,
+        np.ones( (pred_normals.shape[0],1))
+    ) * pred_normals
+    
+    normals = np.where(
+        np.concatenate( [pred_grad_norm , pred_grad_norm, pred_grad_norm], axis=-1) < 0.04,
+        pred_normals,
+        gradients
+    )
+
+    pred_grad_cm = ( normals + np.ones_like(gradients) ) / 2
 
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(mesh)

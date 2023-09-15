@@ -53,7 +53,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
-    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians ) )
+    pred_df = torch.from_numpy( inverse('tanh', np.abs(evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians )), 10) )
     
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
@@ -62,15 +62,17 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     pred_normals = eigenvectors[..., 2]
 
     pred_normals = torch.where(
-        torch.sum( gradients * pred_normals ) < 0,
+        torch.sum( gradients * pred_normals, dim=-1 )[..., None] < 0,
         torch.ones( (pred_normals.shape[0],1)) * -1,
         torch.ones( (pred_normals.shape[0],1))
     ) * pred_normals
+
+    print(pred_normals.shape)
     grad_norms = torch.linalg.norm(gradients, axis=-1)[:,None]
     
-    samples[..., 3] = pred_df.squeeze(1)
+    samples[..., 3] =pred_df.squeeze(1) * grad_norms.squeeze(1)
     samples[..., 4:] = torch.where(
-        torch.hstack([grad_norms, grad_norms, grad_norms]) < .2,
+        torch.hstack([grad_norms, grad_norms, grad_norms]) < 0.04,
         pred_normals,
         gradients
     )
@@ -114,13 +116,14 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
     voxel_size = 2.0 / (N - 1)
     verts, faces, _, _ = udf_mc_lewiner(df_values.cpu().detach().numpy(),
                                         normals.cpu().detach().numpy(),
-                                        spacing=[voxel_size] * 3)
+                                        spacing=[voxel_size] * 3,
+                                        avg_thresh=3.05 ,
+                                        max_thresh=3.75)
     
     verts = verts - 1 # since voxel_origin = [-1, -1, -1]
     ### 3: evaluate vertices DF, and remove the ones that are too far
     verts_torch = torch.from_numpy(verts).float().to(device)
     xyz = verts_torch
-    pred_df_verts = inverse( gt_mode, evaluate(decoder, xyz, latent_vec ), alpha, min_step=0 )
 
     # Remove faces that have vertices far from the surface
     filtered_faces = faces #faces[np.max(pred_df_verts[faces], axis=1)[:,0] < voxel_size / 6]

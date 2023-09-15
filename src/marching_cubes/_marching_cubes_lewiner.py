@@ -79,7 +79,7 @@ def marching_cubes_lewiner(volume, level=None, spacing=(1., 1., 1.),
 
 def udf_mc_lewiner(volume, grads, spacing=(1., 1., 1.),
                            gradient_direction='descent', step_size=1,
-                           allow_degenerate=True, use_classic=False, mask=None):
+                           allow_degenerate=True, use_classic=False, avg_thresh=1.05, max_thresh=1.75, mask=None):
     """Lewiner et al. algorithm for marching cubes. See
     marching_cubes_lewiner for documentation.
     """
@@ -113,7 +113,7 @@ def udf_mc_lewiner(volume, grads, spacing=(1., 1., 1.),
     # Apply algorithm
     func = _marching_cubes_lewiner_cy.marching_cubes_udf
     vertices, faces, normals, values = func(volume, grads, L,
-                                            step_size, use_classic, mask)
+                                            step_size, use_classic, avg_thresh, max_thresh, mask)
 
     if not len(vertices):
         raise RuntimeError('No surface found at the given iso value.')

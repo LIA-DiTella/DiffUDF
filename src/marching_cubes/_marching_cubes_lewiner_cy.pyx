@@ -1114,7 +1114,7 @@ cdef class LutProvider:
 
 
 def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not None,
-                   LutProvider luts, int st=1, int classic=0,
+                   LutProvider luts, int st=1, int classic=0, float avg_thresh =1.05, float max_thresh=1.75,
                    np.ndarray[np.npy_bool, ndim=3, cast=True] mask=None):
     """ marching_cubes(im, double isovalue, LutProvider luts, int st=1, int classic=0)
     Main entry to apply marching cubes.
@@ -1155,8 +1155,8 @@ def marching_cubes_udf(float[:, :, :] im not None, float[:, :, :, :] grads not N
     Nx_bound, Ny_bound, Nz_bound = Nx - 2 * st, Ny - 2 * st, Nz - 2 * st  # precalculated index range
     cdef float[:] base_vec = np.empty((3), dtype=np.float32)
 
-    cdef float avg_cube_val_thresh = 1.05 * voxel_size
-    cdef float max_cube_val_thresh = 1.74 * voxel_size
+    cdef float avg_cube_val_thresh = avg_thresh  * voxel_size
+    cdef float max_cube_val_thresh = max_thresh  * voxel_size
 
     # BFS data structures
     cdef bint[:,:,:] visited = np.zeros((Nz, Ny, Nx), dtype=np.int32)
