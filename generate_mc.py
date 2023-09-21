@@ -1,9 +1,10 @@
 from src.render_mc import get_mesh_udf, get_mesh_sdf
-from src.render_mc_CAP import extract_geometry
+from src.render_mc_CAP import extract_geometry, extract_gt_field, surface_extraction
 from src.model import SIREN
 import torch
 import argparse
 import numpy as np
+import open3d as o3d
 import json
 
 def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbox_max=None,  algorithm='meshudf'):
@@ -18,7 +19,12 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbo
 				alpha=alpha
 			)
 		elif algorithm == 'cap':
-			mesh = extract_geometry(N, model, device, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max))
+			mesh = extract_geometry(N, model, device, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
+		elif algorithm == 'gt':
+			gt_mesh = o3d.io.read_triangle_mesh('data/Preprocess/armadillo_big.ply')
+			u,g = extract_gt_field(N, gt_mesh, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
+			mesh = surface_extraction(u,g, N, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
+
 		else:
 			raise ValueError('Invalid algorithm')
 	else:

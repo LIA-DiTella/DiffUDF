@@ -53,7 +53,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
-    pred_df = torch.from_numpy( inverse('tanh', np.abs(evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians )), 10) )
+    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians ) )
     
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
@@ -67,10 +67,9 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
         torch.ones( (pred_normals.shape[0],1))
     ) * pred_normals
 
-    print(pred_normals.shape)
     grad_norms = torch.linalg.norm(gradients, axis=-1)[:,None]
     
-    samples[..., 3] =pred_df.squeeze(1) * grad_norms.squeeze(1)
+    samples[..., 3] = (pred_df).squeeze(1)
     samples[..., 4:] = torch.where(
         torch.hstack([grad_norms, grad_norms, grad_norms]) < 0.04,
         pred_normals,
@@ -117,8 +116,8 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
     verts, faces, _, _ = udf_mc_lewiner(df_values.cpu().detach().numpy(),
                                         normals.cpu().detach().numpy(),
                                         spacing=[voxel_size] * 3,
-                                        avg_thresh=3.05 ,
-                                        max_thresh=3.75)
+                                        avg_thresh=1.05 ,
+                                        max_thresh=1.75)
     
     verts = verts - 1 # since voxel_origin = [-1, -1, -1]
     ### 3: evaluate vertices DF, and remove the ones that are too far

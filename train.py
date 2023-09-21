@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_squared, loss_tanh, loss_tanh_gc, loss_tanh_tv, loss_tanh_hessian
+from src.loss_functions import loss_siren, loss_squared, loss_tanh, loss_tanh_gc, loss_tanh_tv, loss_tanh_hessian, loss_tanh_std
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
@@ -182,6 +182,8 @@ def setup_train( parameter_dict, cuda_device ):
         loss_fn = loss_tanh_tv
     elif parameter_dict["loss"] == "loss_tanh_hessian":
         loss_fn = loss_tanh_hessian
+    elif parameter_dict["loss"] == "loss_tanh_std":
+        loss_fn = loss_tanh_std
     else:
         raise ValueError("Loss unknown")
 
@@ -227,47 +229,6 @@ def setup_train( parameter_dict, cuda_device ):
     }
 
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
-
-    #print('Generating point cloud')
-    #point_cloud_params = parameter_dict['point_cloud']
-    #pc_options = {
-    #    'json_path': parameter_dict['dataset'],
-    #    'model_path': osp.join(full_path, "models", "model_best.pth"),
-    #    'device': cuda_device,
-    #    'w0': network_params["w0"],
-    #    'ref_steps': 3,
-    #    'surf_thresh': point_cloud_params['surf_thresh'],
-    #    'grad_thresh': point_cloud_params['grad_thresh'],
-    #    'nsamples': point_cloud_params['nsamples'],
-    #    'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-    #    'alpha': parameter_dict['alpha'],
-    #    'hidden_layer_nodes': network_params["hidden_layer_nodes"],
-    #    'max_iter': 10
-    #}
-    #point_cloud = generate_pc(pc_options)
-    #print('     Re-orienting normals')
-    #point_cloud.orient_normals_consistent_tangent_plane(10)
-    #o3d.t.io.write_point_cloud( osp.join(full_path, "reconstructions", "point_cloud.ply"), point_cloud)
-    #print('Generating sphere tracing render')
-    #sphere_tracing_params = parameter_dict['sphere_tracing']
-    #st_options = {
-    #    'model_path': osp.join(full_path, "models", "model_best.pth"),
-    #    'output_path': osp.join(full_path, "reconstructions", "sphere_tracing.png"),
-    #    'device': cuda_device,
-    #    'w0': network_params["w0"],
-    #    'hidden_layer_nodes': network_params["hidden_layer_nodes"],
-    #    'ref_steps': 2,
-    #    'alpha': parameter_dict['alpha'],
-    #    'gt_mode': parameter_dict["loss"][parameter_dict["loss"].find('_') + 1:],
-    #    'max_iter': 100,
-    #    "width": sphere_tracing_params["width"],
-    #    "surf_thresh": sphere_tracing_params["surf_thresh"],
-    #    "grad_thresh": sphere_tracing_params["grad_thresh"],
-    #    "origin": sphere_tracing_params["origin"],
-    #    "distance": sphere_tracing_params["distance"],
-    #    "light_pos": sphere_tracing_params["light_pos"]
-    #}
-    #generate_st( st_options )
 
 
 if __name__ == "__main__":

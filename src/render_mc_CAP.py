@@ -4,9 +4,11 @@ import torch
 import numpy as np
 from src.evaluate import evaluate
 from src.inverses import inverse
+import open3d as o3d
+from scipy.spatial import KDTree
 from src.util import normalize
 
-def extract_fields( resolution, model, device, bbox_min, bbox_max ):
+def extract_fields( resolution, model, device, bbox_min, bbox_max, alpha ):
     X = np.linspace(bbox_min[0], bbox_max[0], resolution)
     Y = np.linspace(bbox_min[1], bbox_max[1], resolution)
     Z = np.linspace(bbox_min[2], bbox_max[2], resolution)
@@ -32,7 +34,7 @@ def extract_fields( resolution, model, device, bbox_min, bbox_max ):
     ) * pred_normals
     grad_norms = np.linalg.norm(gradients, axis=-1)[:,None]
 
-    u = inverse('tanh', val - np.min(val), 10).reshape((resolution, resolution, resolution))
+    u = (val ).reshape((resolution, resolution, resolution))
     g = np.where(
         np.hstack([grad_norms, grad_norms, grad_norms]) < .1,
         pred_normals,
@@ -41,19 +43,39 @@ def extract_fields( resolution, model, device, bbox_min, bbox_max ):
 
     return u, g
 
-def extract_geometry( resolution, model, device, bbox_min, bbox_max):
+def extract_gt_field( resolution, mesh, bbox_min, bbox_max, alpha ):
+    X = np.linspace(bbox_min[0], bbox_max[0], resolution)
+    Y = np.linspace(bbox_min[1], bbox_max[1], resolution)
+    Z = np.linspace(bbox_min[2], bbox_max[2], resolution)
+    # with torch.no_grad():
+
+    xx, yy, zz = np.meshgrid( X, Y, Z, indexing='ij' )
+
+    pts = np.concatenate([xx[...,None], yy[...,None], zz[...,None]], axis=-1)
+
+    subpc = np.asarray(mesh.vertices)#[np.random.choice(len(np.asarray(mesh.vertices)), 100000, replace=False),:]
+    tree = KDTree( subpc )
+    print('quering...')
+    distances, indexs = tree.query(pts, 1)
+
+    u = (distances) * np.tanh(alpha * distances)
+    g = (pts - subpc[indexs])
+    print('extracting mesh...')
+
+    return u, g
+
+def extract_geometry( resolution, model, device, bbox_min, bbox_max, alpha):
 
     print('Extracting mesh with resolution: {}'.format(resolution))
-    u, g = extract_fields( resolution, model, device, bbox_min, bbox_max)
-    mesh = surface_extraction(u, g, resolution, bbox_min, bbox_max)
+    u, g = extract_fields( resolution, model, device, bbox_min, bbox_max, alpha)
+    mesh = surface_extraction(u, g, resolution, bbox_min, bbox_max, alpha)
 
     return mesh
 
-
-def surface_extraction(ndf, grad, resolution, bbox_min, bbox_max):
+def surface_extraction(ndf, grad, resolution, bbox_min, bbox_max, alpha):
     v_all = []
     t_all = []
-    threshold = 0.0037   # accelerate extraction
+    threshold = 0.008   # accelerate extraction
     v_num = 0
     for i in range(resolution-1):
         for j in range(resolution-1):
@@ -67,14 +89,21 @@ def surface_extraction(ndf, grad, resolution, bbox_min, bbox_max):
                 grad_loc = grad_loc[:,j:j+2,:]
                 grad_loc = grad_loc[:,:,k:k+2]
 
+                anchor_i,anchor_j,anchor_k = np.unravel_index(np.argmax(ndf_loc),ndf_loc.shape)
+
                 res = np.ones((2,2,2))
                 for ii in range(2):
                     for jj in range(2):
                         for kk in range(2):
-                            if np.dot(grad_loc[0][0][0], grad_loc[ii][jj][kk]) < 0:
-                                res[ii][jj][kk] = -1 * ndf_loc[ii][jj][kk]
+                            #distance = np.linalg.norm( bbox_min + np.array([i,j,k])*((bbox_max - bbox_min)/resolution) - (bbox_min + np.array([i+ii,j+jj,k+kk])*((bbox_max - bbox_min)/resolution)))
+                            inverse_val = np.abs(ndf_loc[ii,jj,kk])#inverse('tanh', np.abs(ndf_loc[ii,jj,kk]), alpha)
+
+                            if np.dot(grad_loc[anchor_i, anchor_j, anchor_k], grad_loc[ii,jj,kk]) < 0:
+                                sign = -1 * np.sign(ndf_loc[anchor_i, anchor_j, anchor_k])
+                                res[ii,jj,kk] = sign * inverse_val
                             else:
-                                res[ii][jj][kk] = ndf_loc[ii][jj][kk]
+                                sign = np.sign(ndf_loc[anchor_i, anchor_j, anchor_k])
+                                res[ii,jj,kk] = sign * inverse_val
 
                 if res.min()<0:
                     vertices, triangles = mcubes.marching_cubes(
