@@ -1,4 +1,4 @@
-from src.submesh import preprocessMesh
+from src.preprocess_mesh import preprocessMesh
 import argparse
 
 if __name__ == '__main__':

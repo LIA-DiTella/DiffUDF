@@ -12,14 +12,21 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_squared, loss_tanh, loss_tanh_gc, loss_tanh_tv, loss_tanh_hessian, loss_tanh_std
+from src.loss_functions import loss_siren, loss_tanh
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
 from generate_mc import generate_mc
-#from generate_pc import generate_pc
-#from generate_st import generate_st
 import open3d as o3d
+
+def update_learning_rate( epoch, warmup_epochs, optimizer, total_epochs, initial_learning_rate ):
+    lr =  (epoch / warmup_epochs) if epoch < warmup_epochs else 0.5 * (np.cos((epoch - warmup_epochs)/(total_epochs - warmup_epochs) * np.pi) + 1) 
+    lr = lr * initial_learning_rate
+
+    for g in optimizer.param_groups:
+        g['lr'] = lr
+
+    return lr
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
     epochs = config["epochs"]
@@ -44,8 +51,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     best_weights = None
     for epoch in range(epochs):            
         running_loss = dict()
+        current_lr = None
         for input_data, normals, sdf in iter(dataset):
-
+            
+            current_lr = update_learning_rate( epoch, warmup_epochs, optim, epochs, config['init_lr'])
             # zero the parameter gradients
             optim.zero_grad()
             
@@ -54,9 +63,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             normals = normals.to(device)
             sdf = sdf.to(device)
             
-            #outputs = model( input_data )
-
-            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"])#, epoch > 3000 )
+            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"])
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -85,7 +92,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
         for k, v in running_loss.items():
             epoch_loss += v
         epoch_loss /=+ dataset.batchesPerEpoch
-        print(f"Epoch: {epoch} - Loss: {epoch_loss}")
+        print(f"Epoch: {epoch} - Loss: {epoch_loss} - Learning Rate: {current_lr:.2e}")
 
         # Saving the best model after warmup.
         if epoch > warmup_epochs and epoch_loss < best_loss:
@@ -172,18 +179,8 @@ def setup_train( parameter_dict, cuda_device ):
 
     if parameter_dict["loss"] == "loss_siren":
         loss_fn = loss_siren
-    elif parameter_dict["loss"] == "loss_squared":
-        loss_fn = loss_squared
     elif parameter_dict["loss"] == "loss_tanh":
         loss_fn = loss_tanh
-    elif parameter_dict["loss"] == "loss_tanh_gc":
-        loss_fn = loss_tanh_gc
-    elif parameter_dict["loss"] == "loss_tanh_tv":
-        loss_fn = loss_tanh_tv
-    elif parameter_dict["loss"] == "loss_tanh_hessian":
-        loss_fn = loss_tanh_hessian
-    elif parameter_dict["loss"] == "loss_tanh_std":
-        loss_fn = loss_tanh_std
     else:
         raise ValueError("Loss unknown")
 
@@ -195,6 +192,7 @@ def setup_train( parameter_dict, cuda_device ):
         "gt_mode": parameter_dict["gt_mode"],
         "log_path": full_path,
         "optimizer": optimizer,
+        "init_lr": opt_params["lr"],
         "loss_fn": loss_fn,
         "loss_weights": parameter_dict["loss_weights"],
         "alpha": parameter_dict["alpha"]

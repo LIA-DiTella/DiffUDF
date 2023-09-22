@@ -108,12 +108,6 @@ class PointCloud(IterableDataset):
         self.mesh = o3d.t.io.read_triangle_mesh(meshPath)
         self.mesh.vertex.curvature = o3c.Tensor( np.expand_dims(self.mesh.vertex.colors.numpy()[:, 0], -1) )
         del self.mesh.vertex.colors
-        
-        #vertices = np.asarray(self.mesh.vertex['position'])
-        #self.bbox_min = np.array([np.min(vertices[:,0]), np.min(vertices[:,1]), np.min(vertices[:,2])]) -0.05
-        #self.bbox_max = np.array([np.max(vertices[:,0]), np.max(vertices[:,1]), np.max(vertices[:,2])]) +0.05
-
-        #print(f'Bbox_min: {self.bbox_min}, Bbox_max: {self.bbox_max},')
 
         self.batchSize = batchSize
         self.samplesOnSurface = int(self.batchSize * samplingPercentiles[0])
