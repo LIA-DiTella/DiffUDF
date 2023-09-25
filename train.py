@@ -12,30 +12,19 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from src.dataset import PointCloud
-from src.loss_functions import loss_siren, loss_tanh
+from src.loss_functions import loss_siren, loss_s1, loss_s2
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
 from generate_mc import generate_mc
 import open3d as o3d
 
-def update_learning_rate( epoch, warmup_epochs, optimizer, total_epochs, initial_learning_rate ):
-    lr =  (epoch / warmup_epochs) if epoch < warmup_epochs else 0.5 * (np.cos((epoch - warmup_epochs)/(total_epochs - warmup_epochs) * np.pi) + 1) 
-    lr = lr * initial_learning_rate
-
-    for g in optimizer.param_groups:
-        g['lr'] = lr
-
-    return lr
 
 def train_model(dataset, model, device, config) -> torch.nn.Module:
     epochs = config["epochs"]
-    warmup_epochs = config.get("warmup_epochs", 0)
-
     epochs_til_checkpoint = config.get("epochs_to_checkpoint", 0)
 
     log_path = config["log_path"]
-    loss_fn = config["loss_fn"]
     optim = config["optimizer"]
 
     model.to(device)
@@ -49,12 +38,21 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     losses = dict()
     best_loss = np.inf
     best_weights = None
-    for epoch in range(epochs):            
+
+    loss_fn = loss_s1
+    loss_weights = config['loss_s1_weights']
+
+    for epoch in range(epochs):
+        if epoch == config['s1_epochs']:
+            print('Starting second step...')
+            for g in optim.param_groups:
+                g['lr'] = config['lr_s2']
+
+            loss_weights = config['loss_s2_weights']
+            loss_fn = loss_s2            
+
         running_loss = dict()
-        current_lr = None
         for input_data, normals, sdf in iter(dataset):
-            
-            current_lr = update_learning_rate( epoch, warmup_epochs, optim, epochs, config['init_lr'])
             # zero the parameter gradients
             optim.zero_grad()
             
@@ -63,7 +61,13 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             normals = normals.to(device)
             sdf = sdf.to(device)
             
-            loss = loss_fn( model, input_data, {'normals': normals, 'sdf': sdf}, config['loss_weights'], config["alpha"])
+            loss = loss_fn( 
+                model, 
+                input_data, 
+                {'normals': normals, 'sdf': sdf}, 
+                loss_weights,
+                config["alpha"]
+            )
 
             train_loss = torch.zeros((1, 1), device=device)
             for it, l in loss.items():
@@ -92,10 +96,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
         for k, v in running_loss.items():
             epoch_loss += v
         epoch_loss /=+ dataset.batchesPerEpoch
-        print(f"Epoch: {epoch} - Loss: {epoch_loss} - Learning Rate: {current_lr:.2e}")
+        print(f"Epoch: {epoch} - Loss: {epoch_loss}")
 
         # Saving the best model after warmup.
-        if epoch > warmup_epochs and epoch_loss < best_loss:
+        if epoch_loss < best_loss:
             best_loss = epoch_loss
             best_weights = copy.deepcopy(model.state_dict())
             torch.save(
@@ -104,16 +108,23 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             )
 
         # saving the model at checkpoints
-        if epoch and epochs_til_checkpoint and not \
-           epoch % epochs_til_checkpoint:
+        if epoch and epochs_til_checkpoint and (not \
+           epoch % epochs_til_checkpoint or epoch == config['s1_epochs'] - 1):
             print(f"Saving model for epoch {epoch}")
             torch.save(
                 model.state_dict(),
                 osp.join(log_path, "models", f"model_{epoch}.pth")
             )
             print(f"Generating mesh")
-            generate_mc( model, config["gt_mode"], device, 256, 
-                        osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'), alpha=config['alpha'])
+            generate_mc( 
+                model=model, 
+                gt_mode=config["gt_mode"], 
+                device=device, 
+                N=config.get('resolution', 256), 
+                output_path=osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'), 
+                alpha=config['alpha'], 
+                algorithm='cap'
+            )
 
         else:
             torch.save(
@@ -162,40 +173,32 @@ def setup_train( parameter_dict, cuda_device ):
     print(model)
 
     if network_params['pretrained_dict'] != 'None':
-        model.load_state_dict(torch.load(network_params['pretrained_dict']))
+        model.load_state_dict(torch.load(network_params['pretrained_dict'], map_location=device))
 
     opt_params = parameter_dict["optimizer"]
     if opt_params["type"] == "adam":
         optimizer = torch.optim.Adam(
-            lr=opt_params["lr"],
+            lr=opt_params["lr_s1"],
             params=model.parameters()
         )
-    elif opt_params["type"] == "lbfgs":
-        optimizer = torch.optim.LBFGS(
-            lr=opt_params["lr"],
-            params=model.parameters()
-        )
-    
-
-    if parameter_dict["loss"] == "loss_siren":
-        loss_fn = loss_siren
-    elif parameter_dict["loss"] == "loss_tanh":
-        loss_fn = loss_tanh
     else:
-        raise ValueError("Loss unknown")
+        raise ValueError('Unknown optimizer')
+    
 
     config_dict = {
         "epochs": parameter_dict["num_epochs"],
-        "warmup_epochs": parameter_dict.get("warmup_epochs", 0),
+        "s1_epochs": parameter_dict["s1_epochs"],
         "batch_size": parameter_dict["batch_size"],
         "epochs_to_checkpoint": parameter_dict["epochs_to_checkpoint"],
         "gt_mode": parameter_dict["gt_mode"],
         "log_path": full_path,
         "optimizer": optimizer,
-        "init_lr": opt_params["lr"],
-        "loss_fn": loss_fn,
-        "loss_weights": parameter_dict["loss_weights"],
-        "alpha": parameter_dict["alpha"]
+        "lr_s1": opt_params["lr_s1"],
+        "lr_s2": opt_params["lr_s2"],
+        "loss_s1_weights": parameter_dict["loss_s1_weights"],
+        "loss_s2_weights": parameter_dict["loss_s2_weights"],
+        "alpha": parameter_dict["alpha"],
+        "resolution": parameter_dict.get('resolution', 256)
     }
 
     losses, best_weights = train_model(
@@ -226,8 +229,25 @@ def setup_train( parameter_dict, cuda_device ):
         'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }
 
+    print('Generating mesh')
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
 
+    mc_options = {
+        'w0': network_params["w0"],
+        'model_path': osp.join(full_path, "models", "model_best.pth"),
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"]
+    }
+
+    generate_mc( 
+        model=None, 
+        gt_mode=parameter_dict["gt_mode"],
+        device=cuda_device, 
+        N=parameter_dict.get('resolution', 256), 
+        output_path=osp.join(full_path, "reconstructions", f'mc_mesh_best.obj'),
+        alpha=parameter_dict['alpha'],
+        from_file = mc_options,
+        algorithm='cap'
+    )
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(

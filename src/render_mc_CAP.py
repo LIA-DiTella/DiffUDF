@@ -34,7 +34,7 @@ def extract_fields( resolution, model, device, bbox_min, bbox_max, alpha ):
     ) * pred_normals
     grad_norms = np.linalg.norm(gradients, axis=-1)[:,None]
 
-    u = (val ).reshape((resolution, resolution, resolution))
+    u = inverse('tanh', np.abs(val ), alpha).reshape((resolution, resolution, resolution))
     g = np.where(
         np.hstack([grad_norms, grad_norms, grad_norms]) < .1,
         pred_normals,
@@ -65,6 +65,11 @@ def extract_gt_field( resolution, mesh, bbox_min, bbox_max, alpha ):
     return u, g
 
 def extract_geometry( resolution, model, device, bbox_min, bbox_max, alpha):
+    if bbox_min is None:
+        bbox_min = np.array([-1,-1,-1])
+    
+    if bbox_max is None:
+        bbox_max = np.array([1,1,1])
 
     print('Extracting mesh with resolution: {}'.format(resolution))
     u, g = extract_fields( resolution, model, device, bbox_min, bbox_max, alpha)

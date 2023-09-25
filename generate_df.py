@@ -30,7 +30,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
     model = SIREN(
             n_in_features= 3,
             n_out_features=1,
-            hidden_layer_config=[256,256,256,256,256,256,256,256],# options['hidden_layer_nodes'],
+            hidden_layer_config=options['hidden_layer_nodes'],
             w0=options['weight0'],
             ww=None
     )

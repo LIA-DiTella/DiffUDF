@@ -17,7 +17,7 @@ from _marching_cubes_lewiner import udf_mc_lewiner
 
 # Paper MeshUDF
 
-def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
+def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, device, alpha ):
     """
     Fills a dense N*N*N regular grid by querying the decoder network
     Inputs: 
@@ -36,7 +36,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     voxel_origin = [-1, -1, -1]
     voxel_size = 2.0 / (N - 1)
     overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
-    samples = torch.zeros(N ** 3, 7)
+    samples = torch.zeros(N ** 3, 7).to(device)
     # transform first 3 columns
     # to be the x, y, z index
     samples[:, 2] = overall_index % N
@@ -48,12 +48,10 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
     samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
     samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
     samples.requires_grad = False
-
-    samples.pin_memory()
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
-    pred_df = torch.from_numpy( evaluate( decoder, samples[:, :3], latent_vec, gradients=gradients, hessians=hessians ) )
+    pred_df = torch.from_numpy( inverse( gt_mode, np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients, hessians=hessians ) ), alpha))
     
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
@@ -69,12 +67,12 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, alpha ):
 
     grad_norms = torch.linalg.norm(gradients, axis=-1)[:,None]
     
-    samples[..., 3] = (pred_df).squeeze(1)
+    samples[..., 3] = (pred_df).squeeze(1).to(device)
     samples[..., 4:] = torch.where(
         torch.hstack([grad_norms, grad_norms, grad_norms]) < 0.04,
         pred_normals,
         gradients
-    )
+    ).to(device)
 
     # Separate values in DF / gradients
     df_values = samples[:, 3]
@@ -108,7 +106,7 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
         indices: tensor representing the coordinates that need updating in the next iteration
     """
     ### 1: sample grid
-    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, alpha )
+    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, device, alpha )
     df_values[df_values < 0] = 0
     ### 2: run our custom MC on it
     N = df_values.shape[0]
@@ -181,7 +179,7 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
             laplacian = border_neighbouring_averages - filtered_mesh.vertices[border_vertices]
             filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
 
-    return torch.tensor(filtered_mesh.vertices).float().cuda(), torch.tensor(filtered_mesh.faces).long().cuda(), filtered_mesh
+    return torch.tensor(filtered_mesh.vertices).float().to(device), torch.tensor(filtered_mesh.faces).long().to(device), filtered_mesh
 
 
 def gen_sdf_coordinate_grid(N: int, voxel_size: float,

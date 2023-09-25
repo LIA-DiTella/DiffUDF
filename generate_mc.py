@@ -7,7 +7,20 @@ import numpy as np
 import open3d as o3d
 import json
 
-def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbox_max=None,  algorithm='meshudf'):
+def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbox_max=None,  algorithm='meshudf', from_file=None):
+
+	if from_file is not None:
+		model = SIREN(
+			n_in_features= 3,
+			n_out_features=1,
+			hidden_layer_config=from_file["hidden_layer_nodes"],
+			w0=from_file["w0"],
+			ww=None
+		)
+
+		model.load_state_dict( torch.load(from_file["model_path"]))
+		model.to(device)
+
 	if gt_mode != 'siren':
 		if algorithm == 'meshudf':
 			vertices, faces, mesh = get_mesh_udf( 
@@ -16,10 +29,12 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbo
 				device=device,
 				gt_mode=gt_mode,
 				nsamples=N,
-				alpha=alpha
+				alpha=alpha,
+				smooth_borders=True
 			)
 		elif algorithm == 'cap':
-			mesh = extract_geometry(N, model, device, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
+			mesh = extract_geometry(N, model, device, bbox_min=bbox_min, bbox_max=bbox_max, alpha=alpha)
+
 		elif algorithm == 'gt':
 			gt_mesh = o3d.io.read_triangle_mesh('data/Preprocess/armadillo_big.ply')
 			u,g = extract_gt_field(N, gt_mesh, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
