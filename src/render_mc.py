@@ -10,14 +10,14 @@ from src.inverses import inverse
 import numpy as np
 from skimage.measure import marching_cubes
 import torch
-
+import mcubes
 import sys
 sys.path.append('src/marching_cubes')
 from _marching_cubes_lewiner import udf_mc_lewiner
 
 # Paper MeshUDF
 
-def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, device, alpha ):
+def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
     """
     Fills a dense N*N*N regular grid by querying the decoder network
     Inputs: 
@@ -82,7 +82,7 @@ def get_udf_normals_grid(decoder, latent_vec, N, gt_mode, device, alpha ):
 
     return df_values, vecs
 
-def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_borders=False, **kwargs ):
+def extract_mesh_MESHUDF(df_values, normals, device, smooth_borders=False, **kwargs ):
     """
     Computes a triangulated mesh from a distance field network conditioned on the latent vector
     Inputs: 
@@ -105,8 +105,6 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
         samples: (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
         indices: tensor representing the coordinates that need updating in the next iteration
     """
-    ### 1: sample grid
-    df_values, normals = get_udf_normals_grid(decoder, latent_vec, nsamples, gt_mode, device, alpha )
     df_values[df_values < 0] = 0
     ### 2: run our custom MC on it
     N = df_values.shape[0]
@@ -180,6 +178,68 @@ def get_mesh_udf(decoder, latent_vec, nsamples, device, gt_mode, alpha, smooth_b
             filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
 
     return torch.tensor(filtered_mesh.vertices).float().to(device), torch.tensor(filtered_mesh.faces).long().to(device), filtered_mesh
+
+def extract_mesh_CAP( ndf, grad, resolution ):
+    bbox_min, bbox_max = np.array([-1,-1,-1]), np.array([1,1,1])
+    v_all = []
+    t_all = []
+    threshold = 0.008   # accelerate extraction
+    v_num = 0
+    for i in range(resolution-1):
+        for j in range(resolution-1):
+            for k in range(resolution-1):
+                ndf_loc = ndf[i:i+2]
+                ndf_loc = ndf_loc[:,j:j+2,:]
+                ndf_loc = ndf_loc[:,:,k:k+2]
+                if np.min(ndf_loc) > threshold:
+                    continue
+                grad_loc = grad[i:i+2]
+                grad_loc = grad_loc[:,j:j+2,:]
+                grad_loc = grad_loc[:,:,k:k+2]
+
+                anchor_i,anchor_j,anchor_k = np.unravel_index(np.argmax(ndf_loc),ndf_loc.shape)
+
+                res = np.ones((2,2,2))
+                for ii in range(2):
+                    for jj in range(2):
+                        for kk in range(2):
+                            #distance = np.linalg.norm( bbox_min + np.array([i,j,k])*((bbox_max - bbox_min)/resolution) - (bbox_min + np.array([i+ii,j+jj,k+kk])*((bbox_max - bbox_min)/resolution)))
+                            inverse_val = np.abs(ndf_loc[ii,jj,kk])#inverse('tanh', np.abs(ndf_loc[ii,jj,kk]), alpha)
+
+                            if np.dot(grad_loc[anchor_i, anchor_j, anchor_k], grad_loc[ii,jj,kk]) < 0:
+                                sign = -1 * np.sign(ndf_loc[anchor_i, anchor_j, anchor_k])
+                                res[ii,jj,kk] = sign * inverse_val
+                            else:
+                                sign = np.sign(ndf_loc[anchor_i, anchor_j, anchor_k])
+                                res[ii,jj,kk] = sign * inverse_val
+
+                if res.min()<0:
+                    vertices, triangles = mcubes.marching_cubes(
+                        res, 0)
+                    # print(vertices)
+                    # vertices -= 1.5
+
+                    vertices[:,0] += i
+                    vertices[:,1] += j
+                    vertices[:,2] += k
+                    triangles += v_num
+                    # vertices = 
+                    # vertices[:,1] /= 3  # TODO
+                    v_all.append(vertices)
+                    t_all.append(triangles)
+
+                    v_num += vertices.shape[0]
+                    # print(v_num)
+
+    v_all = np.concatenate(v_all)
+    t_all = np.concatenate(t_all)
+    # Create mesh
+    #print(v_all.shape)
+    v_all = v_all / (resolution - 1.0) * (bbox_max - bbox_min)[None, :] + bbox_min[None, :]
+    #print(v_all.shape)
+    mesh = trimesh.Trimesh(v_all, t_all, process=False)
+    
+    return mesh
 
 
 def gen_sdf_coordinate_grid(N: int, voxel_size: float,

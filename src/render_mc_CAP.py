@@ -66,14 +66,14 @@ def extract_gt_field( resolution, mesh, bbox_min, bbox_max, alpha ):
 
 def extract_geometry( resolution, model, device, bbox_min, bbox_max, alpha):
     if bbox_min is None:
-        bbox_min = np.array([-1,-1,-1])
+        bbox_min = [-1,-1,-1]
     
     if bbox_max is None:
-        bbox_max = np.array([1,1,1])
+        bbox_max = [1,1,1]
 
     print('Extracting mesh with resolution: {}'.format(resolution))
-    u, g = extract_fields( resolution, model, device, bbox_min, bbox_max, alpha)
-    mesh = surface_extraction(u, g, resolution, bbox_min, bbox_max, alpha)
+    u, g = extract_fields( resolution, model, device, np.array(bbox_min), np.array(bbox_max), alpha)
+    mesh = surface_extraction(u, g, resolution, np.array(bbox_min), np.array(bbox_max), alpha)
 
     return mesh
 

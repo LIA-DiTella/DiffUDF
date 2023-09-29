@@ -1,5 +1,4 @@
-from src.render_mc import get_mesh_udf, get_mesh_sdf
-from src.render_mc_CAP import extract_geometry, extract_gt_field, surface_extraction
+from src.render_mc import extract_mesh_MESHUDF, extract_mesh_CAP, extract_fields
 from src.model import SIREN
 import torch
 import argparse
@@ -7,7 +6,7 @@ import numpy as np
 import open3d as o3d
 import json
 
-def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbox_max=None,  algorithm='meshudf', from_file=None):
+def generate_mc(model, gt_mode,device, N, output_path, alpha, algorithm='meshudf', from_file=None):
 
 	if from_file is not None:
 		model = SIREN(
@@ -21,36 +20,35 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, bbox_min=None, bbo
 		model.load_state_dict( torch.load(from_file["model_path"]))
 		model.to(device)
 
-	if gt_mode != 'siren':
-		if algorithm == 'meshudf':
-			vertices, faces, mesh = get_mesh_udf( 
-				model, 
-				torch.Tensor([[]]).to(device),
-				device=device,
-				gt_mode=gt_mode,
-				nsamples=N,
-				alpha=alpha,
-				smooth_borders=True
-			)
-		elif algorithm == 'cap':
-			mesh = extract_geometry(N, model, device, bbox_min=bbox_min, bbox_max=bbox_max, alpha=alpha)
+	if algorithm == 'meshudf':
+		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
+		vertices, faces, mesh = extract_mesh_MESHUDF(u, g, device, smooth_borders=True)
 
-		elif algorithm == 'gt':
-			gt_mesh = o3d.io.read_triangle_mesh('data/Preprocess/armadillo_big.ply')
-			u,g = extract_gt_field(N, gt_mesh, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
-			mesh = surface_extraction(u,g, N, bbox_min=np.array(bbox_min), bbox_max=np.array(bbox_max), alpha=alpha)
+		mesh.export(output_path)
+		print(f'Saved to {output_path}')
 
-		else:
-			raise ValueError('Invalid algorithm')
+	elif algorithm == 'cap':
+		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
+		mesh = extract_mesh_CAP(u.cpu().numpy(), g.cpu().numpy(), N, alpha=alpha)
+
+		mesh.export(output_path)
+		print(f'Saved to {output_path}')
+
+	elif algorithm == 'both':
+		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
+		vertices, faces, meshMU = extract_mesh_MESHUDF(u, g, device, smooth_borders=True)
+		meshCAP = extract_mesh_CAP(u.cpu().numpy(), g.cpu().numpy(), N )
+
+		pathMU = output_path[:output_path.rfind('.')] + '_MU' + output_path[output_path.rfind('.'):]
+		pathCAP = output_path[:output_path.rfind('.')] + '_CAP' + output_path[output_path.rfind('.'):]
+
+		meshMU.export(pathMU)
+		meshCAP.export(pathCAP)
+		print(f'Saved to {pathMU}, {pathCAP}')
+
 	else:
-		vertices, faces, mesh = get_mesh_sdf( 
-			model,
-			N=N,
-			device=device
-		)
-
-	mesh.export(output_path)
-	print(f'Saved to {output_path}')
+		raise ValueError('Invalid algorithm')
+	
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Generate mesh through marching cubes from trained model')
@@ -77,5 +75,5 @@ if __name__=='__main__':
 
 	print('Generating mesh...')
 
-	generate_mc(model, config_dict['gt_mode'], device_torch, config_dict['nsamples'], config_dict['output_path'], config_dict['alpha'], config_dict['bbox_min'], config_dict['bbox_max'], algorithm=config_dict['algorithm'])
+	generate_mc(model, config_dict['gt_mode'], device_torch, config_dict['nsamples'], config_dict['output_path'], config_dict['alpha'], algorithm=config_dict['algorithm'])
 

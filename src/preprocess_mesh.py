@@ -1,10 +1,10 @@
 import numpy as np
 import trimesh as tm
-from src.util import normalize
 import igl
 
 def calculateCurvature( meshFile ):
-    v,_,n, f,_,_ = igl.read_obj(meshFile)
+    if meshFile[-4:] == '.obj':
+        v,_,n, f,_,_ = igl.read_obj(meshFile)
     pd1, pd2, pk1, pk2 = igl.principal_curvature(v, f)
 
     return v,n,f, (pk1 + pk2)/2
@@ -27,7 +27,6 @@ class ColorVis:
 def preprocessMesh( outputPath, meshFile, not_normalize=True ):
     print('Computing curvatures')
     vertices, normals, triangles, curvatures = calculateCurvature( meshFile )
-
     # elimino outliers
     curvatures = np.clip( curvatures, np.percentile(curvatures, 5), np.percentile(curvatures, 95) )
 
@@ -35,13 +34,25 @@ def preprocessMesh( outputPath, meshFile, not_normalize=True ):
     curvatures -= np.min(curvatures)
     curvatures /= np.max(curvatures)
 
-    mesh = tm.Trimesh( vertices, triangles, vertex_normals=normalize(normals) )
+    normals_norm = np.linalg.norm( normals, axis=-1 )
+    mask_invalid_normals = np.isclose( normals_norm, np.zeros_like(normals_norm) )
+    norm_factor = np.where(
+        mask_invalid_normals,
+        np.ones_like(normals_norm),
+        normals_norm
+    )
+    normalized_normals = normals / np.vstack( [norm_factor, norm_factor, norm_factor] ).T 
+    mesh = tm.Trimesh( vertices, triangles, vertex_normals=normalized_normals )
+    mesh.update_vertices( np.logical_not(mask_invalid_normals) )
+
+    print(mesh.vertex_normals.shape)
 
     if not not_normalize:
         print('Normalizing')
         normalizeFullMesh(mesh)
     
-    visual = ColorVis(np.vstack([curvatures, curvatures, curvatures, np.ones_like(curvatures) ]).T)
+    valid_curvatures = curvatures[np.logical_not(mask_invalid_normals)]
+    visual = ColorVis(np.vstack([valid_curvatures, valid_curvatures, valid_curvatures, np.ones_like(valid_curvatures) ]).T)
 
     mesh.visual = visual
     with open(outputPath, 'wb+') as outfile:

@@ -45,11 +45,18 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     for epoch in range(epochs):
         if epoch == config['s1_epochs']:
             print('Starting second step...')
-            for g in optim.param_groups:
-                g['lr'] = config['lr_s2']
-
             loss_weights = config['loss_s2_weights']
-            loss_fn = loss_s2            
+            loss_fn = loss_s2
+        
+        if epoch >= config['s1_epochs']:
+            init_lr = config['lr_s2']
+            lr =  0.5 * (np.cos(epoch/(epochs - config['s1_epochs']) * np.pi) + 1) 
+            lr = lr * init_lr
+            
+            print(f'Lr: {lr}')
+            for g in optim.param_groups:
+                g['lr'] = lr
+
 
         running_loss = dict()
         for input_data, normals, sdf in iter(dataset):
@@ -123,7 +130,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
                 N=config.get('resolution', 256), 
                 output_path=osp.join(log_path, "reconstructions", f'mc_mesh_{epoch}.obj'), 
                 alpha=config['alpha'], 
-                algorithm='cap'
+                algorithm='both'
             )
 
         else:
@@ -136,6 +143,10 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
 def setup_train( parameter_dict, cuda_device ):
 
+    if not torch.cuda.is_available():
+        print('Utilizing CPU')
+
+        
     device = torch.device(cuda_device if torch.cuda.is_available() else "cpu")
     seed = 123 
     torch.manual_seed(seed)
@@ -246,7 +257,7 @@ def setup_train( parameter_dict, cuda_device ):
         output_path=osp.join(full_path, "reconstructions", f'mc_mesh_best.obj'),
         alpha=parameter_dict['alpha'],
         from_file = mc_options,
-        algorithm='cap'
+        algorithm='both'
     )
 
 if __name__ == "__main__":
