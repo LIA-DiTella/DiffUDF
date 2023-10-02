@@ -2,12 +2,19 @@ import numpy as np
 import trimesh as tm
 import igl
 
-def calculateCurvature( meshFile ):
+def calculateCurvature( meshFile, subdivide ):
     if meshFile[-4:] == '.obj':
         v,_,n, f,_,_ = igl.read_obj(meshFile)
-    pd1, pd2, pk1, pk2 = igl.principal_curvature(v, f)
+    
+    sv, sf = igl.loop(v,f, subdivide)
 
-    return v,n,f, (pk1 + pk2)/2
+    if subdivide > 0:
+        print(f'Upsampled mesh from {len(v)} to {len(sv)} vertices.')
+        
+    print('Computing curvatures')
+    pd1, pd2, pk1, pk2 = igl.principal_curvature(sv, sf)
+
+    return sv, igl.per_vertex_normals( sv, sf ),sf, (pk1 + pk2)/2
 
 def normalizeFullMesh( mesh ):
     T = np.block( [ [np.eye(3,3), -1 * mesh.center_mass.reshape((3,1))], [np.eye(1,4,k=3)]])
@@ -24,9 +31,9 @@ class ColorVis:
         self.vertex_colors = np.uint8( colors * 255 )
         self.kind = 'vertex'
 
-def preprocessMesh( outputPath, meshFile, not_normalize=True ):
-    print('Computing curvatures')
-    vertices, normals, triangles, curvatures = calculateCurvature( meshFile )
+def preprocessMesh( outputPath, meshFile, not_normalize=True, subdivide=0 ):
+    
+    vertices, normals, triangles, curvatures = calculateCurvature( meshFile, subdivide=subdivide )
     # elimino outliers
     curvatures = np.clip( curvatures, np.percentile(curvatures, 5), np.percentile(curvatures, 95) )
 

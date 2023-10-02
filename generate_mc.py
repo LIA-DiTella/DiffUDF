@@ -27,12 +27,16 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, algorithm='meshudf
 		mesh.export(output_path)
 		print(f'Saved to {output_path}')
 
+		return mesh
+
 	elif algorithm == 'cap':
 		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
 		mesh = extract_mesh_CAP(u.cpu().numpy(), g.cpu().numpy(), N, alpha=alpha)
 
 		mesh.export(output_path)
 		print(f'Saved to {output_path}')
+
+		return mesh
 
 	elif algorithm == 'both':
 		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
@@ -46,8 +50,11 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, algorithm='meshudf
 		meshCAP.export(pathCAP)
 		print(f'Saved to {pathMU}, {pathCAP}')
 
+		return meshMU, meshCAP
+
 	else:
 		raise ValueError('Invalid algorithm')
+
 	
 
 if __name__=='__main__':

@@ -2,14 +2,17 @@ import torch
 from train import setup_train
 import os
 import gc
+from pytorch3d.loss import chamfer_distance
+import pandas as pd
+import trimesh as tm
 
 if __name__=='__main__':
-    net_width = 64
+    net_width = 256
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    folder = 'data/Preprocess/ropa_big/'
-    outfolder = f'results/ropa_{net_width}x{net_depth}(LONG)'
+    dataset = 'data/DF_subset/'
+    outfolder = f'results/Ablation_01'
     cuda_device = 0
 
     if not os.path.exists(outfolder):
@@ -43,16 +46,50 @@ if __name__=='__main__':
             "w0": 30,
             "pretrained_dict": "None"
         },
-        "resolution":256
+        "resolution": 256
     }
 
-    for dirpath, dirnames, filenames in os.walk(folder):
-        for file in filenames:
-            if file[-4:] == '.ply':
-                print(f'Training for {file}')
-                exp_config['dataset'] = os.path.join(dirpath, file)
-                exp_config['experiment_name'] = file[:-4]
+    results = {
+        'time': {},
+        'L1CD_CAP': {},
+        'L2CD_CAP': {},
+        'L1CD_MU': {},
+        'L2CD_MU': {}
+    }
 
-                setup_train( exp_config, cuda_device)
-                torch.cuda.empty_cache()
-                gc.collect()
+    for dirpath, dirnames, filenames in os.walk(dataset):
+        try:
+            dataset_index = [i for i,file in enumerate(filenames) if file[-6:] == '_p.ply'][0]
+            gt_index = [i for i,file in enumerate(filenames) if file[-4:] == '.obj'][0]
+        except:
+            continue
+
+        gt_file = os.path.join(dirpath, filenames[gt_index])
+        dataset_file = os.path.join(dirpath, filenames[dataset_index])
+
+        print(f'Training for {filenames[gt_index]}')
+
+        exp_config['dataset'] = dataset_file
+        exp_config['experiment_name'] = dirpath[dirpath.rfind('/')+1:] #filenames[gt_index][:filenames[gt_index].rfind('.')]
+
+        training_time, (meshMU, meshCAP) = setup_train( exp_config, cuda_device)
+
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        print('Computing chamfer distances...')
+        gt_pc = tm.load_mesh( gt_file )
+
+        results['time'][filenames[gt_index][:filenames[gt_index].rfind('.')]] = training_time
+        results['L1CD_CAP'][filenames[gt_index][:filenames[gt_index].rfind('.')]] = chamfer_distance( torch.from_numpy(meshCAP.vertices).float()[None,...], torch.from_numpy(gt_pc.vertices).float()[None,...], norm=1)[0].numpy()
+        results['L2CD_CAP'][filenames[gt_index][:filenames[gt_index].rfind('.')]] = chamfer_distance( torch.from_numpy(meshCAP.vertices).float()[None,...], torch.from_numpy(gt_pc.vertices).float()[None,...], norm=2)[0].numpy()
+        results['L1CD_MU'][filenames[gt_index][:filenames[gt_index].rfind('.')]] = chamfer_distance( torch.from_numpy(meshMU.vertices).float()[None,...], torch.from_numpy(gt_pc.vertices).float()[None,...], norm=1)[0].numpy()
+        results['L2CD_MU'][filenames[gt_index][:filenames[gt_index].rfind('.')]] = chamfer_distance( torch.from_numpy(meshMU.vertices).float()[None,...], torch.from_numpy(gt_pc.vertices).float()[None,...], norm=2)[0].numpy()
+
+    pd.DataFrame(results).to_csv(os.path.join(outfolder, 'results.csv'))
+
+
+
+    
+
+    

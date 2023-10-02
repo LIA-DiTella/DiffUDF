@@ -17,6 +17,7 @@ from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
 from generate_df import generate_df
 from generate_mc import generate_mc
+import time
 import open3d as o3d
 
 
@@ -42,6 +43,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
     loss_fn = loss_s1
     loss_weights = config['loss_s1_weights']
 
+    recon_time = 0
+    start_ttime = time.time() 
     for epoch in range(epochs):
         if epoch == config['s1_epochs']:
             print('Starting second step...')
@@ -105,6 +108,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
         epoch_loss /=+ dataset.batchesPerEpoch
         print(f"Epoch: {epoch} - Loss: {epoch_loss}")
 
+
+        start_rtime = time.time()
         # Saving the best model after warmup.
         if epoch_loss < best_loss:
             best_loss = epoch_loss
@@ -139,7 +144,13 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
                 osp.join(log_path, "models", "model_current.pth")
             )
 
-    return losses, best_weights
+        end_rtime = time.time()
+        recon_time += end_rtime - start_rtime
+
+    end_ttime = time.time()
+    total_training_time = end_ttime - start_ttime - recon_time
+
+    return losses, best_weights, total_training_time
 
 def setup_train( parameter_dict, cuda_device ):
 
@@ -212,7 +223,7 @@ def setup_train( parameter_dict, cuda_device ):
         "resolution": parameter_dict.get('resolution', 256)
     }
 
-    losses, best_weights = train_model(
+    losses, best_weights, training_time = train_model(
         dataset,
         model,
         device,
@@ -228,7 +239,6 @@ def setup_train( parameter_dict, cuda_device ):
     )
 
     print('Generating distance field slices')
-
     df_options = {
         'device': cuda_device,
         'surf_thresh': 1e-3,
@@ -240,16 +250,16 @@ def setup_train( parameter_dict, cuda_device ):
         'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }
 
-    print('Generating mesh')
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
 
+    print('Generating mesh')
     mc_options = {
         'w0': network_params["w0"],
         'model_path': osp.join(full_path, "models", "model_best.pth"),
         'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }
 
-    generate_mc( 
+    return training_time, generate_mc( 
         model=None, 
         gt_mode=parameter_dict["gt_mode"],
         device=cuda_device, 
