@@ -42,10 +42,18 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
     loss_fn = loss_s1
     loss_weights = config['loss_s1_weights']
+    current_lr = config['warmup_lr']
+    for g in optim.param_groups:
+        g['lr'] = current_lr
 
     recon_time = 0
     start_ttime = time.time() 
     for epoch in range(epochs):
+        if epoch == config['warmup_epochs']:
+            current_lr = config['lr_s1']
+            for g in optim.param_groups:
+                g['lr'] = current_lr
+
         if epoch == config['s1_epochs']:
             print('Starting second step...')
             loss_weights = config['loss_s2_weights']
@@ -55,8 +63,8 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
             init_lr = config['lr_s2']
             lr =  0.5 * (np.cos(epoch/(epochs - config['s1_epochs']) * np.pi) + 1) 
             lr = lr * init_lr
+            current_lr = lr
             
-            print(f'Lr: {lr}')
             for g in optim.param_groups:
                 g['lr'] = lr
 
@@ -106,7 +114,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
         for k, v in running_loss.items():
             epoch_loss += v
         epoch_loss /=+ dataset.batchesPerEpoch
-        print(f"Epoch: {epoch} - Loss: {epoch_loss}")
+        print(f"Epoch: {epoch} - Loss: {epoch_loss} - Learning Rate: {current_lr:.3e}")
 
 
         start_rtime = time.time()
@@ -121,7 +129,7 @@ def train_model(dataset, model, device, config) -> torch.nn.Module:
 
         # saving the model at checkpoints
         if epoch and epochs_til_checkpoint and (not \
-           epoch % epochs_til_checkpoint or epoch == config['s1_epochs'] - 1):
+           epoch % epochs_til_checkpoint):
             print(f"Saving model for epoch {epoch}")
             torch.save(
                 model.state_dict(),
@@ -215,6 +223,8 @@ def setup_train( parameter_dict, cuda_device ):
         "gt_mode": parameter_dict["gt_mode"],
         "log_path": full_path,
         "optimizer": optimizer,
+        "warmup_epochs": parameter_dict.get('warmup_epochs',0),
+        "warmup_lr": parameter_dict.get('warmup_lr', 1e-4),
         "lr_s1": opt_params["lr_s1"],
         "lr_s2": opt_params["lr_s2"],
         "loss_s1_weights": parameter_dict["loss_s1_weights"],

@@ -11,7 +11,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from src.util import normalize
 
-def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='br', max_val=1.5):
+def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='br', max_val=1.5, contour=False):
     masked_distancias = distancias
     for v in niveles:
         masked_distancias = np.ma.masked_inside( masked_distancias, v / max_val - eps, v / max_val + eps )
@@ -19,7 +19,22 @@ def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='b
     if negs:
         masked_distancias = np.ma.masked_less(masked_distancias, 0)
     
-    pos = axis.imshow( masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)), cmap=color_map, interpolation='none', vmin=0, vmax=max_val )
+    pos = axis.imshow( 
+        masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)), 
+        cmap=color_map, 
+        interpolation='none', 
+        vmin=0, 
+        vmax=max_val
+    )
+
+    if contour:
+        axis.contour(
+            masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)),
+            levels= np.linspace(0,1,23), colors='black', linewidths=0.5)
+        pos = axis.contourf(
+            masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)),
+            levels= np.linspace(0,1,23), cmap=color_map)
+        
     axis.set_xticks([])
     axis.set_yticks([])
 
@@ -100,10 +115,12 @@ def generate_df( model_path, mesh_path, output_path, options ):
 
     #max_val = np.max( np.concatenate([gt_distances,pred_distances,gt_grad_norm,pred_grad_norm]))
 
-    imagen_dist( axes.flat[0] ,np.clip(gt_distances, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
-    imagen_dist( axes.flat[1] ,np.clip(pred_distances,a_min=None, a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
-    imagen_dist( axes.flat[2] ,np.clip(gt_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
-    pos = imagen_dist( axes.flat[3] ,np.clip(pred_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map='turbo', eps=options['surf_thresh'])
+    color_map = 'rainbow'
+
+    pos = imagen_dist( axes.flat[0] ,np.clip(gt_distances, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
+    imagen_dist( axes.flat[1] ,np.clip(pred_distances,a_min=None, a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
+    imagen_dist( axes.flat[2] ,np.clip(gt_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'])
+    imagen_dist( axes.flat[3] ,np.clip(pred_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'])
 
     axes.flat[0].set_title(r'Ground truth slices')
     axes.flat[1].set_title(r'Predicted value slices')

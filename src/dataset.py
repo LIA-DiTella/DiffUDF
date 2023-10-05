@@ -30,22 +30,34 @@ def sampleTrainingData(
         curvatureFractions
     )
 
+    ## samples uniformly in domain
+    samplesFar = samplesOffSurface // 2
+    samplesNear = samplesOffSurface - samplesFar
 
-    ## samples uniformly in domain (far)
     domainPoints = o3c.Tensor(np.random.uniform(
         domainBounds[0], domainBounds[1],
-        (samplesOffSurface, 3)
+        (samplesFar, 3)
     ), dtype=o3c.Dtype.Float32)
 
     domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
     domainPoints = torch.from_numpy(domainPoints.numpy())
+
+
+    surfacePointsSubset = surfacePoints[ torch.randint(0, samplesOnSurface, (samplesNear,1)).flatten(), :]
+
+    closePoints = o3c.Tensor(
+        ( surfacePointsSubset[..., :3] + surfacePointsSubset[..., 3:6] * torch.normal(0, 0.01, (samplesNear, 1)) ).numpy(), 
+        dtype=o3c.Dtype.Float32)
+    closeSDFs = torch.from_numpy(scene.compute_distance(closePoints).numpy())
+    closePoints = torch.from_numpy(closePoints.numpy())
 
     domainNormals = torch.zeros((samplesOffSurface, 3))
 
     # full dataset:
     fullSamples = torch.row_stack((
         surfacePoints[..., :3],
-        domainPoints
+        domainPoints,
+        closePoints
     ))
     fullNormals = torch.row_stack((
         surfacePoints[..., 3:6],
@@ -53,7 +65,8 @@ def sampleTrainingData(
     ))
     fullSDFs = torch.cat((
         torch.zeros(len(surfacePoints)),
-        domainSDFs
+        domainSDFs,
+        closeSDFs
     )).unsqueeze(1)
 
     return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)

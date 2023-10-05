@@ -22,7 +22,8 @@ if __name__ == '__main__':
         preprocessMesh( 
                 outputPath, 
                 inputPath,
-                not_normalize=args.not_normalize )
+                not_normalize=args.not_normalize,
+                subdivide=args.sub_it )
     else:
         for i, (dirpath, dirnames, filenames) in enumerate(os.walk(inputPath)):
             for file in filenames:

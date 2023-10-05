@@ -48,6 +48,23 @@ def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
     samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
     samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
     samples.requires_grad = False
+
+    # gradients = np.zeros((samples.shape[0], 3))
+    # pred_df = torch.from_numpy( inverse( gt_mode, np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients ) ), alpha))
+    
+    # gradients = torch.from_numpy( gradients )
+    # gradients = -1 * F.normalize(gradients, dim=-1)
+    
+    # samples[..., 3] = (pred_df).squeeze(1).to(device)
+    # samples[..., 4:] = gradients.to(device)
+
+    # # Separate values in DF / gradients
+    # df_values = samples[:, 3]
+    # df_values = df_values.reshape(N, N, N)
+    # vecs = samples[:, 4:]
+    # vecs = vecs.reshape(N, N, N, 3)
+
+    # return df_values, vecs
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
