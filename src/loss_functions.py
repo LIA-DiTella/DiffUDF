@@ -9,10 +9,7 @@ import numpy as np
 def sdf_constraint_on_surf(udf, pred_sdf):
     return torch.where(
         udf == 0,
-        #F.smooth_l1_loss(pred_sdf, torch.zeros_like(pred_sdf), beta=1e-5, reduction='none'),
         torch.abs(pred_sdf),
-        #torch.exp( 5 * torch.max(torch.abs(pred_sdf), torch.Tensor([0.5]).to(udf.device))) - 1,
-        #pred_sdf ** 2,
         torch.zeros_like(pred_sdf)
     )
 
@@ -20,15 +17,7 @@ def sdf_constraint_on_surf(udf, pred_sdf):
 def sdf_constraint_off_surf(udf, tdf, pred_sdf):
     return torch.where(
         udf != 0,
-        #F.smooth_l1_loss(pred_sdf, gt_sdf, beta=1e-5, reduction='none'),
         torch.abs(tdf - pred_sdf),
-        #torch.exp(-1e2 * torch.nn.functional.relu(pred_sdf)),
-        #( pred_sdf - gt_sdf ) ** 2,
-        #torch.where(
-        #    udf < 0.1,
-        #    torch.abs(tdf - pred_sdf),
-        #    torch.exp(-65 * torch.abs(pred_sdf))
-        #),
         torch.zeros_like(pred_sdf)
     )
 
@@ -53,7 +42,7 @@ def off_surface_without_sdf_constraint(gt_sdf, pred_sdf, radius=1e2):
            torch.exp(-radius * torch.abs(pred_sdf))
         )
 
-def principal_curvature_alignmentOLD( udf, gt_vectors, pred_normals ): # hessians, alpha ):
+def principal_curvature_alignment( udf, gt_vectors, pred_normals ): # hessians, alpha ):
     surface_points_mask = torch.flatten(udf == 0)
 
     return torch.where(
@@ -63,12 +52,6 @@ def principal_curvature_alignmentOLD( udf, gt_vectors, pred_normals ): # hessian
         torch.zeros_like(surface_points_mask)
     )
 
-def principal_curvature_alignment( udf, gt_vectors, hessians, alpha ):
-    return torch.where(
-        udf == 0,
-        torch.linalg.norm( torch.bmm( hessians[0], gt_vectors[0,...,None] )[None,:,:,0] - 2*alpha*gt_vectors, dim=-1)[...,None],
-        torch.zeros_like(udf)
-    )
 
 def total_variation(  alpha, udf, gradient, coords ):
     f = 1 - torch.tanh(alpha * udf) ** 2
@@ -96,7 +79,9 @@ def grad_consistency( model, coords, gt_normals, alpha ):
         torch.abs( torch.linalg.norm(gradients.squeeze(0), dim=-1) - torch.abs( tan + torch.abs(steps) * alpha * (1 - tan ** 2) ).squeeze(-1) )
     )
 
-def loss_siren(model_output, gt, loss_weights, alpha=None ):
+def loss_siren( model, model_input, gt,  loss_weights ):
+    model_output = model(model_input)
+
     gt_sdf = gt['sdf']
     gt_normals = gt['normals']
 
@@ -105,43 +90,18 @@ def loss_siren(model_output, gt, loss_weights, alpha=None ):
 
     gradient = dif.gradient(pred_sdf, coords).squeeze(0)
 
+    off_surf_constraint = torch.where(
+        gt_sdf != 0,
+        torch.abs( pred_sdf - gt_sdf),
+        torch.zeros_like(gt_sdf)
+    )
+
     # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * loss_weights[0],
-        'sdf_off_surf': sdf_constraint_off_surf(gt_sdf, pred_sdf).mean() * loss_weights[1],
+        'sdf_off_surf': off_surf_constraint.mean() * loss_weights[1],
         'normal_constraint': vector_aligment_on_surf(gt_sdf, gt_normals, gradient).mean() * loss_weights[2] ,
         'grad_constraint': eikonal_constraint(gradient).unsqueeze(-1).mean() * loss_weights[3]
-    }
-
-def loss_s1_old( model, model_input, gt, loss_weights, alpha ):
-    model_output = model(model_input)
-    
-    udf = gt['sdf']
-    gt_normals = gt['normals']
-
-    coords = model_output['model_in']
-    pred_sdf = model_output['model_out']
-
-    gradient = dif.gradient(pred_sdf, coords)
-    
-    hessians = dif.hessian(pred_sdf.squeeze(-1), coords)
-    eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
-    pred_normals = eigenvectors[..., 2]
-
-    principal_direction_constraint = principal_curvature_alignmentOLD( udf, gt_normals, pred_normals )
-
-    tan = torch.tanh( alpha * udf )
-    tdf = udf * tan
-    grad_constraint = torch.abs(torch.linalg.norm(gradient.squeeze(0), dim=-1) - torch.abs( tan + udf * alpha * (1 - tan ** 2)).squeeze(-1))
-
-    grad_consist, sdf_near_surf, grad_constraint_near_surf = grad_consistency( model, coords[:,(udf == 0).flatten(),:], gt_normals[:,(udf == 0).flatten(),:], alpha  )
-    
-    return {
-        'sdf_on_surf': sdf_constraint_on_surf(udf, pred_sdf).mean() * loss_weights[0],
-        'sdf_off_surf': (sdf_constraint_off_surf( udf, tdf, pred_sdf ).mean()  + sdf_near_surf.mean())* loss_weights[1],
-        'hessian_constraint': principal_direction_constraint.mean() * loss_weights[2],
-        'grad_constraint': (grad_constraint.mean() + grad_constraint_near_surf.mean()) * loss_weights[3],
-        'grad_consistency': grad_consist.mean() * loss_weights[4]
     }
 
 def loss_s2( model, model_input, gt, loss_weights, alpha ):
@@ -183,9 +143,7 @@ def loss_s1( model, model_input, gt, loss_weights, alpha ):
         eigenvalues, eigenvectors = torch.linalg.eigh( hessians )
         pred_normals = eigenvectors[..., 2]
 
-        principal_direction_constraint = principal_curvature_alignmentOLD( udf, gt_normals, pred_normals )
-        #hessians = dif.hessian(pred_sdf.squeeze(-1), coords)
-        #principal_direction_constraint = principal_curvature_alignment( udf, gt_normals, hessians, alpha )
+        principal_direction_constraint = principal_curvature_alignment( udf, gt_normals, pred_normals )
     else:
         principal_direction_constraint=torch.Tensor([0]).to(coords.device)
 

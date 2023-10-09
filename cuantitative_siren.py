@@ -11,43 +11,41 @@ if __name__=='__main__':
     layer_nodes = [net_width] * net_depth
 
     dataset = 'data/DF_subset/'
-    outfolder = f'results/no_grad'
+    outfolder = f'results/siren'
     cuda_device = 1
 
     if not os.path.exists(outfolder):
         os.mkdir(outfolder)
 
     exp_config = {
-        "num_epochs": 3000,
-        "s1_epochs": 2000,
-        "warmup_epochs": 1000,
+        "description": "SIREN Learning of complete test mesh using SDF values and non-uniform sampling.",
+        "num_epochs": 1500,
+        "warmup_epochs": 0,
         "sampling_opts": {
             "curvature_iteration_fractions": [0.2, 0.4, 0.4],
             "curvature_percentile_thresholds": [0.6, 0.85]
         },
         "dataset": "...",
         "batch_size": 30000,
-        "sampling_percentiles": [0.333, 0.666],
+        "sampling_percentiles": [0.33, 0.66],
         "batches_per_epoch": 1,
-        "checkpoint_path": outfolder,
-        "experiment_name": "...",
+        "checkpoint_path": "...",
+        "experiment_name": "siren",
         "epochs_to_checkpoint": 4000,
-        "gt_mode": "tanh",
-        "loss_s1_weights": [ 1e4, 1e4, 1e4, 0 ],
-        "loss_s2_weights": [ 1e5, 1e5 ],
-        "alpha": 100,
+        "gt_mode": "siren",
+        "loss_weights": [ 5e3, 5e2, 5e2, 5e1  ],
         "optimizer": {
             "type": "adam",
-            "lr_s1": 1e-5,
-            "lr_s2": 1e-7
+            "lr": 1e-4
         },
         "network": {
-            "hidden_layer_nodes": layer_nodes,
+            "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
             "w0": 30,
             "pretrained_dict": "None"
         },
         "resolution": 256
     }
+
 
 
     with open(os.path.join(outfolder, 'results.csv'), 'w+') as result_file:
@@ -68,13 +66,13 @@ if __name__=='__main__':
         experiment_name = dirpath[dirpath.rfind('/')+1:]
 
         exp_config['dataset'] = dataset_file
-        exp_config['experiment_name'] = experiment_name #filenames[gt_index][:filenames[gt_index].rfind('.')]
+        exp_config['experiment_name'] = experiment_name
 
         if os.path.exists(os.path.join(outfolder, experiment_name)):
             print(f'Skipping {experiment_name}')
             continue
 
-        training_time, (meshMU, meshCAP) = setup_train( exp_config, cuda_device)
+        training_time, mesh = setup_train( exp_config, cuda_device)
 
         torch.cuda.empty_cache()
         gc.collect()
@@ -83,13 +81,11 @@ if __name__=='__main__':
         gt_pc = tm.load_mesh( gt_file )
 
         time = training_time
-        L1CD_CAP = chamfer_distance( torch.from_numpy(meshCAP.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=1)[0].cpu().numpy()
-        L2CD_CAP = chamfer_distance( torch.from_numpy(meshCAP.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=2)[0].cpu().numpy()
-        L1CD_MU = chamfer_distance( torch.from_numpy(meshMU.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=1)[0].cpu().numpy()
-        L2CD_MU = chamfer_distance( torch.from_numpy(meshMU.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=2)[0].cpu().numpy()
+        L1CD = chamfer_distance( torch.from_numpy(mesh.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=1)[0].cpu().numpy()
+        L2CD = chamfer_distance( torch.from_numpy(mesh.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=2)[0].cpu().numpy()
 
         with open(os.path.join(outfolder, 'results.csv'), 'a') as result_file:
-            result_file.write(f'{experiment_name},{time},{L1CD_CAP},{L2CD_CAP},{L1CD_MU},{L2CD_MU}\n')
+            result_file.write(f'{experiment_name},{time},{L1CD},{L2CD}\n')
 
 
     

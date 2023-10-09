@@ -176,23 +176,24 @@ def extract_mesh_MESHUDF(df_values, normals, device, smooth_borders=False, **kwa
             neighbours[v].append(u)
         border_vertices = np.array(list(neighbours.keys()))
 
-        # Build a sparse matrix for computing laplacian
-        pos_i, pos_j = [], []
-        for k, ns in enumerate(neighbours.values()):
-            for j in ns:
-                pos_i.append(k)
-                pos_j.append(j)
+        if len(border_vertices) > 0:
+            # Build a sparse matrix for computing laplacian
+            pos_i, pos_j = [], []
+            for k, ns in enumerate(neighbours.values()):
+                for j in ns:
+                    pos_i.append(k)
+                    pos_j.append(j)
 
-        sparse = coo_matrix((np.ones(len(pos_i)),   # put ones
-                            (pos_i, pos_j)),        # at these locations
-                            shape=(len(border_vertices), len(filtered_mesh.vertices)))
+            sparse = coo_matrix((np.ones(len(pos_i)),   # put ones
+                                (pos_i, pos_j)),        # at these locations
+                                shape=(len(border_vertices), len(filtered_mesh.vertices)))
 
-        # Smoothing operation:
-        lambda_ = 0.3
-        for _ in range(5):
-            border_neighbouring_averages = sparse @ filtered_mesh.vertices / sparse.sum(axis=1)
-            laplacian = border_neighbouring_averages - filtered_mesh.vertices[border_vertices]
-            filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
+            # Smoothing operation:
+            lambda_ = 0.3
+            for _ in range(5):
+                border_neighbouring_averages = sparse @ filtered_mesh.vertices / sparse.sum(axis=1)
+                laplacian = border_neighbouring_averages - filtered_mesh.vertices[border_vertices]
+                filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
 
     return torch.tensor(filtered_mesh.vertices).float().to(device), torch.tensor(filtered_mesh.faces).long().to(device), filtered_mesh
 

@@ -91,7 +91,11 @@ def generate_df( model_path, mesh_path, output_path, options ):
         gradients
     )
 
-    pred_grad_cm = ( normals + np.ones_like(gradients) ) / 2
+    #cyclic_cmap = cm.get_cmap('twilight_shifted')
+    #grad_map = cyclic_cmap( np.arccos( normals[:, 0] ) / np.pi )[:,:3]
+
+    normals *= np.hstack([ np.ones((len(normals), 2)), np.sign(normals[:, 2]).reshape((len(normals), 1))])
+    grad_map = ( normals + np.ones_like(normals) ) / 2
 
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(mesh)
@@ -132,7 +136,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
     fig.colorbar(pos, cax=cbar_ax)
     fig.savefig(output_path + 'distance_fields.png')
 
-    im = Image.fromarray((pred_grad_cm.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
+    im = Image.fromarray((grad_map.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
     im.save( output_path +'pred_grad.png', 'PNG')
 
 if __name__ == '__main__':

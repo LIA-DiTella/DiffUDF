@@ -1,4 +1,4 @@
-from src.render_mc import extract_mesh_MESHUDF, extract_mesh_CAP, extract_fields
+from src.render_mc import extract_mesh_MESHUDF, extract_mesh_CAP, extract_fields, get_mesh_sdf
 from src.model import SIREN
 import torch
 import argparse
@@ -6,7 +6,7 @@ import numpy as np
 import open3d as o3d
 import json
 
-def generate_mc(model, gt_mode,device, N, output_path, alpha, algorithm='meshudf', from_file=None):
+def generate_mc(model, gt_mode,device, N, output_path, alpha=None, algorithm='meshudf', from_file=None):
 
 	if from_file is not None:
 		model = SIREN(
@@ -52,6 +52,16 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha, algorithm='meshudf
 
 		return meshMU, meshCAP
 
+	elif algorithm == 'siren':
+		vertices, faces, meshSIREN = get_mesh_sdf(
+			model,
+			N=N,
+			device=device
+		)
+
+		meshSIREN.export(output_path)
+		print(f'Saved to {output_path}')
+		return meshSIREN
 	else:
 		raise ValueError('Invalid algorithm')
 
