@@ -5,29 +5,22 @@ import open3d.core as o3c
 import torch
 from torch.utils.data import IterableDataset
 
-def getCurvatureBins(curvature: torch.Tensor, percentiles: list) -> list:
-    q = torch.quantile(curvature, torch.Tensor(percentiles))
-    bins = [curvature.min().item(), curvature.max().item()]
-    # Hack to insert elements of a list inside another list.
-    bins[1:1] = q.data.tolist()
+def o3c_to_torch( tensor: o3c.Tensor ) -> torch.Tensor:
+    return torch.utils.dlpack.from_dlpack( tensor.to_dlpack() )
 
-    return bins
+def torch_to_o3c( tensor: torch.Tensor ) -> o3c.Tensor:
+    return o3c.Tensor.from_dlpack( torch.utils.dlpack.to_dlpack(tensor) )
 
 def sampleTrainingData(
-        mesh: list,
+        surface_pc: o3d.t.geometry.PointCloud,
         samplesOnSurface: int,
         samplesOffSurface: int,
         scene,
         domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
-        curvatureFractions: list = [],
-        curvatureBins: list = []
 ):
-        ## samples on surface
-    surfacePoints = pointSegmentationByCurvature(
-        mesh,
-        samplesOnSurface,
-        curvatureBins,
-        curvatureFractions
+    
+    surfaceSamples = surface_pc.select_by_index( 
+        o3c.Tensor.from_numpy( np.random.randint(0, len(surface_pc.point['positions']), samplesOnSurface) )
     )
 
     ## samples uniformly in domain
@@ -40,87 +33,53 @@ def sampleTrainingData(
     ), dtype=o3c.Dtype.Float32)
 
     domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
-    domainPoints = torch.from_numpy(domainPoints.numpy())
+    domainPoints = o3c_to_torch( domainPoints )
 
+    surfacePointsSubset = surfaceSamples.select_by_index( 
+        o3c.Tensor.from_numpy( np.random.randint(0, samplesOnSurface, (samplesNear,1)) )
+    )
 
-    surfacePointsSubset = surfacePoints[ torch.randint(0, samplesOnSurface, (samplesNear,1)).flatten(), :]
+    surfacePointsSubsetNormals = o3c_to_torch( surfacePointsSubset.point['normals'] ).squeeze(1)
+    surfacePointsSubset = o3c_to_torch( surfacePointsSubset.point['positions'] ).squeeze(1)
 
-    closePoints = o3c.Tensor(
-        ( surfacePointsSubset[..., :3] + surfacePointsSubset[..., 3:6] * torch.normal(0, 0.01, (samplesNear, 1)) ).numpy(), 
-        dtype=o3c.Dtype.Float32)
-    closeSDFs = torch.from_numpy(scene.compute_distance(closePoints).numpy())
-    closePoints = torch.from_numpy(closePoints.numpy())
+    surfaceNormals = o3c_to_torch( surfaceSamples.point['normals'] )
+    surfacePoints = o3c_to_torch( surfaceSamples.point['positions'] )
+
+    closePoints = ( surfacePointsSubset + surfacePointsSubsetNormals * torch.normal(0, 0.01, (samplesNear, 1) ) )
+
+    closeSDFs = o3c_to_torch( scene.compute_distance( torch_to_o3c(closePoints).to( o3c.Dtype.Float32 ) ) )
 
     domainNormals = torch.zeros((samplesOffSurface, 3))
 
     # full dataset:
     fullSamples = torch.row_stack((
-        surfacePoints[..., :3],
+        surfacePoints,
         domainPoints,
         closePoints
     ))
     fullNormals = torch.row_stack((
-        surfacePoints[..., 3:6],
+        surfaceNormals,
         domainNormals
     ))
     fullSDFs = torch.cat((
-        torch.zeros(len(surfacePoints)),
+        torch.zeros(samplesOnSurface),
         domainSDFs,
         closeSDFs
     )).unsqueeze(1)
 
     return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)
 
-def pointSegmentationByCurvature(
-        mesh: o3d.t.geometry.TriangleMesh,
-        amountOfSamples: int,
-        binEdges: np.array,
-        proportions: np.array
-):
-    
-    def fillBin( points, curvatures, amountSamples, lowerBound, upperBound ):
-        pointsInBounds = points[(curvatures >= lowerBound) & (curvatures <= upperBound), ...]
-        maskSampledPoints = np.random.choice(
-            range(pointsInBounds.shape[0]),
-            size=amountSamples,
-            replace=True if amountSamples > pointsInBounds.shape[0] else False
-        )
-        return pointsInBounds[maskSampledPoints, ...]
-
-    pointsOnSurface = torch.column_stack((
-        torch.from_numpy(mesh.vertex["positions"].numpy()),
-        torch.from_numpy(mesh.vertex["normals"].numpy()),
-        torch.from_numpy(mesh.vertex["curvature"].numpy())
-    ))
-
-    curvatures = pointsOnSurface[..., -1]
-
-    pointsLowCurvature = fillBin( pointsOnSurface, curvatures, int(math.floor(proportions[0] * amountOfSamples)), binEdges[0], binEdges[1])
-    pointsMedCurvature = fillBin( pointsOnSurface, curvatures, int(math.ceil(proportions[1] * amountOfSamples)), binEdges[1], binEdges[2])
-    pointsHighCurvature = fillBin( pointsOnSurface, curvatures, amountOfSamples - pointsLowCurvature.shape[0] - pointsMedCurvature.shape[0] , binEdges[2], binEdges[3])
-
-    return torch.cat((
-        pointsLowCurvature,
-        pointsMedCurvature,
-        pointsHighCurvature
-    ), dim=0)
-
-
-
 class PointCloud(IterableDataset):
     def __init__(self, meshPath: str,
                  batchSize: int,
                  samplingPercentiles: list,
-                 batchesPerEpoch : int,
-                 curvatureFractions: list = [],
-                 curvaturePercentiles: list = []):
+                 batchesPerEpoch : int ):
         super().__init__()
 
         print(f"Loading mesh \"{meshPath}\".")
 
-        self.mesh = o3d.t.io.read_triangle_mesh(meshPath)
-        self.mesh.vertex.curvature = o3c.Tensor( np.expand_dims(self.mesh.vertex.colors.numpy()[:, 0], -1) )
-        del self.mesh.vertex.colors
+        self.mesh = o3d.t.io.read_triangle_mesh(meshPath + '_t.obj')
+        self.surface_pc = o3d.t.io.read_point_cloud(meshPath + '_pc.ply')
 
         self.batchSize = batchSize
         self.samplesOnSurface = int(self.batchSize * samplingPercentiles[0])
@@ -134,18 +93,12 @@ class PointCloud(IterableDataset):
         print("Creating point-cloud and acceleration structures.")
         self.scene = o3d.t.geometry.RaycastingScene()
         self.scene.add_triangles(self.mesh)
-
-        self.curvatureFractions = curvatureFractions
-
-        self.curvatureBins = getCurvatureBins( torch.from_numpy(self.mesh.vertex.curvature.numpy()), curvaturePercentiles)
         
     def __iter__(self):
         for _ in range(self.batchesPerEpoch):
             yield sampleTrainingData(
-                mesh=self.mesh,
+                surface_pc=self.surface_pc,
                 samplesOnSurface=self.samplesOnSurface,
                 samplesOffSurface=self.samplesFarSurface,
-                scene=self.scene,
-                curvatureFractions=self.curvatureFractions,
-                curvatureBins=self.curvatureBins,
+                scene=self.scene
             )

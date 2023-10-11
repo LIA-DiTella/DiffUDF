@@ -307,14 +307,11 @@ def setup_train( parameter_dict, cuda_device ):
     with open(osp.join(full_path, "params.json"), "w+") as fout:
         json.dump(parameter_dict, fout, indent=4)
 
-    sampling_config = parameter_dict["sampling_opts"]
     dataset = PointCloud(
         meshPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
         samplingPercentiles=parameter_dict["sampling_percentiles"],
-        batchesPerEpoch = parameter_dict["batches_per_epoch"],
-        curvatureFractions=sampling_config["curvature_iteration_fractions"],
-        curvaturePercentiles=sampling_config["curvature_percentile_thresholds"]
+        batchesPerEpoch = parameter_dict["batches_per_epoch"]
     )
 
     network_params = parameter_dict["network"]
@@ -407,7 +404,7 @@ def setup_train( parameter_dict, cuda_device ):
         'hidden_layer_nodes': network_params["hidden_layer_nodes"]
     }
 
-    generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'], osp.join(full_path, "reconstructions/"), df_options)
+    generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'] + '_t.obj', osp.join(full_path, "reconstructions/"), df_options)
 
     print('Generating mesh')
     mc_options = {

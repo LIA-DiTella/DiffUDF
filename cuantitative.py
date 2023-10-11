@@ -12,7 +12,7 @@ if __name__=='__main__':
 
     dataset = 'data/DF_subset/'
     outfolder = f'results/no_grad'
-    cuda_device = 1
+    cuda_device = 0
 
     if not os.path.exists(outfolder):
         os.mkdir(outfolder)
@@ -21,10 +21,6 @@ if __name__=='__main__':
         "num_epochs": 3000,
         "s1_epochs": 2000,
         "warmup_epochs": 1000,
-        "sampling_opts": {
-            "curvature_iteration_fractions": [0.2, 0.4, 0.4],
-            "curvature_percentile_thresholds": [0.6, 0.85]
-        },
         "dataset": "...",
         "batch_size": 30000,
         "sampling_percentiles": [0.333, 0.666],
@@ -52,23 +48,23 @@ if __name__=='__main__':
 
     with open(os.path.join(outfolder, 'results.csv'), 'w+') as result_file:
         result_file.write('mesh,time,L1CD_CAP,L2CD_CAP,L1CD_MU,L2CD_MU\n')
-
-    for dirpath, dirnames, filenames in os.walk(dataset):
+    
+    for it, (dirpath, dirnames, filenames) in enumerate(os.walk(dataset)):
         try:
-            dataset_index = [i for i,file in enumerate(filenames) if file[-6:] == '_p.ply'][0]
+            dataset_index = [i for i,file in enumerate(filenames) if file[-7:] == '_pc.ply'][0]
             gt_index = [i for i,file in enumerate(filenames) if file[-6:] == '_t.obj'][0]
         except:
             continue
 
-        gt_file = os.path.join(dirpath, filenames[gt_index])
+        # comparo con la nube de puntos y no con los vertices de la malla original... tiene mas sentido
         dataset_file = os.path.join(dirpath, filenames[dataset_index])
 
         print(f'Training for {filenames[gt_index]}')
 
         experiment_name = dirpath[dirpath.rfind('/')+1:]
 
-        exp_config['dataset'] = dataset_file
-        exp_config['experiment_name'] = experiment_name #filenames[gt_index][:filenames[gt_index].rfind('.')]
+        exp_config['dataset'] = dataset_file[:-7]
+        exp_config['experiment_name'] = experiment_name
 
         if os.path.exists(os.path.join(outfolder, experiment_name)):
             print(f'Skipping {experiment_name}')
@@ -80,7 +76,7 @@ if __name__=='__main__':
         gc.collect()
 
         print('Computing chamfer distances...')
-        gt_pc = tm.load_mesh( gt_file )
+        gt_pc = tm.load( dataset_file )
 
         time = training_time
         L1CD_CAP = chamfer_distance( torch.from_numpy(meshCAP.vertices).float()[None,...].to(cuda_device), torch.from_numpy(gt_pc.vertices).float()[None,...].to(cuda_device), norm=1)[0].cpu().numpy()

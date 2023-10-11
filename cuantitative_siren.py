@@ -49,7 +49,7 @@ if __name__=='__main__':
 
 
     with open(os.path.join(outfolder, 'results.csv'), 'w+') as result_file:
-        result_file.write('mesh,time,L1CD_CAP,L2CD_CAP,L1CD_MU,L2CD_MU\n')
+        result_file.write('mesh,time,L1CD,L2CD\n')
 
     for dirpath, dirnames, filenames in os.walk(dataset):
         try:

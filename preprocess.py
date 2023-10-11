@@ -9,8 +9,7 @@ if __name__ == '__main__':
                         help='path to input mesh')
     parser.add_argument('output_path', metavar='path/to/output/point_cloud', type=str,
                         help='path to output point cloud')
-    parser.add_argument('-nn', '--not_normalize', action='store_true', help='skip normalization step')
-    parser.add_argument('-s', '--sub_it', type=int, default=0, help='loop subdivide iterations')
+    parser.add_argument('-s', '--samples', type=int, default=1e5, help='surface samples')
 
     args = parser.parse_args()
 
@@ -22,18 +21,16 @@ if __name__ == '__main__':
         preprocessMesh( 
                 outputPath, 
                 inputPath,
-                not_normalize=args.not_normalize,
-                subdivide=args.sub_it )
+                surfacePoints=args.samples )
     else:
-        for i, (dirpath, dirnames, filenames) in enumerate(os.walk(inputPath)):
+        for dirpath, dirnames, filenames in os.walk(inputPath):
             for file in filenames:
-                if file[-4:] == '.obj':
-                    print(f'Processing {i}-th mesh...')
+                if file[-4:] == '.obj' and file[-6:-4] != '_t' and file[-7:-4] != '_pc':
+                    print(f'Processing {dirpath[dirpath.rfind("/")+1:]}...')
                     preprocessMesh( 
-                        os.path.join(dirpath, file[:-4] + '_p.ply'), 
+                        os.path.join(dirpath, file[:-4]), 
                         os.path.join(os.path.join(dirpath, file)), 
-                        not_normalize=args.not_normalize, 
-                        subdivide=args.sub_it 
+                        surfacePoints=args.samples 
                     )
     
 
