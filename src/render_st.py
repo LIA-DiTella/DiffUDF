@@ -6,7 +6,6 @@ from src.evaluate import evaluate
 from src.inverses import inverse
 import open3d as o3d
 import open3d.core as o3c
-import json
 
 def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, refinement_steps ):
     device_torch = torch.device(0)
@@ -71,7 +70,7 @@ def create_orthogonal_image( model, sample_count, surface_eps, gradient_step, re
     cmap = cm.get_cmap('turbo')
     return cmap( (np.clip( samples[:, 2].reshape((LADO, LADO)), -1, 1) + np.ones((LADO, LADO))) / 2 )[:,:,:3], values
 
-def create_projectional_image( model, sample_count, surface_eps, gradient_eps, alpha, gt_mode, refinement_steps, directions, image, light_position, shininess=40, max_iterations=30, device=torch.device(0) ):
+def create_projectional_image( model, sample_count, surface_eps, alpha, gt_mode, directions, image, light_position, shininess=1200, max_iterations=30, device=torch.device(0) ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     LADO = int(np.sqrt(sample_count))
 
@@ -86,31 +85,24 @@ def create_projectional_image( model, sample_count, surface_eps, gradient_eps, a
 
         gradient_norms = np.sum( gradients ** 2, axis=-1)
 
-        steps = inverse( gt_mode, udfs, alpha )
+        steps = inverse( gt_mode, np.abs(udfs), alpha )
 
         samples[alive] += directions[alive] * np.hstack([steps, steps, steps])
 
-        threshold_mask = np.logical_and(gradient_norms < gradient_eps, steps.flatten() < surface_eps)
+        threshold_mask = np.abs(udfs).flatten() < surface_eps
         indomain_mask = np.logical_and( np.all( samples[alive] > -1, axis=1 ), np.all( samples[alive] < 1, axis=1 ))
         hits[alive] += np.logical_and( threshold_mask, indomain_mask)
         alive[alive] *= np.logical_and( np.logical_not(threshold_mask), indomain_mask )
         
         iteration += 1
 
-    
     if np.sum(hits) == 0:
         raise ValueError(f"Ray tracing did not converge in {max_iterations} iterations to any point at distance {surface_eps} or lower from surface.")
 
     amount_hits = np.sum(hits)
-    hessians = np.zeros( (amount_hits, 3, 3) )
     gradients = np.zeros((amount_hits, 3))
-
-    for _ in range(refinement_steps):    
-        udfs = evaluate( model, samples[hits], gradients=gradients, device=device)
-        steps = inverse( gt_mode, udfs, alpha, min_step=0 )
-        samples[hits] -= normalize(gradients) * steps
-
     hessians = np.zeros((amount_hits, 3, 3))
+
     udfs = evaluate( model, samples[hits], gradients=gradients, hessians=hessians, device=device)
 
     if gt_mode == 'siren':
@@ -139,11 +131,11 @@ def phong_shading(light_position, shininess, hits, samples, normals):
     colors = np.ones_like(samples)
 
     diffuse_color = np.array([0.7, 0.7, 0.7] )
-    specular_color = np.array([1, 1, 1])
+    specular_color = np.array([0.7, 0.7, 0.7])
     ambient_color = np.array( [0.2, 0.2, 0.2])
     colors[hits] = np.clip( 
         np.tile( diffuse_color, (normals.shape[0],1)) * lambertian + 
-        np.tile( specular_color, (normals.shape[0],1)) * specular +
+        #np.tile( specular_color, (normals.shape[0],1)) * specular +
         ambient_color , 0, 1)
     
     return colors

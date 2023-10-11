@@ -11,7 +11,7 @@ if __name__=='__main__':
     layer_nodes = [net_width] * net_depth
 
     dataset = 'data/DF_subset/'
-    outfolder = f'results/no_grad'
+    outfolder = f'results/no_grad_no_hess'
     cuda_device = 0
 
     if not os.path.exists(outfolder):
@@ -29,7 +29,7 @@ if __name__=='__main__':
         "experiment_name": "...",
         "epochs_to_checkpoint": 4000,
         "gt_mode": "tanh",
-        "loss_s1_weights": [ 1e4, 1e4, 1e4, 0 ],
+        "loss_s1_weights": [ 1e4, 1e4, 0, 0 ],
         "loss_s2_weights": [ 1e5, 1e5 ],
         "alpha": 100,
         "optimizer": {
