@@ -1,0 +1,17 @@
+{
+    "image_width":512,
+    "image_height":480,
+    "fov": 90,
+    "camera_pos": [-10,10,-10],
+    "light_pos": [-10,3,10],
+    "sample_rate":1,
+    "gt_mode": "tanh",
+    "device": 0,
+    "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
+    "w0": 30,
+    "model_path": "model_best.pth",
+    "surf_thresh": 0.001,
+    "alpha": 100,
+    "max_iter": 300,
+    "output_path": "prueba.png"
+}
