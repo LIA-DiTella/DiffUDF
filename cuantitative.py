@@ -10,8 +10,8 @@ if __name__=='__main__':
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    dataset = 'data/cars/'
-    outfolder = f'results/best'
+    dataset = 'data/multi_garment/'
+    outfolder = f'results/best_mg'
     cuda_device = 0
 
     if not os.path.exists(outfolder):

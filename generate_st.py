@@ -18,8 +18,8 @@ def get_pixels_camera( width, height, fov, noise ):
 
     aspect_ratio = width / height
     fov_radians = fov * np.pi / 180
-    pixel_camera_x = ( pixel_screen_x ) * aspect_ratio #* np.tan(fov_radians / 2)
-    pixel_camera_y = (  pixel_screen_y ) #* np.tan(fov_radians / 2)
+    pixel_camera_x = ( pixel_screen_x ) * aspect_ratio * np.tan(fov_radians / 2)
+    pixel_camera_y = (  pixel_screen_y ) * np.tan(fov_radians / 2)
 
     pixel_camera_x, pixel_camera_y = np.meshgrid(pixel_camera_x, pixel_camera_y, indexing='xy')
 
@@ -39,47 +39,28 @@ def generate_st( config_dict ):
         pixels_camera = get_pixels_camera(config_dict['image_width'], config_dict['image_height'], config_dict['fov'], np.random.normal(0.5,0.35))
 
         camera_pos = np.float32( config_dict['camera_pos'] )
-        #a = np.array([0,0,-1])
-        #b = -1 * camera_pos
-        #b /= np.linalg.norm(b)
-#
-        #v = np.cross(a,b)
-        #c = np.dot(a,b)
-#
-        #if np.isclose(c, -1):
-        #    R = np.array([
-        #        [-1,0,0],
-        #        [0,-1,0],
-        #        [0,0,1]
-        #    ])
-        #elif np.isclose(c,1):
-        #    R = np.eye(3,3)
-        #else:
-        #    v_x = np.array([
-        #        [0, -v[2], v[1]],
-        #        [v[2], 0, -v[0]],
-        #        [-v[1], v[0], 0]
-        #    ])
-#
-        #    R = np.eye(3,3) + v_x + v_x@v_x * (1 / (1 + c))
-        
-        forward = camera_pos
-        forward /= np.linalg.norm(forward)
+        a = np.array([0,0,-1])
+        b = -1 * camera_pos
+        b /= np.linalg.norm(b)
 
-        temp_up = np.float64(config_dict.get('up_vector', [0,-1,0]))
-        right = np.cross(temp_up,forward)
-        right /= np.linalg.norm(right)
-
-        up = np.cross(forward, right)
-        up /= np.linalg.norm(up)
-
-        R = np.vstack( [right, up, forward] )
-        print(R@[0,0,-1])
+        if np.isclose(a@b, -1):
+           R = np.array([
+               [-1,0,0],
+               [0,1,0],
+               [0,0,-1]
+           ])
+        elif np.isclose(a@b,1):
+            R = np.eye(3,3)
+        else:
+            upVector = np.array([0,1,0]) - (np.array([0,1,0])@b) * b
+            upVector /= np.linalg.norm(upVector)
+            rightVector = np.cross(upVector, b)
+            R = np.vstack([rightVector, upVector , b]).T
 
         ray_directions = (pixels_camera).reshape((config_dict['image_width'] * config_dict['image_height'], 3))
         ray_directions = (R @ ray_directions.T).T + np.tile(camera_pos, (len(ray_directions),1))
         ray_directions /= np.linalg.norm(ray_directions, axis=-1)[...,None]
-        #ray_directions *= -1
+        ray_directions *= -1
 
         plane_normals = np.array([
             [1,0,0],
@@ -89,13 +70,14 @@ def generate_st( config_dict ):
             [0,0,1],
             [0,0,1]
         ])
+        p_pos = config_dict.get('planes', [1,-1,1,-1,1,-1] )
         plane_positions = np.array([
-            [1,0,0],
-            [-1,0,0],
-            [0,1,0],
-            [0,-1,0],
-            [0,0,1],
-            [0,0,-1]
+            [p_pos[0],0,0],
+            [p_pos[1],0,0],
+            [0,p_pos[2],0],
+            [0,p_pos[3],0],
+            [0,0,p_pos[4]],
+            [0,0,p_pos[5]]
         ]) - np.tile( config_dict['camera_pos'], (6,1) )
 
         numerator = np.sum( plane_positions * plane_normals, axis=-1 )
@@ -109,7 +91,7 @@ def generate_st( config_dict ):
             np.tile( config_dict['camera_pos'], (len(ray_directions)*6,1) ).reshape((len(ray_directions), 6,3) )
         )
 
-        mask_outside_intersections = np.prod( np.logical_and(intersections >= -1, intersections <= 1),axis=-1 ) * (np.abs(denominator) > 1e-5)
+        mask_outside_intersections = np.prod( np.logical_and(intersections >= -1.001, intersections <= 1.001),axis=-1 ) * (np.abs(denominator) > 1e-5)
         valid_rays = np.sum( mask_outside_intersections , axis=-1 ).astype(bool)
         ds = np.min( np.where( np.logical_and( ds >= 0, mask_outside_intersections ), ds, np.ones_like(ds) * np.inf)[valid_rays,:], axis=-1)
         starting_pos = np.zeros_like(ray_directions)
@@ -124,7 +106,8 @@ def generate_st( config_dict ):
                 t0=starting_pos, 
                 mask_rays=valid_rays,
                 light_position=np.array(config_dict["light_pos"]),
-                max_iterations=config_dict["max_iter"])
+                max_iterations=config_dict["max_iter"],
+                specular_comp=config_dict.get('specular', False))
         else:
             device_torch = torch.device(config_dict["device"])
             model = SIREN(
@@ -150,11 +133,12 @@ def generate_st( config_dict ):
                 gt_mode=config_dict["gt_mode"],
                 light_position=np.array(config_dict["light_pos"]),
                 max_iterations=config_dict["max_iter"],
-                device=device_torch
+                device=device_torch,
+                specular_comp=config_dict.get('specular', False),
+                plot_curvatures=config_dict.get('plot_curvs', False)
             )
     
-    im = Image.fromarray((colores / config_dict['sample_rate'] * 255).astype(np.uint8))
-    im.save(config_dict["output_path"], 'PNG')
+    return Image.fromarray((colores / config_dict['sample_rate'] * 255).astype(np.uint8))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate ray traced image from trained model')
@@ -165,4 +149,5 @@ if __name__ == '__main__':
     with open(args.config_path) as config_file:
         config_dict = json.load(config_file)
 
-    generate_st(config_dict)
+    im = generate_st(config_dict)
+    im.save(config_dict["output_path"], 'PNG')
