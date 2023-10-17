@@ -135,7 +135,7 @@ def generate_st( config_dict ):
                 max_iterations=config_dict["max_iter"],
                 device=device_torch,
                 specular_comp=config_dict.get('specular', False),
-                plot_curvatures=config_dict.get('plot_curvs', False)
+                plot_curvatures=config_dict.get('plot_curvs', 'none')
             )
     
     return Image.fromarray((colores / config_dict['sample_rate'] * 255).astype(np.uint8))

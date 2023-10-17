@@ -3,7 +3,7 @@
     "image_height":960,
     "fov": 75,
     "camera_pos": [0,0,-10],
-    "light_pos": [2,2,-10],
+    "light_pos": [3,3,-10],
     "sample_rate":1,
     "gt_mode": "tanh",
     "device": 1,
@@ -15,6 +15,6 @@
     "max_iter": 500,
     "output_path": "prueba.png",
     "specular": false,
-    "plot_curvs": true,
+    "plot_curvs": "gaussian",
     "planes": [1,-1,1,-1,1,-1]
 }

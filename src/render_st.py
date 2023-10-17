@@ -7,9 +7,9 @@ from src.inverses import inverse
 import open3d as o3d
 import open3d.core as o3c
 import numpy as np
-from src.diff_operators import gradient, hessian, divergence
+from src.diff_operators import gradient, hessian, divergence, jacobian
 
-def evaluate(model, samples, max_batch=64**2, output_size=1, device=torch.device(0), get_gradients=False, get_normals=False, get_curvatures=False):
+def evaluate(model, samples, max_batch=64**2, output_size=1, device=torch.device(0), get_gradients=False, get_normals=False, get_curvatures='none'):
     head = 0
     amount_samples = samples.shape[0]
 
@@ -20,7 +20,7 @@ def evaluate(model, samples, max_batch=64**2, output_size=1, device=torch.device
     if get_normals or get_curvatures:
         normals = np.zeros((amount_samples,3))
     
-    if get_curvatures:
+    if get_curvatures != 'none':
         curvatures = np.zeros((amount_samples, 1))
 
     while head < amount_samples:
@@ -44,26 +44,29 @@ def evaluate(model, samples, max_batch=64**2, output_size=1, device=torch.device
             pred_normals = eigenvectors[..., 2]
             normals[head:min(head + max_batch, amount_samples)] = pred_normals[0].detach().cpu().numpy()[..., :]
 
-            if get_curvatures:
-                #extended_hessians = torch.zeros((hessians_torch.shape[1], 4,4)).to(device)
-                #extended_hessians[:, :3,:3] = hessians_torch[0, :,:]
-                #extended_hessians[:, :3, 3] = pred_normals
-                #extended_hessians[:, 3, :3] = pred_normals
-                #curvatures[head:min(head + max_batch, amount_samples)] = (-1 * torch.linalg.det(extended_hessians)).detach().cpu().numpy()[...,None]
+            if get_curvatures == 'gaussian':
+                shape_op, status = jacobian(pred_normals, x)
+
+                extended_hessians = torch.zeros((shape_op.shape[1], 4,4)).to(device)
+                extended_hessians[:, :3,:3] = shape_op[0, :,:]
+                extended_hessians[:, :3, 3] = pred_normals
+                extended_hessians[:, 3, :3] = pred_normals
+                curvatures[head:min(head + max_batch, amount_samples)] = (-1 * torch.linalg.det(extended_hessians)).detach().cpu().numpy()[...,None]
+            elif get_curvatures == 'mean':
                 curvatures[head:min(head + max_batch, amount_samples)] = divergence( pred_normals, x ).detach().cpu().numpy()[...,:]
     
         evaluations[head:min(head + max_batch, amount_samples)] = y.squeeze(0).detach().cpu()
         head += max_batch
 
-    if get_curvatures:
-        return evaluations, normals, curvatures / 2
+    if get_curvatures != 'none':
+        return evaluations, normals, curvatures
     if get_normals:
         return evaluations, normals
     if get_gradients:
         return evaluations, gradients
         
 
-def create_projectional_image( model, width, height, rays, t0, mask_rays, surface_eps, alpha, gt_mode, light_position, specular_comp, max_iterations=30, device=torch.device(0), plot_curvatures=False ):
+def create_projectional_image( model, width, height, rays, t0, mask_rays, surface_eps, alpha, gt_mode, light_position, specular_comp, plot_curvatures, max_iterations=30, device=torch.device(0) ):
     # image es una lista de puntos. Tengo un rayo por cada punto en la imagen. Los rayos salen con dirección norm(image_i - origin) desde el punto mismo.
     hits = np.zeros_like(mask_rays, dtype=np.bool8)
 
@@ -94,21 +97,20 @@ def create_projectional_image( model, width, height, rays, t0, mask_rays, surfac
         normals = normalize(gradients)
         return phong_shading(light_position, specular_comp, 40, hits, t0, normals).reshape((height,width,3)) 
     else:
-        if plot_curvatures:
-            udfs, normals, curvatures = evaluate( model, t0[hits], get_normals=True, get_curvatures=True, device=device )
-            #normals = np.array( [ np.linalg.eigh(hessian)[1][:,2] for hessian in hessians ] )
+        if plot_curvatures != 'none':
+            udfs, normals, curvatures = evaluate( model, t0[hits], get_normals=True, get_curvatures=plot_curvatures, device=device )
             # podria ser que las normales apunten para el otro lado. las tengo que invertir si  < direccion, normal > = cos(tita) > 0
             direction_alignment = np.sign(np.expand_dims(np.sum(normals * rays[hits], axis=1),1)) * -1
             normals *= direction_alignment
 
-            curvatures *= direction_alignment
+            if plot_curvatures == 'mean':
+                curvatures *= direction_alignment / 2
+
             cmap = cm.get_cmap('bwr')
             curvatures = np.clip( curvatures, np.percentile(curvatures, 5), np.percentile(curvatures,95))
             curvatures -= np.min(curvatures)
             curvatures/= np.max(curvatures)
-            plt.figure(0)
-            plt.hist(curvatures, bins=30)
-            plt.savefig('hist.png')
+
             return phong_shading(light_position, specular_comp, 40, hits, t0, normals, color_map=cmap(curvatures.squeeze(1))[:,:3]).reshape((height,width,3))     
         else:
             udfs, normals = evaluate( model, t0[hits], get_normals=True, device=device )
