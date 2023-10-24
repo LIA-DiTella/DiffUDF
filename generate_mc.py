@@ -14,7 +14,8 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha=None, algorithm='me
 			n_out_features=1,
 			hidden_layer_config=from_file["hidden_layer_nodes"],
 			w0=from_file["w0"],
-			ww=None
+			ww=None,
+			activation=from_file.get('activation','sine')
 		)
 
 		model.load_state_dict( torch.load(from_file["model_path"]))

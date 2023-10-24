@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from src.util import normalize
 import torch
+import torch.nn.functional as F
 from src.inverses import inverse
 import open3d as o3d
 import open3d.core as o3c
@@ -42,6 +43,7 @@ def evaluate(model, samples, max_batch=64**2, output_size=1, device=torch.device
             hessians_torch = hessian(y,x)
             eigenvalues, eigenvectors = torch.linalg.eigh( hessians_torch )
             pred_normals = eigenvectors[..., 2]
+            #pred_normals = F.normalize( gradient(y,x), dim=-1)
             normals[head:min(head + max_batch, amount_samples)] = pred_normals[0].detach().cpu().numpy()[..., :]
 
             if get_curvatures == 'gaussian':

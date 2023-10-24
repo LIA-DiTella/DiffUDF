@@ -47,7 +47,8 @@ def generate_df( model_path, mesh_path, output_path, options ):
             n_out_features=1,
             hidden_layer_config=options['hidden_layer_nodes'],
             w0=options['weight0'],
-            ww=None
+            ww=None,
+            activation=options.get('activation', 'sine')
     )
     model.load_state_dict( torch.load(model_path))
 
@@ -155,6 +156,8 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--alpha', type=float, default=1, help='alpha for ground truth')
 
     args = parser.parse_args()
-
-    generate_df(args.model_path, args.mesh_path, args.output_path, vars(args))
+    d = vars(args)
+    d['hidden_layer_nodes'] = [256,256,256,256,256,256,256,256]
+    d['activation']='relu'
+    generate_df(args.model_path, args.mesh_path, args.output_path,d )
 

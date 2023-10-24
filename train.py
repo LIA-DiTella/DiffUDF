@@ -143,10 +143,7 @@ def train_model_siren( dataset, model, device, config) -> torch.nn.Module:
     return losses, best_weights, total_training_time
 
 
-def train_model(dataset, model, device, config) -> torch.nn.Module:
-    if config['gt_mode'] == 'siren':
-        return train_model_siren( dataset, model, device, config )
-
+def train_model_tanh(dataset, model, device, config) -> torch.nn.Module:
     epochs = config["epochs"]
     epochs_til_checkpoint = config.get("epochs_to_checkpoint", 0)
 
@@ -320,7 +317,8 @@ def setup_train( parameter_dict, cuda_device ):
         n_out_features=1,
         hidden_layer_config=network_params["hidden_layer_nodes"],
         w0=network_params["w0"],
-        ww=network_params.get("ww", None)
+        ww=network_params.get("ww", None),
+        activation= network_params.get('activation', 'sine')
     )
     print(model)
 
@@ -354,6 +352,12 @@ def setup_train( parameter_dict, cuda_device ):
             "alpha": parameter_dict["alpha"],
             "resolution": parameter_dict.get('resolution', 256)
         }
+        losses, best_weights, training_time = train_model_tanh(
+            dataset,
+            model,
+            device,
+            config_dict,
+        )
     elif parameter_dict['gt_mode'] == 'siren':
         if opt_params["type"] == "adam":
             optimizer = torch.optim.Adam(
@@ -375,15 +379,16 @@ def setup_train( parameter_dict, cuda_device ):
             "loss_weights": parameter_dict["loss_weights"],
             "resolution": parameter_dict.get('resolution', 256)
         }
+        losses, best_weights, training_time = train_model_siren(
+            dataset,
+            model,
+            device,
+            config_dict,
+        )
     else:
         raise ValueError('Invalid ground truth mode. Valid options are \'tanh\' and \'siren\'.')
 
-    losses, best_weights, training_time = train_model(
-        dataset,
-        model,
-        device,
-        config_dict,
-    )
+        
     loss_df = pd.DataFrame.from_dict(losses)
     loss_df.to_csv(osp.join(full_path, "losses.csv"), sep=";", index=None)
 
@@ -401,7 +406,8 @@ def setup_train( parameter_dict, cuda_device ):
         'weight0': network_params["w0"],
         'gt_mode': parameter_dict["gt_mode"],
         'alpha': parameter_dict.get('alpha', 1),
-        'hidden_layer_nodes': network_params["hidden_layer_nodes"]
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
+        'activation': network_params.get('activation', 'sine')
     }
 
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'] + '_t.obj', osp.join(full_path, "reconstructions/"), df_options)
@@ -410,7 +416,8 @@ def setup_train( parameter_dict, cuda_device ):
     mc_options = {
         'w0': network_params["w0"],
         'model_path': osp.join(full_path, "models", "model_best.pth"),
-        'hidden_layer_nodes': network_params["hidden_layer_nodes"]
+        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
+        'activation': network_params.get('activation', 'sine')
     }
 
     return training_time, generate_mc( 
