@@ -10,8 +10,8 @@ if __name__=='__main__':
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    dataset = 'data/data/'
-    outfolder = f'results/relu'
+    dataset = 'data/cars_closed/'
+    outfolder = f'results/siren'
     cuda_device = 1
 
     if not os.path.exists(outfolder):
@@ -40,9 +40,9 @@ if __name__=='__main__':
         },
         "network": {
             "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
-            "w0": 1,
+            "w0": 30,
             "pretrained_dict": "None",
-            "activation": "relu"
+            "activation": "sine"
         },
         "resolution": 256
     }

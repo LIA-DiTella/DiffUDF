@@ -92,11 +92,10 @@ def loss_siren( model, model_input, gt,  loss_weights ):
 
     off_surf_constraint = torch.where(
         gt_sdf != 0,
-        torch.abs( pred_sdf - gt_sdf),
+        torch.exp(-1e2 * torch.abs(pred_sdf)),
         torch.zeros_like(gt_sdf)
     )
 
-    # Wherever boundary_values is not equal to zero, we interpret it as a boundary constraint.
     return {
         'sdf_on_surf': sdf_constraint_on_surf(gt_sdf, pred_sdf).mean() * loss_weights[0],
         'sdf_off_surf': off_surf_constraint.mean() * loss_weights[1],

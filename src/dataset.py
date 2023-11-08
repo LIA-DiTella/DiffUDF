@@ -32,7 +32,7 @@ def sampleTrainingData(
         (samplesFar, 3)
     ), dtype=o3c.Dtype.Float32)
 
-    domainSDFs = torch.from_numpy(scene.compute_distance(domainPoints).numpy())
+    domainSDFs = torch.from_numpy(scene.compute_signed_distance(domainPoints).numpy())
     domainPoints = o3c_to_torch( domainPoints )
 
     surfacePointsSubset = surfaceSamples.select_by_index( 
@@ -47,7 +47,7 @@ def sampleTrainingData(
 
     closePoints = ( surfacePointsSubset + surfacePointsSubsetNormals * torch.normal(0, 0.01, (samplesNear, 1) ) )
 
-    closeSDFs = o3c_to_torch( scene.compute_distance( torch_to_o3c(closePoints).to( o3c.Dtype.Float32 ) ) )
+    closeSDFs = o3c_to_torch( scene.compute_signed_distance( torch_to_o3c(closePoints).to( o3c.Dtype.Float32 ) ) )
 
     domainNormals = torch.zeros((samplesOffSurface, 3))
 

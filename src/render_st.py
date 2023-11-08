@@ -80,7 +80,11 @@ def create_projectional_image( model, width, height, rays, t0, mask_rays, surfac
 
         t0[mask_rays] += rays[mask_rays] * steps
 
-        threshold_mask = np.abs(udfs).flatten() < surface_eps
+        if gt_mode == 'siren':
+            threshold_mask = udfs.flatten() < surface_eps
+        else:
+            threshold_mask = np.abs(udfs).flatten() < surface_eps
+            
         indomain_mask = np.logical_and( np.all( t0[mask_rays] > -1, axis=1 ), np.all( t0[mask_rays] < 1, axis=1 ))
         hits[mask_rays] += np.logical_and( threshold_mask, indomain_mask)
         mask_rays[mask_rays] *= np.logical_and( np.logical_not(threshold_mask), indomain_mask )
@@ -113,7 +117,7 @@ def create_projectional_image( model, width, height, rays, t0, mask_rays, surfac
             curvatures -= np.min(curvatures)
             curvatures/= np.max(curvatures)
 
-            return phong_shading(light_position, specular_comp, 40, hits, t0, normals, color_map=cmap(curvatures.squeeze(1))[:,:3]).reshape((height,width,3))     
+            return phong_shading(light_position, specular_comp, 40, hits, t0, normals, color_map=cmap(curvatures.squeeze(1))[:,:3] ).reshape((height,width,3))     
         else:
             udfs, normals = evaluate( model, t0[hits], get_normals=True, device=device )
             direction_alignment = np.sign(np.expand_dims(np.sum(normals * rays[hits], axis=1),1)) * -1
@@ -144,10 +148,10 @@ def phong_shading(light_position, specular_comp, shininess, hits, samples, norma
         specular_color = np.tile( np.array([0.7, 0.7, 0.7] ), (normals.shape[0],1))
         ambient_color = np.tile( np.array([0.2, 0.2, 0.2] ), (normals.shape[0],1))
     else:
-        diffuse_color = color_map
-        specular_color = color_map
+        diffuse_color = color_map * 0.7
+        specular_color = color_map * 0.7
         #ambient_color = np.tile( np.array([0.2, 0.2, 0.2] ), (normals.shape[0],1))
-        ambient_color = np.clip( color_map - np.tile( np.array([0.7,0.7,0.7]), (normals.shape[0],1) ), 0.1, 1)
+        ambient_color = color_map * 0.2
 
     colors[hits] = np.clip( 
         diffuse_color * lambertian + 

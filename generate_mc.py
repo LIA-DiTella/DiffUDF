@@ -32,7 +32,7 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha=None, algorithm='me
 
 	elif algorithm == 'cap':
 		u,g = extract_fields(model, torch.Tensor([[]]).to(device), N, gt_mode, device, alpha )
-		mesh = extract_mesh_CAP(u.cpu().numpy(), g.cpu().numpy(), N, alpha=alpha)
+		mesh = extract_mesh_CAP(u.cpu().numpy(), g.cpu().numpy(), N)
 
 		mesh.export(output_path)
 		print(f'Saved to {output_path}')

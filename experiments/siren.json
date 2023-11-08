@@ -6,7 +6,7 @@
         "curvature_iteration_fractions": [0.2, 0.4, 0.4],
         "curvature_percentile_thresholds": [0.6, 0.85]
     },
-    "dataset": "data/data/1-1/model_cleaned",
+    "dataset": "data/shirt/shirt",
     "batch_size": 30000,
     "sampling_percentiles": [0.33, 0.66],
     "batches_per_epoch": 1,
@@ -14,14 +14,14 @@
     "experiment_name": "siren",
     "epochs_to_checkpoint": 4000,
     "gt_mode": "siren",
-    "loss_weights": [ 5e3, 5e2, 5e2, 5e1  ],
+    "loss_weights": [ 3e3, 1e2, 1e2, 5e1  ],
     "optimizer": {
         "type": "adam",
         "lr": 1e-4
     },
     "network": {
         "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
-        "w0": 1,
+        "w0": 30,
         "pretrained_dict": "None",
         "activation": "sine"
     },

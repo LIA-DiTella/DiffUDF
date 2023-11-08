@@ -1,23 +1,17 @@
 import torch
 import numpy as np
-from scipy.sparse import coo_matrix
 import trimesh
 from torch.nn import functional as F
-import sys
-from collections import defaultdict
 from src.evaluate import evaluate
 from src.inverses import inverse
 import numpy as np
 from skimage.measure import marching_cubes
 import torch
 import mcubes
-import sys
-sys.path.append('src/marching_cubes')
-from _marching_cubes_lewiner import udf_mc_lewiner
 
 # Paper MeshUDF
 
-def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
+def extract_fields2(decoder, latent_vec, N, gt_mode, device, alpha ):
     """
     Fills a dense N*N*N regular grid by querying the decoder network
     Inputs: 
@@ -48,23 +42,6 @@ def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
     samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
     samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
     samples.requires_grad = False
-
-    # gradients = np.zeros((samples.shape[0], 3))
-    # pred_df = torch.from_numpy( inverse( gt_mode, np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients ) ), alpha))
-    
-    # gradients = torch.from_numpy( gradients )
-    # gradients = -1 * F.normalize(gradients, dim=-1)
-    
-    # samples[..., 3] = (pred_df).squeeze(1).to(device)
-    # samples[..., 4:] = gradients.to(device)
-
-    # # Separate values in DF / gradients
-    # df_values = samples[:, 3]
-    # df_values = df_values.reshape(N, N, N)
-    # vecs = samples[:, 4:]
-    # vecs = vecs.reshape(N, N, N, 3)
-
-    # return df_values, vecs
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
@@ -100,109 +77,12 @@ def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
 
     return df_values, vecs
 
-def extract_mesh_MESHUDF(df_values, normals, device, smooth_borders=False, **kwargs ):
-    """
-    Computes a triangulated mesh from a distance field network conditioned on the latent vector
-    Inputs: 
-        decoder: coordinate network to evaluate
-        latent_vec: conditioning vector
-        samples: already computed (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
-                    for a previous latent_vec, which is assumed to be close to the current one, if any
-        indices: tensor representing the coordinates that need updating in the previous samples tensor (to speed
-                    up iterations)
-        N_MC: grid size
-        fourier: are xyz coordinates encoded with fourier?
-        gradient: do we need gradients?
-        eps: length of the normal vectors used to derive gradients
-        border_gradients: add a special case for border gradients?
-        smooth_borders: do we smooth borders with a Laplacian?
-    Returns:
-        verts: vertices of the mesh
-        faces: faces of the mesh
-        mesh: trimesh object of the mesh
-        samples: (N**3, 7) tensor representing (x,y,z, distance field, grad_x, grad_y, grad_z)
-        indices: tensor representing the coordinates that need updating in the next iteration
-    """
-    df_values[df_values < 0] = 0
-    ### 2: run our custom MC on it
-    N = df_values.shape[0]
-    voxel_size = 2.0 / (N - 1)
-    verts, faces, _, _ = udf_mc_lewiner(df_values.cpu().detach().numpy(),
-                                        normals.cpu().detach().numpy(),
-                                        spacing=[voxel_size] * 3,
-                                        avg_thresh=1.05 ,
-                                        max_thresh=1.75)
-    
-    verts = verts - 1 # since voxel_origin = [-1, -1, -1]
-    ### 3: evaluate vertices DF, and remove the ones that are too far
-    verts_torch = torch.from_numpy(verts).float().to(device)
-    xyz = verts_torch
-
-    # Remove faces that have vertices far from the surface
-    filtered_faces = faces #faces[np.max(pred_df_verts[faces], axis=1)[:,0] < voxel_size / 6]
-    
-    if len(filtered_faces) == 0:
-        raise ValueError("Could not find surface in volume")
-    
-    filtered_mesh = trimesh.Trimesh(verts, filtered_faces)
-    ### 4: clean the mesh a bit
-    # Remove NaNs, flat triangles, duplicate faces
-    filtered_mesh = filtered_mesh.process(validate=False) # DO NOT try to consistently align winding directions: too slow and poor results
-    filtered_mesh.remove_duplicate_faces()
-    filtered_mesh.remove_degenerate_faces()
-    # Fill single triangle holes
-    filtered_mesh.fill_holes()
-
-    filtered_mesh_2 = trimesh.Trimesh(filtered_mesh.vertices, filtered_mesh.faces)
-    # Re-process the mesh until it is stable:
-    n_verts, n_faces, n_iter = 0, 0, 0
-    while (n_verts, n_faces) != (len(filtered_mesh_2.vertices), len(filtered_mesh_2.faces)) and n_iter<10:
-        filtered_mesh_2 = filtered_mesh_2.process(validate=False)
-        filtered_mesh_2.remove_duplicate_faces()
-        filtered_mesh_2.remove_degenerate_faces()
-        (n_verts, n_faces) = (len(filtered_mesh_2.vertices), len(filtered_mesh_2.faces))
-        n_iter += 1
-        filtered_mesh_2 = trimesh.Trimesh(filtered_mesh_2.vertices, filtered_mesh_2.faces)
-
-    filtered_mesh = trimesh.Trimesh(filtered_mesh_2.vertices, filtered_mesh_2.faces)
-
-    if smooth_borders:
-        # Identify borders: those appearing only once
-        border_edges = trimesh.grouping.group_rows(filtered_mesh.edges_sorted, require_count=1)
-
-        # Build a dictionnary of (u,l): l is the list of vertices that are adjacent to u
-        neighbours  = defaultdict(lambda: [])
-        for (u,v) in filtered_mesh.edges_sorted[border_edges]:
-            neighbours[u].append(v)
-            neighbours[v].append(u)
-        border_vertices = np.array(list(neighbours.keys()))
-
-        if len(border_vertices) > 0:
-            # Build a sparse matrix for computing laplacian
-            pos_i, pos_j = [], []
-            for k, ns in enumerate(neighbours.values()):
-                for j in ns:
-                    pos_i.append(k)
-                    pos_j.append(j)
-
-            sparse = coo_matrix((np.ones(len(pos_i)),   # put ones
-                                (pos_i, pos_j)),        # at these locations
-                                shape=(len(border_vertices), len(filtered_mesh.vertices)))
-
-            # Smoothing operation:
-            lambda_ = 0.3
-            for _ in range(5):
-                border_neighbouring_averages = sparse @ filtered_mesh.vertices / sparse.sum(axis=1)
-                laplacian = border_neighbouring_averages - filtered_mesh.vertices[border_vertices]
-                filtered_mesh.vertices[border_vertices] = filtered_mesh.vertices[border_vertices] + lambda_ * laplacian
-
-    return torch.tensor(filtered_mesh.vertices).float().to(device), torch.tensor(filtered_mesh.faces).long().to(device), filtered_mesh
-
-def extract_mesh_CAP( ndf, grad, resolution ):
+def extract_mesh_CAP2( ndf, grad, resolution ):
     bbox_min, bbox_max = np.array([-1,-1,-1]), np.array([1,1,1])
+    side_length = 2 / resolution
     v_all = []
     t_all = []
-    threshold = 0.008   # accelerate extraction
+    threshold = 0.0007   # accelerate extraction
     v_num = 0
     for i in range(resolution-1):
         for j in range(resolution-1):
@@ -220,12 +100,15 @@ def extract_mesh_CAP( ndf, grad, resolution ):
                 for ii in range(2):
                     for jj in range(2):
                         for kk in range(2):
-                            val = np.sqrt( ndf_loc[ii][jj][kk] / 100 )
+                            pos1 = bbox_min + np.array( [i,j,k]) *  side_length
+                            pos2 = bbox_min + np.array( [i + ii ,j + jj ,k + kk]) *  side_length
+
+
 
                             if np.dot(grad_loc[0][0][0], grad_loc[ii][jj][kk]) < 0:
-                                res[ii][jj][kk] = -val
+                                res[ii][jj][kk] = -ndf_loc[ii][jj][kk]
                             else:
-                                res[ii][jj][kk] = val
+                                res[ii][jj][kk] = ndf_loc[ii][jj][kk]
 
                 if res.min()<0:
                     vertices, triangles = mcubes.marching_cubes(
