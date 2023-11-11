@@ -4,7 +4,7 @@
     "fov": 100,
     "camera_pos": [6,2.5,-10],
     "light_pos": [3,2,-10],
-    "sample_rate":6,
+    "sample_rate":1,
     "gt_mode": "tanh",
     "device": 0,
     "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
@@ -15,6 +15,6 @@
     "max_iter": 100,
     "output_path": "armadillo_mean.png",
     "specular": false,
-    "plot_curvs": "mean",
+    "plot_curvs": "gaussian",
     "planes": [1,-1,1,-1,1,-1]
 }
