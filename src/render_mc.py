@@ -220,7 +220,8 @@ def extract_mesh_CAP( ndf, grad, resolution ):
                 for ii in range(2):
                     for jj in range(2):
                         for kk in range(2):
-                            val = np.sqrt( ndf_loc[ii][jj][kk] / 100 )
+                            #val = np.sqrt( ndf_loc[ii][jj][kk] / 100 )
+                            val = ndf_loc[ii][jj][kk]
 
                             if np.dot(grad_loc[0][0][0], grad_loc[ii][jj][kk]) < 0:
                                 res[ii][jj][kk] = -val

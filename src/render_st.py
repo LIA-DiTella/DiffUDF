@@ -41,7 +41,7 @@ def batched_op( inputs, outputs, op, *args, **kwargs ):
 
 def compute_curvature( inputs, normals, curvature='mean', device=torch.device(0)):
     if curvature == 'mean':
-        return divergence( normals, inputs ) / 2
+        return (divergence( normals, inputs ) / 2).detach().cpu()
     elif curvature == 'gaussian':
         shape_op, status = jacobian(normals, inputs)
 
@@ -50,7 +50,7 @@ def compute_curvature( inputs, normals, curvature='mean', device=torch.device(0)
         extended_hessians[:, :3, 3] = normals
         extended_hessians[:, 3, :3] = normals
 
-        return (-1 * torch.linalg.det(extended_hessians))
+        return (-1 * torch.linalg.det(extended_hessians)[None, ..., None]).detach().cpu()
     else:
         return None
 
@@ -73,11 +73,12 @@ def create_projectional_image(
         rendering_config,
         device ): 
     hits = propagate_rays(model, rays, t0, mask_rays, network_config, rendering_config, device)
+    grad_descent(model, t0, hits, network_config, rendering_config, device)
 
     inputs, udfs = evaluate( model, t0[ hits ], device=device)
 
     if network_config['gt_mode'] == 'siren':
-        gradients = torch.hstack(batched_op(udfs, inputs, compute_grad )).squeeze(0).detach().cpu().numpy()
+        gradients = torch.hstack(batched_op(inputs, udfs, compute_grad )).squeeze(0).detach().cpu().numpy()
         udfs = udfs.squeeze(0).detach().cpu().numpy()
         normals = normalize(gradients)
         return phong_shading(
@@ -92,7 +93,7 @@ def create_projectional_image(
 
         if rendering_config['plot_curvatures'] in ['mean', 'gaussian']:
             curvatures = batched_op( inputs, normals, compute_curvature, curvature=rendering_config['plot_curvatures'], device=device )
-            curvatures = torch.hstack(curvatures).squeeze(0).detach().cpu().numpy()
+            curvatures = torch.hstack(curvatures).squeeze(0).numpy()
 
         else:
             curvatures= None
@@ -106,7 +107,7 @@ def create_projectional_image(
         if rendering_config['plot_curvatures'] == 'mean':
             curvatures *= direction_alignment
 
-        if curvatures != None:
+        if curvatures is not None:
             curvatures = np.clip( curvatures, np.percentile(curvatures, 5), np.percentile(curvatures,95))
             curvatures -= np.min(curvatures)
             curvatures/= np.max(curvatures)
@@ -140,13 +141,15 @@ def propagate_rays(model, rays, t0, mask_rays, network_config, rendering_config,
         _, udfs = evaluate( model, t0[ mask_rays ], device=device)
         udfs = torch.hstack(udfs).squeeze(0).detach().cpu().numpy()
         steps = inverse( network_config['gt_mode'], np.abs(udfs), network_config['alpha'] )
+        #steps = np.abs(udfs)
 
         t0[mask_rays] += rays[mask_rays] * steps
 
         if network_config['gt_mode'] == 'siren':
             threshold_mask = udfs.flatten() < rendering_config['surface_threshold']
         else:
-            threshold_mask = np.abs(udfs).flatten() < rendering_config['surface_threshold']
+            #threshold_mask = np.abs(udfs).flatten() < rendering_config['surface_threshold']
+            threshold_mask = np.abs(steps).flatten() < rendering_config['surface_threshold']
             
         indomain_mask = np.logical_and( np.all( t0[mask_rays] > -1, axis=1 ), np.all( t0[mask_rays] < 1, axis=1 ))
         hits[mask_rays] += np.logical_and( threshold_mask, indomain_mask)
@@ -158,6 +161,16 @@ def propagate_rays(model, rays, t0, mask_rays, network_config, rendering_config,
         raise ValueError(f"Ray tracing did not converge in {rendering_config['max_iterations']} iterations to any point at distance {rendering_config['surface_threshold']} or lower from surface.")
     return hits
 
+def grad_descent( model, t0, mask_rays, network_config, rendering_config, device ):
+    for step in range(rendering_config['gd_steps']):
+        inputs, udfs = evaluate( model, t0[ mask_rays ], device=device)
+        gradients = torch.hstack(batched_op(inputs, udfs, compute_grad )).squeeze(0).detach().cpu().numpy()
+        gradients = normalize(gradients)
+        
+        udfs = torch.hstack(udfs).squeeze(0).detach().cpu().numpy()
+        steps = inverse( network_config['gt_mode'], np.abs(udfs), network_config['alpha'] )
+
+        t0[mask_rays] -= gradients * steps
 
 def phong_shading(light_position, shininess, hits, samples, normals, color_map=None):
     light_directions = normalize( np.tile( light_position, (normals.shape[0],1) ) - samples[hits] )

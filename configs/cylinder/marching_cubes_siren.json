@@ -1,8 +1,0 @@
-{
-    "model_path": "results/cylinder/siren/models/model_best.pth",
-    "output_path": "results/cylinder/siren/reconstructions/mc_mesh.obj",
-    "device": 0,
-    "w0": 60,
-    "nsamples": 512,
-    "gt_mode": "siren"
-}
