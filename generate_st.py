@@ -33,12 +33,15 @@ def get_pixels_camera( width, height, fov, noise ):
     return pixels_camera
 
 def generate_st( config_dict ):
-    colores = np.zeros((config_dict['image_height'], config_dict['image_width'],3))
+    network_config = config_dict['network_config']
+    rendering_config = config_dict['rendering_config']
 
-    for i in range(config_dict['sample_rate']):
-        pixels_camera = get_pixels_camera(config_dict['image_width'], config_dict['image_height'], config_dict['fov'], np.random.normal(0.5,0.35))
+    colores = np.zeros((rendering_config['height'], rendering_config['width'],3))
 
-        camera_pos = np.float32( config_dict['camera_pos'] )
+    for i in range(rendering_config['sample_rate']):
+        pixels_camera = get_pixels_camera(rendering_config['height'], rendering_config['width'], rendering_config['fov'], np.random.normal(0.5,0.35))
+
+        camera_pos = np.float32( rendering_config['camera_position'] )
         a = np.array([0,0,-1])
         b = -1 * camera_pos
         b /= np.linalg.norm(b)
@@ -57,7 +60,7 @@ def generate_st( config_dict ):
             rightVector = np.cross(upVector, b)
             R = np.vstack([rightVector, upVector , b]).T
 
-        ray_directions = (pixels_camera).reshape((config_dict['image_width'] * config_dict['image_height'], 3))
+        ray_directions = (pixels_camera).reshape((rendering_config['width'] * rendering_config['height'], 3))
         ray_directions = (R @ ray_directions.T).T + np.tile(camera_pos, (len(ray_directions),1))
         ray_directions /= np.linalg.norm(ray_directions, axis=-1)[...,None]
         ray_directions *= -1
@@ -70,7 +73,7 @@ def generate_st( config_dict ):
             [0,0,1],
             [0,0,1]
         ])
-        p_pos = config_dict.get('planes', [1,-1,1,-1,1,-1] )
+        p_pos = rendering_config.get('planes', [1,-1,1,-1,1,-1] )
         plane_positions = np.array([
             [p_pos[0],0,0],
             [p_pos[1],0,0],
@@ -78,7 +81,7 @@ def generate_st( config_dict ):
             [0,p_pos[3],0],
             [0,0,p_pos[4]],
             [0,0,p_pos[5]]
-        ]) - np.tile( config_dict['camera_pos'], (6,1) )
+        ]) - np.tile( rendering_config['camera_position'], (6,1) )
 
         numerator = np.sum( plane_positions * plane_normals, axis=-1 )
         numerator = np.tile(numerator.reshape((1,6)), (len(ray_directions),1))
@@ -88,16 +91,16 @@ def generate_st( config_dict ):
 
         intersections = (
             np.repeat(ray_directions, 6, axis=0).reshape((len(ray_directions), 6,3) ) * ds[...,None] + 
-            np.tile( config_dict['camera_pos'], (len(ray_directions)*6,1) ).reshape((len(ray_directions), 6,3) )
+            np.tile( rendering_config['camera_position'], (len(ray_directions)*6,1) ).reshape((len(ray_directions), 6,3) )
         )
 
         mask_outside_intersections = np.prod( np.logical_and(intersections >= -1.001, intersections <= 1.001),axis=-1 ) * (np.abs(denominator) > 1e-5)
         valid_rays = np.sum( mask_outside_intersections , axis=-1 ).astype(bool)
         ds = np.min( np.where( np.logical_and( ds >= 0, mask_outside_intersections ), ds, np.ones_like(ds) * np.inf)[valid_rays,:], axis=-1)
         starting_pos = np.zeros_like(ray_directions)
-        starting_pos[valid_rays,:] = ray_directions[valid_rays,:] * ds[...,None] + np.tile( config_dict['camera_pos'], (np.sum(valid_rays),1) )
+        starting_pos[valid_rays,:] = ray_directions[valid_rays,:] * ds[...,None] + np.tile( rendering_config['camera_position'], (np.sum(valid_rays),1) )
 
-        if config_dict['gt_mode'] == 'gt':
+        if network_config['gt_mode'] == 'gt':
             colores += create_projectional_image_gt( 
                 mesh_file=config_dict['mesh_path'], 
                 width=config_dict["image_width"],
@@ -109,36 +112,29 @@ def generate_st( config_dict ):
                 max_iterations=config_dict["max_iter"],
                 specular_comp=config_dict.get('specular', False))
         else:
-            device_torch = torch.device(config_dict["device"])
+            device_torch = torch.device(network_config["device"])
             model = SIREN(
                     n_in_features= 3,
                     n_out_features=1,
-                    hidden_layer_config=config_dict["hidden_layer_nodes"],
-                    w0=config_dict["w0"],
+                    hidden_layer_config=network_config["hidden_layer_nodes"],
+                    w0=network_config["w0"],
                     ww=None
             )
 
-            model.load_state_dict( torch.load(config_dict["model_path"], map_location=device_torch))
+            model.load_state_dict( torch.load(network_config["model_path"], map_location=device_torch))
             model.to(device_torch)
 
             colores += create_projectional_image( 
-                model, 
-                width=config_dict["image_width"],
-                height=config_dict['image_height'], 
+                model,
                 rays=ray_directions, 
                 t0=starting_pos, 
                 mask_rays=valid_rays,
-                surface_eps=config_dict["surf_thresh"],
-                alpha=config_dict["alpha"],
-                gt_mode=config_dict["gt_mode"],
-                light_position=np.array(config_dict["light_pos"]),
-                max_iterations=config_dict["max_iter"],
-                device=device_torch,
-                specular_comp=config_dict.get('specular', False),
-                plot_curvatures=config_dict.get('plot_curvs', 'none')
+                network_config=network_config,
+                rendering_config=rendering_config,
+                device=device_torch
             )
     
-    return Image.fromarray((colores / config_dict['sample_rate'] * 255).astype(np.uint8))
+    return Image.fromarray((colores / rendering_config['sample_rate'] * 255).astype(np.uint8))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate ray traced image from trained model')

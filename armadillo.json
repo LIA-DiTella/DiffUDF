@@ -1,20 +1,26 @@
 {
-    "image_width":1280,
-    "image_height":1280,
-    "fov": 100,
-    "camera_pos": [6,2.5,-10],
-    "light_pos": [3,2,-10],
-    "sample_rate":1,
-    "gt_mode": "tanh",
-    "device": 0,
-    "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
-    "w0": 30,
-    "model_path": "model_best.pth",
-    "surf_thresh": 0.002,
-    "alpha": 100,
-    "max_iter": 100,
-    "output_path": "armadillo_mean.png",
-    "specular": false,
-    "plot_curvs": "gaussian",
-    "planes": [1,-1,1,-1,1,-1]
+    "network_config" :{ 
+        "alpha": 100, 
+        "device": 1, 
+        "gt_mode": "tanh",
+        "hidden_layer_nodes": [256,256,256,256, 256,256,256,256],
+        "w0":30,
+        "model_path": "model_best.pth"
+    },
+    "rendering_config" : { 
+        "width": 1280,
+        "height": 1280,
+        "surface_threshold": 0.002,
+        "fov": 100,
+        "camera_position": [6,2.5,-10],
+        "light_position": [3,2,-10],
+        "plot_curvatures": "mean",
+        "max_iterations": 100,
+        "reflection_method": "blinn-phong",
+        "alpha1": 0.2,
+        "alpha2": 0.5,
+        "shininess": -1,
+        "sample_rate": 1
+    },
+    "output_path": "armadillo-mean.png"
 }
