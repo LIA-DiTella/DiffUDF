@@ -59,7 +59,7 @@ def compute_normals_and_cd( inputs, outputs):
     eigenvalues, eigenvectors = torch.linalg.eigh( hessians_torch )
     pred_normals = eigenvectors[..., 2]
     
-    return pred_normals, eigenvectors[...,:2]
+    return pred_normals, eigenvectors[...,:2].detach().cpu()
 
 def compute_grad(inputs, outputs):
     return gradient(outputs, inputs)
@@ -108,9 +108,10 @@ def create_projectional_image(
             curvatures *= direction_alignment
 
         if curvatures is not None:
-            curvatures = np.clip( curvatures, np.percentile(curvatures, 5), np.percentile(curvatures,95))
-            curvatures -= np.min(curvatures)
-            curvatures/= np.max(curvatures)
+            curvatures = np.clip( curvatures, np.percentile(curvatures, rendering_config['curv_low_bound']), np.percentile(curvatures,rendering_config['curv_high_bound']))
+            curvatures -= np.mean(curvatures)
+            curvatures /= 2* np.max(np.abs(curvatures))
+            curvatures += 0.5
             curvatures = cmap(curvatures.squeeze(1))[:,:3]
 
         if rendering_config['reflection_method'] == 'blinn-phong':

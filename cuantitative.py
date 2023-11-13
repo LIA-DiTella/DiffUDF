@@ -23,15 +23,15 @@ if __name__=='__main__':
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    dataset = 'data/data/'
-    outfolder = f'results/no_s2'
+    dataset = 'data/curvatures/'
+    outfolder = f'results/curvatures'
     cuda_device = 0
 
     if not os.path.exists(outfolder):
         os.mkdir(outfolder)
 
     exp_config = {
-        "num_epochs": 2000,
+        "num_epochs": 3000,
         "s1_epochs": 2000,
         "warmup_epochs": 1000,
         "dataset": "...",
@@ -43,7 +43,7 @@ if __name__=='__main__':
         "epochs_to_checkpoint": 4000,
         "gt_mode": "tanh",
         "loss_s1_weights": [ 1e4, 1e4, 1e4, 1e3 ],
-        "loss_s2_weights": [ 0, 0 ],
+        "loss_s2_weights": [ 1e5, 1e5 ],
         "alpha": 100,
         "optimizer": {
             "type": "adam",

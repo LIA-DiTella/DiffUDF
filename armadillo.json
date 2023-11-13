@@ -5,23 +5,25 @@
         "gt_mode": "tanh",
         "hidden_layer_nodes": [256,256,256,256, 256,256,256,256],
         "w0":30,
-        "model_path": "model_best.pth"
+        "model_path": "results/curvatures/metatron/models/model_best.pth"
     },
     "rendering_config" : { 
-        "width": 1280,
-        "height": 1280,
-        "surface_threshold": 0.003,
-        "fov": 100,
-        "camera_position": [6,2.5,-10],
+        "width": 720,
+        "height": 720,
+        "surface_threshold": 0.007,
+        "fov": 112,
+        "camera_position": [6,4,-10],
         "light_position": [3,2,-10],
         "plot_curvatures": "gaussian",
+        "curv_low_bound": 1,
+        "curv_high_bound": 99,
         "max_iterations": 100,
-        "reflection_method": "ward",
+        "reflection_method": "blinn-phong",
         "alpha1": 0.2,
         "alpha2": 0.5,
         "shininess": -1,
-        "sample_rate": 1,
-        "gd_steps": 1
+        "sample_rate": 6,
+        "gd_steps": 0
     },
-    "output_path": "armadillo_10.png"
+    "output_path": "metatron_gauss.png"
 }
