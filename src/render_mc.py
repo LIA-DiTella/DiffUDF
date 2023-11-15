@@ -68,8 +68,8 @@ def extract_fields(decoder, latent_vec, N, gt_mode, device, alpha ):
     
     gradients = np.zeros((samples.shape[0], 3))
     hessians = np.zeros((gradients.shape[0],3,3))
-    #pred_df = torch.from_numpy( inverse( gt_mode, np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients, hessians=hessians ) ), alpha))
-    pred_df = torch.from_numpy( np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients, hessians=hessians ) ) )
+    pred_df = torch.from_numpy( inverse( gt_mode, np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients, hessians=hessians ) ), alpha))
+    #pred_df = torch.from_numpy( np.abs(evaluate( decoder, samples[:, :3], latent_vec, device=device, gradients=gradients, hessians=hessians ) ) )
     
     gradients = torch.from_numpy( gradients )
     gradients = -1 * F.normalize(gradients, dim=-1)
@@ -220,8 +220,7 @@ def extract_mesh_CAP( ndf, grad, resolution ):
                 for ii in range(2):
                     for jj in range(2):
                         for kk in range(2):
-                            val = np.sqrt( ndf_loc[ii][jj][kk] / 100 )
-                            #val = ndf_loc[ii][jj][kk]
+                            val = ndf_loc[ii][jj][kk]
 
                             if np.dot(grad_loc[0][0][0], grad_loc[ii][jj][kk]) < 0:
                                 res[ii][jj][kk] = -val

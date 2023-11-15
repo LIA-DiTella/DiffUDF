@@ -412,24 +412,25 @@ def setup_train( parameter_dict, cuda_device ):
 
     generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'] + '_t.obj', osp.join(full_path, "reconstructions/"), df_options)
 
-    print('Generating mesh')
-    mc_options = {
-        'w0': network_params["w0"],
-        'model_path': osp.join(full_path, "models", "model_best.pth"),
-        'hidden_layer_nodes': network_params["hidden_layer_nodes"],
-        'activation': network_params.get('activation', 'sine')
-    }
+    if parameter_dict.get('resolution', 256) != 0:
+        print('Generating mesh')
+        mc_options = {
+            'w0': network_params["w0"],
+            'model_path': osp.join(full_path, "models", "model_best.pth"),
+            'hidden_layer_nodes': network_params["hidden_layer_nodes"],
+            'activation': network_params.get('activation', 'sine')
+        }
 
-    return training_time, generate_mc( 
-        model=None, 
-        gt_mode=parameter_dict["gt_mode"],
-        device=cuda_device, 
-        N=parameter_dict.get('resolution', 256), 
-        output_path=osp.join(full_path, "reconstructions", f'mc_mesh_best.obj'),
-        alpha=parameter_dict.get('alpha', 1),
-        from_file = mc_options,
-        algorithm='both' if parameter_dict['gt_mode'] == 'tanh' else 'siren'
-    )
+        return training_time, generate_mc( 
+            model=None, 
+            gt_mode=parameter_dict["gt_mode"],
+            device=cuda_device, 
+            N=parameter_dict.get('resolution', 256), 
+            output_path=osp.join(full_path, "reconstructions", f'mc_mesh_best.obj'),
+            alpha=parameter_dict.get('alpha', 1),
+            from_file = mc_options,
+            algorithm='both' if parameter_dict['gt_mode'] == 'tanh' else 'siren'
+        )
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(

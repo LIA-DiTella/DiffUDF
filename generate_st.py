@@ -134,7 +134,12 @@ def generate_st( config_dict ):
                 device=device_torch
             )
     
-    return Image.fromarray((colores / rendering_config['sample_rate'] * 255).astype(np.uint8))
+    im = Image.fromarray((colores / rendering_config['sample_rate'] * 255).astype(np.uint8))
+
+    if rendering_config.get('rotation', 0)!= 0:
+        im = im.rotate(rendering_config['rotation'])
+
+    return im
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate ray traced image from trained model')

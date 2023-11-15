@@ -23,8 +23,8 @@ if __name__=='__main__':
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    dataset = 'data/curvatures/'
-    outfolder = f'results/curvatures'
+    dataset = 'data/multi_garment/'
+    outfolder = f'results/multi_garment'
     cuda_device = 0
 
     if not os.path.exists(outfolder):
@@ -63,6 +63,7 @@ if __name__=='__main__':
         result_file.write('mesh,time,L1CD_CAP,L2CD_CAP,NC_CAP,L1CD_MU,L2CD_MU,NC_MU\n')
     
     for it, (dirpath, dirnames, filenames) in enumerate(os.walk(dataset)):
+
         try:
             dataset_index = [i for i,file in enumerate(filenames) if file[-7:] == '_pc.ply'][0]
             gt_index = [i for i,file in enumerate(filenames) if file[-6:] == '_t.obj'][0]

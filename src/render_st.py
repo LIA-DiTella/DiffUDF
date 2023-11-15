@@ -40,11 +40,11 @@ def batched_op( inputs, outputs, op, *args, **kwargs ):
     return [ op(x,y, *args, **kwargs) for x,y in zip(inputs, outputs) ]
 
 def compute_curvature( inputs, normals, curvature='mean', device=torch.device(0)):
+    shape_op, status = jacobian(normals, inputs)
     if curvature == 'mean':
-        return (divergence( normals, inputs ) / 2).detach().cpu()
+        return (torch.sum(torch.diagonal(shape_op[0], dim1=1, dim2=2), dim=-1) / 2).detach().cpu()[None,..., None]
+    
     elif curvature == 'gaussian':
-        shape_op, status = jacobian(normals, inputs)
-
         extended_hessians = torch.zeros((shape_op.shape[1], 4,4)).to(device)
         extended_hessians[:, :3,:3] = shape_op[0, :,:]
         extended_hessians[:, :3, 3] = normals
@@ -86,7 +86,7 @@ def create_projectional_image(
             rendering_config['shininess'], 
             hits, t0, normals).reshape((rendering_config['height'],rendering_config['width'],3)) 
     else:
-        cmap = cm.get_cmap('bwr')
+        cmap = cm.get_cmap('RdYlBu')
         normals_and_cd = batched_op( inputs, udfs, compute_normals_and_cd )
         normals = [ p[0] for p in normals_and_cd ]
         pcd = [ p[1] for p in normals_and_cd ]
@@ -109,9 +109,8 @@ def create_projectional_image(
 
         if curvatures is not None:
             curvatures = np.clip( curvatures, np.percentile(curvatures, rendering_config['curv_low_bound']), np.percentile(curvatures,rendering_config['curv_high_bound']))
-            curvatures -= np.mean(curvatures)
-            curvatures /= 2* np.max(np.abs(curvatures))
-            curvatures += 0.5
+            curvatures -= np.min(curvatures)
+            curvatures /= np.max(curvatures)
             curvatures = cmap(curvatures.squeeze(1))[:,:3]
 
         if rendering_config['reflection_method'] == 'blinn-phong':
@@ -149,7 +148,6 @@ def propagate_rays(model, rays, t0, mask_rays, network_config, rendering_config,
         if network_config['gt_mode'] == 'siren':
             threshold_mask = udfs.flatten() < rendering_config['surface_threshold']
         else:
-            #threshold_mask = np.abs(udfs).flatten() < rendering_config['surface_threshold']
             threshold_mask = np.abs(steps).flatten() < rendering_config['surface_threshold']
             
         indomain_mask = np.logical_and( np.all( t0[mask_rays] > -1, axis=1 ), np.all( t0[mask_rays] < 1, axis=1 ))
@@ -201,7 +199,7 @@ def phong_shading(light_position, shininess, hits, samples, normals, color_map=N
     colors[hits] = np.clip( 
         diffuse_color * lambertian + 
         specular_color * specular +
-        ambient_color , 0, 1)
+        ambient_color , 0, 0.9)
     
     return colors
 
@@ -237,7 +235,7 @@ def ward_reflectance(light_position, camera_position, hits, samples, normals, al
     colors[hits] = np.clip( 
         diffuse_color * lambertian + 
         specular_color * specular +
-        ambient_color , 0, 1)
+        ambient_color , 0, 0.9)
     
     return colors
 
