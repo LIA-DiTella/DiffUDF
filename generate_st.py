@@ -18,8 +18,8 @@ def get_pixels_camera( width, height, fov, noise ):
 
     aspect_ratio = width / height
     fov_radians = fov * np.pi / 180
-    pixel_camera_x = ( pixel_screen_x ) * aspect_ratio * np.tan(fov_radians / 2)
-    pixel_camera_y = (  pixel_screen_y ) * np.tan(fov_radians / 2)
+    pixel_camera_x = ( pixel_screen_x ) * aspect_ratio * np.tan( fov_radians / 2 )
+    pixel_camera_y = (  pixel_screen_y ) * np.tan( fov_radians / 2)
 
     pixel_camera_x, pixel_camera_y = np.meshgrid(pixel_camera_x, pixel_camera_y, indexing='xy')
 
@@ -133,6 +133,8 @@ def generate_st( config_dict ):
                 rendering_config=rendering_config,
                 device=device_torch
             )
+
+        torch.cuda.empty_cache()
     
     im = Image.fromarray((colores / rendering_config['sample_rate'] * 255).astype(np.uint8))
 
@@ -151,4 +153,4 @@ if __name__ == '__main__':
         config_dict = json.load(config_file)
 
     im = generate_st(config_dict)
-    im.save(config_dict["output_path"], 'PNG')
+    im.save(config_dict["rendering_config"]["output_path"], 'PNG')

@@ -23,7 +23,7 @@ class Sampler:
 
         self.decoder.load_state_dict( torch.load(checkpoint, map_location=self.device))
 
-    def generate_point_cloud(self, gt_mode, alpha, num_steps = 5, num_points = 20000, surf_thresh = 0.01, grad_thresh=0.01, max_iter=1000 ):
+    def generate_point_cloud(self, gt_mode, alpha, num_steps = 5, num_points = 20000, surf_thresh = 0.01, max_iter=1000 ):
 
         for param in self.decoder.parameters():
             param.requires_grad = False
@@ -52,10 +52,8 @@ class Sampler:
 
                 samples -= steps * normalize(gradients)
         
-            gradient_norms = np.sum( gradients ** 2, axis=1)
-        
             mask_points_on_domain = np.prod( np.logical_and( samples >= -1, samples <= 1 ), axis=1 ).astype(np.bool8)
-            mask_points_on_surf = np.logical_and( gradient_norms < grad_thresh, steps.flatten() < surf_thresh) * mask_points_on_domain
+            mask_points_on_surf = (  steps.flatten() < surf_thresh ) * mask_points_on_domain
 
             if np.sum(mask_points_on_surf) > 0:
                 samples_near_surf = samples[ mask_points_on_surf ]

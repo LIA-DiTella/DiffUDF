@@ -223,6 +223,9 @@ def ward_reflectance(light_position, camera_position, hits, samples, normals, al
     specular = specular[...,None]
     specular = np.nan_to_num(specular)
 
+    ro = .1
+    specular *= ro
+
     if color_map is None:
         diffuse_color = np.tile( np.array([0.7, 0.7, 0.7] ), (normals.shape[0],1))
         specular_color = np.tile( np.array([0.7, 0.7, 0.7] ), (normals.shape[0],1))
@@ -231,6 +234,8 @@ def ward_reflectance(light_position, camera_position, hits, samples, normals, al
         diffuse_color = color_map * 0.7
         specular_color = color_map * 0.7
         ambient_color = color_map * 0.2
+
+    
 
     colors[hits] = np.clip( 
         diffuse_color * lambertian + 

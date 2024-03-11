@@ -16,7 +16,7 @@ def inv_squared( pred_df, alpha, min_step ):
     return inverse
 
 def inv_tanh( pred_df, alpha, min_step ):
-    return np.where( pred_df < 0.1, np.sqrt(pred_df / alpha ), pred_df )
+    return np.where( pred_df < 1/alpha, np.sqrt(pred_df / alpha ), pred_df )
 
 def inv_siren( pred_df, alpha, min_step ):
     return np.where( pred_df > 0, pred_df, np.ones_like(pred_df) * min_step ) 

@@ -1,12 +1,7 @@
-data
 __pycache__/
 differential_geometry_in_neural_implicits/
-results/
 *build/
-*.ply
-*.off
 .vscode/
-*.png
 .ipynb_checkpoints
 *.ipynb
-*.obj
+compute_fscore.py

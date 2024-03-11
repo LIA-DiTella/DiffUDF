@@ -23,8 +23,8 @@ if __name__=='__main__':
     net_depth = 8
     layer_nodes = [net_width] * net_depth
 
-    dataset = 'data/multi_garment/'
-    outfolder = f'results/multi_garment'
+    dataset = 'data/deepfashion/'
+    outfolder = f'results/df_subset/'
     cuda_device = 0
 
     if not os.path.exists(outfolder):
@@ -40,11 +40,11 @@ if __name__=='__main__':
         "batches_per_epoch": 1,
         "checkpoint_path": outfolder,
         "experiment_name": "...",
-        "epochs_to_checkpoint": 4000,
+        "epochs_to_checkpoint": 8001,
         "gt_mode": "tanh",
         "loss_s1_weights": [ 1e4, 1e4, 1e4, 1e3 ],
         "loss_s2_weights": [ 1e5, 1e5 ],
-        "alpha": 100,
+        "alpha": 10,
         "optimizer": {
             "type": "adam",
             "lr_s1": 1e-5,

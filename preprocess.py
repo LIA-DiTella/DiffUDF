@@ -7,7 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Preprocess triangle mesh for training')
     parser.add_argument('input_path', metavar='path/to/mesh', type=str,
                         help='path to input mesh')
-    parser.add_argument('output_path', metavar='path/to/output/point_cloud', type=str,
+    parser.add_argument('output_path', metavar='path/to/output/folder/', type=str,
                         help='path to output point cloud')
     parser.add_argument('-s', '--samples', type=int, default=1e5, help='surface samples')
 

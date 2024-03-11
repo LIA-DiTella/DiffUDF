@@ -1,0 +1,13 @@
+{
+    "alpha": 100, 
+    "device": 0, 
+    "gt_mode": "tanh",
+    "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
+    "w0": 30,
+    "model_path": "results/beetle/experiment_1/models/model_best.pth",
+    "output_path": "results/beetle/experiment_1/reconstructions/beetle.ply",
+    "nsamples": 100000,
+    "ref_steps": 3,
+    "surf_thresh": 0.007,
+    "max_iter": 10
+}

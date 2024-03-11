@@ -1,0 +1,27 @@
+{
+    "num_epochs": 3000,
+    "s1_epochs": 2000,
+    "warmup_epochs": 1000,
+    "dataset": "data/beetle/beetle",
+    "batch_size": 30000,
+    "sampling_percentiles": [0.333, 0.666],
+    "batches_per_epoch": 1,
+    "checkpoint_path": "results/beetle/",
+    "experiment_name": "experiment_1",
+    "epochs_to_checkpoint": 8001,
+    "gt_mode": "tanh",
+    "loss_s1_weights": [ 1e4, 1e4, 1e4, 1e3 ],
+    "loss_s2_weights": [ 1e5, 1e5 ],
+    "alpha": 100,
+    "optimizer": {
+        "type": "adam",
+        "lr_s1": 1e-5,
+        "lr_s2": 1e-7
+    },
+    "network": {
+        "hidden_layer_nodes": [256,256,256,256,256,256,256,256],
+        "w0": 30,
+        "pretrained_dict": "None"
+    },
+    "resolution": 256
+}
