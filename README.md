@@ -97,7 +97,7 @@ python preprocess.py data/beetle/beetle.obj data/beetle -s 100000
 ```
 Then we can train a neural network:
 ```
-python train.py train_cfg.json 0
+python train.py configs/train_cfg.json 0
 ```
 After training is over, in folder *results/beetle/experiment_1* we find all the files related with the process. Folder *reconstructions* will have two images:
 1. *distance_fields.png* has information about the field and the gradient norm, with comparisons with ground truth values.
