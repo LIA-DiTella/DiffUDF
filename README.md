@@ -12,14 +12,13 @@ Repository for the CVPR 2024 [paper](https://lia-ditella.github.io/DUDF/).
 If you find our project useful, please cite the following
 
 ```     
-@misc{
-    fainstein2024dudf,
-    title={DUDF: Differentiable Unsigned Distance Fields with Hyperbolic Scaling}, 
-    author={Miguel Fainstein and Viviana Siless and Emmanuel Iarussi},
-    year={2024},
-    eprint={2402.08876},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
+@InProceedings{Fainstein_2024_CVPR,
+    author    = {Fainstein, Miguel and Siless, Viviana and Iarussi, Emmanuel},
+    title     = {DUDF: Differentiable Unsigned Distance Fields with Hyperbolic Scaling},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2024},
+    pages     = {4484-4493}
 }
 ```
 
