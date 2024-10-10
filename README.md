@@ -115,6 +115,25 @@ Lastly, to extract the oriented point cloud run
 python generate_pc.py configs/pc_cfg.json
 ```
 
+## Update
+
+We received some comments about the lack of code for pointcloud input, without the need of ground truth triangle meshes. So we added the necessary code.
+To perform the preprocessing of the pointcloud, run 
+```
+python preprocess.py input/pointcloud output/folder -s {NUMBER_OF_SAMPLES} -pc
+```
+
+To train, just add the option to the config file. You can see 'configs/train_cfg_pc.json' as an example.
+```
+"onlyPCloud": true
+```
+
+We estimate ground truth distances, by computing shortest distance to the pointcloud. If the pointcloud is not dense enough, this approximation will be poor and the reconstruction will fail. In our experiments, pointclouds of as low as 20k points seemed to work well enough.
+
+For completion, we rerun the experiments present on the paper with the same configuration but approximating ground truth distances as mentioned (only using pointclouds). The results are on the same level of those reported on the paper:
+
+<img src="resources/table_pointcloud.png">
+
 ## Contact
 
 For questions and comments contact Miguel Fainstein via mail

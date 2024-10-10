@@ -7,14 +7,15 @@ import argparse
 from src.model import SIREN
 from src.evaluate import evaluate
 from PIL import Image
+from scipy.spatial import KDTree
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from src.util import normalize
 
-def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='br', max_val=1.5, contour=False):
+def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='br', min_val=-1.5, max_val=1.5, contour=False):
     masked_distancias = distancias
     for v in niveles:
-        masked_distancias = np.ma.masked_inside( masked_distancias, v / max_val - eps, v / max_val + eps )
+        masked_distancias = np.ma.masked_inside( masked_distancias, - eps, eps )
 
     if negs:
         masked_distancias = np.ma.masked_less(masked_distancias, 0)
@@ -23,17 +24,23 @@ def imagen_dist( axis, distancias, niveles, eps=0.0005, negs=False, color_map='b
         masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)), 
         cmap=color_map, 
         interpolation='none', 
-        vmin=0, 
+        vmin=min_val, 
         vmax=max_val
     )
 
     if contour:
         axis.contour(
             masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)),
-            levels= np.linspace(0,1,23), colors='black', linewidths=0.5)
+            levels= np.linspace(min_val,max_val,18), colors='black', linewidths=0.5)
         pos = axis.contourf(
             masked_distancias.reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)),
-            levels= np.linspace(0,1,23), cmap=color_map)
+            levels= np.linspace(min_val,max_val,18), cmap=color_map)
+    
+
+    axis.contour( 
+        np.ma.masked_outside( distancias, -eps, eps ).reshape(np.sqrt(len(distancias)).astype(np.uint32), np.sqrt(len(distancias)).astype(np.uint32)),
+        colors='black', linewidths=0.5
+    )
         
     axis.set_xticks([])
     axis.set_yticks([])
@@ -50,11 +57,11 @@ def generate_df( model_path, mesh_path, output_path, options ):
             ww=None,
             activation=options.get('activation', 'sine')
     )
-    model.load_state_dict( torch.load(model_path))
+    model.load_state_dict( torch.load(model_path, weights_only=True ))
 
     SAMPLES = options['width'] ** 2
     BORDES = [1, -1]
-    EJEPLANO = [0,1,2]
+    EJEPLANO = [2,1,0]
     OFFSETPLANO = 0.0
 
     device_torch = torch.device(options['device'])
@@ -120,7 +127,104 @@ def generate_df( model_path, mesh_path, output_path, options ):
 
     #max_val = np.max( np.concatenate([gt_distances,pred_distances,gt_grad_norm,pred_grad_norm]))
 
-    color_map = 'rainbow'
+    color_map = 'bwr_r'
+
+    pos = imagen_dist( axes.flat[0] ,np.clip(gt_distances, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
+    imagen_dist( axes.flat[1] ,np.clip(pred_distances,a_min=None, a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
+    imagen_dist( axes.flat[2] ,np.clip(gt_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'])
+    imagen_dist( axes.flat[3] ,np.clip(pred_grad_norm, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'])
+
+    axes.flat[0].set_title(r'Ground truth slices')
+    axes.flat[1].set_title(r'Predicted value slices')
+    axes.flat[0].set_ylabel(r'$f$', rotation=0, labelpad=12, size='large')
+    axes.flat[2].set_ylabel(r'$\left \| \nabla f \right \|$', rotation=0, labelpad=24, size='large')
+
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    fig.colorbar(pos, cax=cbar_ax)
+    fig.savefig(output_path + 'distance_fields.png')
+
+    im = Image.fromarray((grad_map.reshape(np.sqrt(SAMPLES).astype(np.uint32), np.sqrt(SAMPLES).astype(np.uint32), 3) * 255).astype(np.uint8))
+    im.save( output_path +'pred_grad.png', 'PNG')
+
+def generate_df_pc( model_path, pc_path, output_path, options ):
+
+    model = SIREN(
+            n_in_features= 3,
+            n_out_features=1,
+            hidden_layer_config=options['hidden_layer_nodes'],
+            w0=options['weight0'],
+            ww=None,
+            activation=options.get('activation', 'sine')
+    )
+    model.load_state_dict( torch.load(model_path, weights_only=True))
+
+    SAMPLES = options['width'] ** 2
+    BORDES = [1, -1]
+    EJEPLANO = [2,1,0]
+    OFFSETPLANO = 0.0
+
+    device_torch = torch.device(options['device'])
+    model.to(device_torch)
+
+    pointcloud = o3d.io.read_point_cloud(pc_path)
+
+    ranges = np.linspace(BORDES[0], BORDES[1], options['width'])
+    i_1, i_2 = np.meshgrid( ranges, ranges )
+    samples = np.concatenate(
+            np.concatenate( np.array([np.expand_dims(i_1, 2), 
+                                np.expand_dims(i_2, 2), 
+                                np.expand_dims(np.ones_like(i_1) * OFFSETPLANO, 2)])[EJEPLANO]
+                        , axis=2 ),
+            axis=0)
+
+    gradients = np.zeros((SAMPLES, 3))
+    hessians = np.zeros((SAMPLES, 3, 3))
+    pred_distances = evaluate( model, samples, device=device_torch, gradients=gradients, hessians=hessians )
+    pred_grad_norm = np.linalg.norm( gradients , axis=1 ).reshape((SAMPLES, 1))
+
+    gradients = normalize(gradients)
+    eigenvalues, eigenvectors = torch.linalg.eigh( torch.from_numpy(hessians) )
+    pred_normals = eigenvectors[..., 2].numpy()
+
+    pred_normals = np.where(
+        np.sum( gradients * pred_normals, axis=-1 )[..., None] < 0,
+        np.ones( (pred_normals.shape[0],1)) * -1,
+        np.ones( (pred_normals.shape[0],1))
+    ) * pred_normals
+    
+    normals = np.where(
+        np.concatenate( [pred_grad_norm , pred_grad_norm, pred_grad_norm], axis=-1) < 0.04,
+        pred_normals,
+        gradients
+    )
+
+    normals *= np.hstack([ np.ones((len(normals), 2)), np.sign(normals[:, 2]).reshape((len(normals), 1))])
+    grad_map = ( normals + np.ones_like(normals) ) / 2
+
+    tree = KDTree( np.asarray( pointcloud.points ) )
+    gt_distances, _ = tree.query( samples )
+
+    if options['gt_mode'] == 'squared':
+        gt_grad_norm = 2 * options['alpha'] * gt_distances
+        gt_distances = options['alpha'] * (gt_distances ** 2)
+    elif options['gt_mode'] == 'tanh':
+        tanh = np.tanh( options['alpha'] * gt_distances ) 
+        gt_grad_norm = tanh + options['alpha'] * gt_distances * (1 - tanh ** 2)
+        gt_distances = gt_distances * tanh
+    elif options['gt_mode'] == 'siren':
+        gt_grad_norm = np.where( gt_distances < options['surf_thresh'], np.zeros_like(gt_distances), np.ones_like(gt_distances))
+        gt_distances = gt_distances
+    else:
+        raise ValueError('gt_mode not valid')
+    
+    #plt.rcParams['text.usetex'] = True
+    plt.rcParams.update({'font.size': 16})
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10,9), dpi=500)
+
+    #max_val = np.max( np.concatenate([gt_distances,pred_distances,gt_grad_norm,pred_grad_norm]))
+
+    color_map = 'bwr_r'
 
     pos = imagen_dist( axes.flat[0] ,np.clip(gt_distances, a_min=None,a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
     imagen_dist( axes.flat[1] ,np.clip(pred_distances,a_min=None, a_max=1.5), [0], negs=True, color_map=color_map, eps=options['surf_thresh'], contour=True)
@@ -142,7 +246,7 @@ def generate_df( model_path, mesh_path, output_path, options ):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate dense point cloud from trained model')
-    parser.add_argument('mesh_path', metavar='path/to/mesh.ply', type=str,
+    parser.add_argument('mesh_path', metavar='path/to/mesh.obj', type=str,
                         help='path to input preprocessed mesh')
     parser.add_argument('model_path', metavar='path/to/pth', type=str,
                         help='path to input model')
@@ -158,6 +262,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     d = vars(args)
     d['hidden_layer_nodes'] = [256,256,256,256,256,256,256,256]
-    d['activation']='relu'
-    generate_df(args.model_path, args.mesh_path, args.output_path,d )
+    d['activation']='sine'
+    generate_df_pc(args.model_path, args.mesh_path, args.output_path,d )
 

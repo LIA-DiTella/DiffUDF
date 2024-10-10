@@ -18,7 +18,7 @@ def generate_mc(model, gt_mode,device, N, output_path, alpha=None, algorithm='me
 			activation=from_file.get('activation','sine')
 		)
 
-		model.load_state_dict( torch.load(from_file["model_path"]))
+		model.load_state_dict( torch.load(from_file["model_path"], weights_only=True) )
 		model.to(device)
 
 	if algorithm == 'meshudf':
@@ -88,7 +88,7 @@ if __name__=='__main__':
 		ww=None
 	)
 
-	model.load_state_dict( torch.load(config_dict["model_path"], map_location=device_torch))
+	model.load_state_dict( torch.load(config_dict["model_path"], map_location=device_torch, weights_only=True))
 	model.to(device_torch)
 
 	print('Generating mesh...')

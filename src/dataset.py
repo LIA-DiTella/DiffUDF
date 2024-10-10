@@ -69,17 +69,94 @@ def sampleTrainingData(
 
     return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)
 
+def shortestDistance( P, X ):
+    sqnormP = torch.sum( P * P, dim=1)
+    sqnormX = torch.sum( X * X, dim=1)
+
+    shDistances, _ = torch.min( sqnormX.repeat( P.shape[0], 1 ) - 2 * ( P @ X.T ), dim=1 )
+
+    return torch.sqrt( shDistances + sqnormP )
+
+def sampleTrainingDataPC(
+        surface_pc: torch.Tensor,
+        surface_normals: torch.Tensor,
+        samplesOnSurface: int,
+        samplesOffSurface: int,
+        domainBounds: tuple = ([-1, -1, -1], [1, 1, 1]),
+):
+    device = surface_pc.get_device()
+    
+    surfaceIndexs = torch.from_numpy( np.random.randint(0, surface_pc.shape[0], samplesOnSurface) ).to( device )
+    surfacePoints = surface_pc[ surfaceIndexs ]
+    surfaceNormals = surface_normals[ surfaceIndexs ]
+
+    ## samples uniformly in domain
+    samplesFar = samplesOffSurface // 2
+    samplesNear = samplesOffSurface - samplesFar
+
+    domainPoints = np.random.uniform(
+        domainBounds[0], domainBounds[1],
+        (samplesFar, 3)
+    )
+
+    domainPoints = torch.from_numpy( domainPoints ).to( device )
+    domainSDFs = shortestDistance( domainPoints, surface_pc )
+
+    nearIndexs = torch.from_numpy( np.random.randint(0, samplesOnSurface, samplesNear ) ).to( device )
+    surfacePointsSubset = surfacePoints[ nearIndexs ]
+    surfacePointsSubsetNormals = surfaceNormals[ nearIndexs ]
+
+    offset = torch.normal(0, 0.01, (samplesNear, 1) ).to( device )
+    closePoints = ( surfacePointsSubset + surfacePointsSubsetNormals * offset )
+    closeSDFs = torch.abs( offset )
+
+    domainNormals = torch.zeros((samplesOffSurface, 3)).to(device)
+
+    # full dataset:
+    fullSamples = torch.row_stack((
+        surfacePoints,
+        domainPoints,
+        closePoints
+    ))
+    fullNormals = torch.row_stack((
+        surfaceNormals,
+        domainNormals
+    ))
+    fullSDFs = torch.cat((
+        torch.zeros(samplesOnSurface).to(device),
+        domainSDFs,
+        closeSDFs.squeeze(1)
+    )).unsqueeze(1)
+
+    return fullSamples.float().unsqueeze(0), fullNormals.float().unsqueeze(0), fullSDFs.float().unsqueeze(0)
+
+
 class PointCloud(IterableDataset):
-    def __init__(self, meshPath: str,
-                 batchSize: int,
-                 samplingPercentiles: list,
-                 batchesPerEpoch : int ):
+    def __init__(
+                self, meshPath: str,
+                batchSize: int,
+                samplingPercentiles: list,
+                batchesPerEpoch : int,
+                device: torch.device,
+                onlyPCloud=False,
+                ):
         super().__init__()
 
-        print(f"Loading mesh \"{meshPath}\".")
+        self.onlyPCloud = onlyPCloud
 
-        self.mesh = o3d.t.io.read_triangle_mesh(meshPath + '_t.obj')
+        print(f"Loading data \"{meshPath}\".")
+        
         self.surface_pc = o3d.t.io.read_point_cloud(meshPath + '_pc.ply')
+        
+        if not self.onlyPCloud: 
+            self.mesh = o3d.t.io.read_triangle_mesh(meshPath + '_t.obj')
+            print("Creating point-cloud and acceleration structures.")
+            self.scene = o3d.t.geometry.RaycastingScene()
+            self.scene.add_triangles(self.mesh)
+        else:
+            self.surface_normals = o3c_to_torch( self.surface_pc.point.normals ).to( device )
+            self.surface_pc = o3c_to_torch( self.surface_pc.point.positions ).to( device )
+
 
         self.batchSize = batchSize
         self.samplesOnSurface = int(self.batchSize * samplingPercentiles[0])
@@ -90,15 +167,19 @@ class PointCloud(IterableDataset):
 
         self.batchesPerEpoch = batchesPerEpoch
 
-        print("Creating point-cloud and acceleration structures.")
-        self.scene = o3d.t.geometry.RaycastingScene()
-        self.scene.add_triangles(self.mesh)
-        
     def __iter__(self):
         for _ in range(self.batchesPerEpoch):
-            yield sampleTrainingData(
-                surface_pc=self.surface_pc,
-                samplesOnSurface=self.samplesOnSurface,
-                samplesOffSurface=self.samplesFarSurface,
-                scene=self.scene
-            )
+            if self.onlyPCloud:
+                yield sampleTrainingDataPC(
+                    surface_pc=self.surface_pc,
+                    surface_normals=self.surface_normals,
+                    samplesOnSurface=self.samplesOnSurface,
+                    samplesOffSurface=self.samplesFarSurface,
+                )
+            else:
+                yield sampleTrainingData(
+                    surface_pc=self.surface_pc,
+                    samplesOnSurface=self.samplesOnSurface,
+                    samplesOffSurface=self.samplesFarSurface,
+                    scene=self.scene
+                )

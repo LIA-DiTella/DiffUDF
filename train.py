@@ -15,7 +15,7 @@ from src.dataset import PointCloud
 from src.loss_functions import loss_siren, loss_s1, loss_s2
 from src.model import SIREN
 from src.util import create_output_paths, load_experiment_parameters
-from generate_df import generate_df
+from generate_df import generate_df, generate_df_pc
 from generate_mc import generate_mc
 import time
 import open3d as o3d
@@ -308,7 +308,9 @@ def setup_train( parameter_dict, cuda_device ):
         meshPath= parameter_dict["dataset"],
         batchSize= parameter_dict["batch_size"],
         samplingPercentiles=parameter_dict["sampling_percentiles"],
-        batchesPerEpoch = parameter_dict["batches_per_epoch"]
+        batchesPerEpoch = parameter_dict["batches_per_epoch"],
+        device=device,
+        onlyPCloud= parameter_dict.get( "onlyPCloud", False )
     )
 
     network_params = parameter_dict["network"]
@@ -410,7 +412,20 @@ def setup_train( parameter_dict, cuda_device ):
         'activation': network_params.get('activation', 'sine')
     }
 
-    generate_df( osp.join(full_path, "models", "model_best.pth"), parameter_dict['dataset'] + '_t.obj', osp.join(full_path, "reconstructions/"), df_options)
+    if parameter_dict["onlyPCloud"]:
+        generate_df_pc(
+            osp.join(full_path, "models", "model_best.pth"), 
+            parameter_dict['dataset'] + '_t.ply', 
+            osp.join(full_path, "reconstructions/"), 
+            df_options
+        )
+    else:
+        generate_df( 
+            osp.join(full_path, "models", "model_best.pth"), 
+            parameter_dict['dataset'] + '_t.obj', 
+            osp.join(full_path, "reconstructions/"), 
+            df_options
+        )
 
     if parameter_dict.get('resolution', 256) != 0:
         print('Generating mesh')
