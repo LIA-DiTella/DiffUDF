@@ -1,5 +1,5 @@
 # DUDF: Differentiable Unsigned Distance Fields with Hyperbolic Scaling
-Miguel Fainstein $^{\text{1}}, ^{\text{2}}$, Viviana Siless $^{\text{1}}$, Emmanuel Iarussi $^{\text{1},\text{3}}$ 
+Miguel Fainstein $^{\text{1},\text{2}}$, Viviana Siless $^{\text{1}}$, Emmanuel Iarussi $^{\text{1},\text{3}}$ 
 
 $^{\text{1}}$ Universidad Torcuato Di Tella $^{\text{2}}$ FCEyN Universidad de Buenos Aires $^{\text{3}}$ CONICET
 
